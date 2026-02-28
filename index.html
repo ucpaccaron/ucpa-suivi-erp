@@ -927,6 +927,93 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
   text-transform:uppercase;margin-left:6px;
 }
 
+/* ══════════════════════════════════════════
+   MOBILE RESPONSIVE
+══════════════════════════════════════════ */
+.burger-btn{
+  display:none;background:none;border:none;cursor:pointer;
+  padding:8px 10px;color:var(--text);font-size:24px;line-height:1;flex-shrink:0;
+}
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:199;
+}
+.sidebar-overlay.open{display:block;}
+
+/* Login responsive */
+@media (max-width:480px){
+  .login-wrap{padding:24px 16px;border-radius:12px;}
+  .login-logo{font-size:26px;}
+}
+
+@media (max-width:768px){
+  .burger-btn{display:flex;align-items:center;justify-content:center;}
+
+  #sidebar{
+    position:fixed;left:-270px;top:0;bottom:0;z-index:200;
+    transition:left 0.25s cubic-bezier(.4,0,.2,1);
+    width:260px !important;box-shadow:none;
+  }
+  #sidebar.open{left:0;box-shadow:6px 0 24px rgba(0,0,0,0.35);}
+
+  #main{margin-left:0 !important;width:100% !important;}
+
+  /* User bar adapté mobile */
+  .login-user-info{
+    position:sticky;top:0;z-index:100;
+    padding:6px 10px;gap:8px;
+    background:var(--panel);border-bottom:1px solid var(--border);
+  }
+  #user-info-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;font-size:11px;}
+  .logout-btn{font-size:10px;padding:3px 8px;}
+
+  /* Cards */
+  .card-hdr{flex-wrap:wrap;gap:6px;padding:10px 12px;}
+  .card-hdr h3{font-size:13px;}
+  .card-hdr .ml{flex-wrap:wrap;gap:4px;}
+  .card-body{padding:10px 12px;}
+
+  /* Grilles → 1 colonne */
+  .form-grid{grid-template-columns:1fr !important;}
+  .ecs-layout{grid-template-columns:1fr !important;}
+  .bulk-fields-grid{grid-template-columns:1fr !important;}
+  .synth-grid{grid-template-columns:1fr !important;}
+  .synth-grid-3{grid-template-columns:1fr !important;}
+  .synth-span2{grid-column:span 1 !important;}
+  .ged-layout{grid-template-columns:1fr !important;height:auto !important;}
+  .ged-tree-panel{max-height:220px;}
+
+  /* KPIs */
+  .reg-kpi-strip{grid-template-columns:repeat(3,1fr) !important;}
+  .kpi-strip{grid-template-columns:repeat(2,1fr) !important;}
+  .admin-kpi-bar{grid-template-columns:repeat(3,1fr) !important;}
+  .pmr-header-grid{grid-template-columns:1fr 1fr !important;}
+
+  /* Tables scrollables horizontalement */
+  #registre-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .card table{font-size:11px;min-width:600px;}
+
+  /* Boutons touch-friendly */
+  .btn{min-height:38px;}
+  .btn-sm{min-height:32px;font-size:11px;}
+  select, input[type=date], input[type=text], input[type=number], input[type=email]{
+    font-size:16px !important; /* évite le zoom iOS */
+  }
+
+  /* Toolbar registre */
+  .reg-toolbar{gap:6px;}
+  .reg-search{width:100% !important;}
+
+  /* PMR table */
+  .pmr-item-row{grid-template-columns:1fr !important;}
+}
+
+@media (max-width:480px){
+  .reg-kpi-strip{grid-template-columns:repeat(2,1fr) !important;}
+  .kpi-strip{grid-template-columns:repeat(2,1fr) !important;}
+  .card-hdr .ml .btn{font-size:10px;padding:5px 8px;}
+  #user-info-text{max-width:120px;}
+}
+
 /* ── SAUVEGARDE / BACKUP ── */
 .backup-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px;}
 .backup-card{
@@ -997,10 +1084,99 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 </head>
 <body>
 
-<!-- REGION SWITCHER BAR (always visible, no login) -->
-<div class="login-user-info" id="user-info-bar" style="display:flex">
+<!-- SIDEBAR OVERLAY (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="App.closeSidebar()"></div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none">
+  <div class="login-wrap">
+    <div class="login-logo">UCPA<span> ERP</span></div>
+    <div class="login-region">▲ Alpes · ERP Régional · Accès sécurisé</div>
+    <div class="login-title">Connexion</div>
+
+    <div class="region-switcher" style="margin-top:0;margin-bottom:20px">
+      <button class="region-tab active-admin" id="tab-admin" onclick="Auth.switchTab('admin')">👑 Admin</button>
+      <button class="region-tab" id="tab-sud" onclick="Auth.switchTab('sud')">▲ Alpes Sud</button>
+      <button class="region-tab" id="tab-nord" onclick="Auth.switchTab('nord')">▲ Alpes Nord</button>
+    </div>
+
+    <!-- ADMIN -->
+    <div id="login-tab-admin">
+      <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#a78bfa">
+        👑 Accès administrateur — toutes régions et tous centres
+      </div>
+      <div class="login-field"><label>Identifiant</label>
+        <input type="text" id="login-user-admin" placeholder="admin" autocomplete="off">
+      </div>
+      <div class="login-field"><label>Mot de passe</label>
+        <input type="password" id="login-pass-admin" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')Auth.login()">
+      </div>
+    </div>
+
+    <!-- ALPES SUD -->
+    <div id="login-tab-sud" style="display:none">
+      <div class="login-tabs" style="margin-bottom:14px">
+        <button class="login-tab active" onclick="Auth.switchSubTab('sud','region')" id="subtab-sud-region">🌐 Région</button>
+        <button class="login-tab" onclick="Auth.switchSubTab('sud','centre')" id="subtab-sud-centre">🏔 Centre</button>
+      </div>
+      <div id="login-subtab-sud-region">
+        <div class="login-field"><label>Identifiant</label>
+          <input type="text" id="login-user-sud" placeholder="alpessud" autocomplete="off">
+        </div>
+        <div class="login-field"><label>Mot de passe</label>
+          <input type="password" id="login-pass-sud-region" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')Auth.login()">
+        </div>
+      </div>
+      <div id="login-subtab-sud-centre" style="display:none">
+        <div class="login-field"><label>Centre</label>
+          <select id="login-centre-sud"><option value="">— Choisir un centre —</option></select>
+        </div>
+        <div class="login-field"><label>Mot de passe</label>
+          <input type="password" id="login-pass-sud-centre" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')Auth.login()">
+        </div>
+      </div>
+    </div>
+
+    <!-- ALPES NORD -->
+    <div id="login-tab-nord" style="display:none">
+      <div class="login-tabs" style="margin-bottom:14px">
+        <button class="login-tab active" onclick="Auth.switchSubTab('nord','region')" id="subtab-nord-region">🌐 Région</button>
+        <button class="login-tab" onclick="Auth.switchSubTab('nord','centre')" id="subtab-nord-centre">🏔 Centre</button>
+      </div>
+      <div id="login-subtab-nord-region">
+        <div class="login-field"><label>Identifiant</label>
+          <input type="text" id="login-user-nord" placeholder="alpesnord" autocomplete="off">
+        </div>
+        <div class="login-field"><label>Mot de passe</label>
+          <input type="password" id="login-pass-nord-region" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')Auth.login()">
+        </div>
+      </div>
+      <div id="login-subtab-nord-centre" style="display:none">
+        <div class="login-field"><label>Centre</label>
+          <select id="login-centre-nord"><option value="">— Choisir un centre —</option></select>
+        </div>
+        <div class="login-field"><label>Mot de passe</label>
+          <input type="password" id="login-pass-nord-centre" placeholder="••••••••"
+            onkeydown="if(event.key==='Enter')Auth.login()">
+        </div>
+      </div>
+    </div>
+
+    <button class="login-btn" onclick="Auth.login()"><span>→</span> Se connecter</button>
+    <div class="login-error" id="login-error">Identifiant ou mot de passe incorrect.</div>
+  </div>
+</div>
+
+<!-- USER INFO BAR -->
+<div class="login-user-info" id="user-info-bar" style="display:none">
+  <button class="burger-btn" onclick="App.toggleSidebar()" title="Menu">☰</button>
   <div class="user-dot"></div>
-  <span id="user-info-text">▲ Alpes Sud + Nord</span>
+  <span id="user-info-text">—</span>
+  <button class="logout-btn" onclick="Auth.logout()">Déconnexion</button>
 </div>
 
 <!-- SIDEBAR -->
@@ -2082,24 +2258,7 @@ const App = {
     // Charger toutes les données depuis Firebase Firestore (partagé multi-utilisateurs)
     await this._loadAllFromStorage();
 
-    // Peupler le sélecteur de centres avec TOUS les centres (SUD + NORD)
-    const allCentres = [...CENTRES_SUD, ...CENTRES_NORD];
-    CENTRES.length = 0;
-    allCentres.forEach(c => CENTRES.push(c));
-
-    const sel = document.getElementById('centre-select');
-    sel.innerHTML = '<option value="ALL">— Tous les centres —</option>';
-    allCentres.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c;
-      o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
-      sel.appendChild(o);
-    });
-
-    // Ajouter le switcher région dans la sidebar
-    this._initRegionSwitcher();
-
-    // Init data stores (initialiser si non existant)
+    // Init data stores
     if (!this.load('registre')) this.save('registre', this.buildInitRegistre());
     if (!this.load('pmr')) this.save('pmr', {});
     if (!this.load('observations')) this.save('observations', []);
@@ -2129,84 +2288,28 @@ const App = {
     // Signature canvases
     this.initSig();
     this.initSigPF();
-
-    // Init prev/pf checklists
     this.renderPrevChecklist();
     this.renderPFChecklist();
 
-    // Afficher nav admin toujours (plus de rôles)
-    const navAdmin = document.getElementById('nav-admin');
-    if (navAdmin) navAdmin.style.display = 'flex';
-
-    // Indicateur connexion Firebase
-    const isFirebase = !!window._firebaseReady;
-    document.getElementById('user-info-text').innerHTML =
-      '▲ Alpes Sud + Nord &nbsp;' +
-      (isFirebase
-        ? '<span style="font-size:9px;background:rgba(29,185,84,0.15);color:var(--green);padding:2px 7px;border-radius:10px;font-family:\'DM Mono\',monospace">🟢 Firebase sync</span>'
-        : '<span style="font-size:9px;background:rgba(245,166,35,0.15);color:var(--amber);padding:2px 7px;border-radius:10px;font-family:\'DM Mono\',monospace">🟡 Local only</span>');
+    // Badge Firebase
+    const badge = document.getElementById('firebase-badge');
+    if (badge) badge.textContent = window._firebaseReady ? '🟢 Firebase' : '🟡 Local';
 
     this.renderAll();
     this.nav('dashboard');
   },
 
-  // ── Switcher région dans la sidebar ──
-  _initRegionSwitcher() {
-    const head = document.getElementById('sidebar-head');
-    if (document.getElementById('region-switcher-bar')) return;
-    const sw = document.createElement('div');
-    sw.id = 'region-switcher-bar';
-    sw.className = 'region-switcher';
-    sw.style.marginTop = '8px';
-    sw.innerHTML = `
-      <button class="region-tab active-admin" id="rsw-all" onclick="App.switchRegion('ALL')">⊕ Tout</button>
-      <button class="region-tab" id="rsw-sud" onclick="App.switchRegion('SUD')">▲ Sud</button>
-      <button class="region-tab" id="rsw-nord" onclick="App.switchRegion('NORD')">▲ Nord</button>
-    `;
-    head.appendChild(sw);
+  // ── Sidebar mobile ──
+  toggleSidebar() {
+    const sb  = document.getElementById('sidebar');
+    const ov  = document.getElementById('sidebar-overlay');
+    const open = sb.classList.toggle('open');
+    ov.classList.toggle('open', open);
   },
 
-  switchRegion(region) {
-    let activeCentres, label;
-    if (region === 'SUD') {
-      activeCentres = CENTRES_SUD;
-      label = '▲ Alpes Sud · ' + CENTRES_SUD.length + ' centres';
-    } else if (region === 'NORD') {
-      activeCentres = CENTRES_NORD;
-      label = '▲ Alpes Nord · ' + CENTRES_NORD.length + ' centres';
-    } else {
-      activeCentres = [...CENTRES_SUD, ...CENTRES_NORD];
-      label = '▲ Alpes Sud + Nord';
-    }
-
-    CENTRES.length = 0;
-    activeCentres.forEach(c => CENTRES.push(c));
-
-    // Rebuild centre-select
-    const sel = document.getElementById('centre-select');
-    sel.innerHTML = '<option value="ALL">— Tous les centres —</option>';
-    activeCentres.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c; o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
-      sel.appendChild(o);
-    });
-    this.centre = 'ALL';
-    sel.value = 'ALL';
-
-    // Mettre à jour label
-    document.getElementById('sidebar-region-label').textContent = label;
-
-    // Boutons actifs
-    ['all','sud','nord'].forEach(r => {
-      const btn = document.getElementById('rsw-'+r);
-      if (!btn) return;
-      btn.className = 'region-tab';
-      if (r === region.toLowerCase() || (r==='all' && region==='ALL'))
-        btn.classList.add(r==='all'?'active-admin':r==='sud'?'active-sud':'active-nord');
-    });
-
-    this.renderAll();
-    this.nav(this.page || 'dashboard');
+  closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
   },
 
   buildInitRegistre() {
@@ -2285,6 +2388,8 @@ const App = {
   // ── NAVIGATION ──
   nav(page) {
     this.page = page;
+    // Fermer le menu sidebar sur mobile
+    this.closeSidebar();
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     const el = document.getElementById('page-'+page);
@@ -4752,10 +4857,226 @@ const CENTRE_PASSWORDS_SUD  = buildCentrePasswords(CENTRES_SUD);
 const CENTRE_PASSWORDS_NORD = buildCentrePasswords(CENTRES_NORD);
 
 // ═══════════════════════════════════════════════════════════
-// AUTH — Supprimé. Stub minimal pour compatibilité.
+// AUTH — Connexion par région / centre
 // ═══════════════════════════════════════════════════════════
 const Auth = {
-  init() { App.init(); }
+  currentTab: 'admin',
+  currentSubTab: { sud: 'region', nord: 'region' },
+
+  async init() {
+    await Admin.loadPersistedCentres();
+    this._populateCentreSelect('login-centre-sud', CENTRES_SUD);
+    this._populateCentreSelect('login-centre-nord', CENTRES_NORD);
+
+    // Vérifier session existante
+    const sess = sessionStorage.getItem('ucpa_session');
+    if (sess) {
+      try {
+        const s = JSON.parse(sess);
+        this.startSession(s.role, s.region, s.centre, s.label, true);
+        return;
+      } catch(e) {}
+    }
+    this.showLogin();
+  },
+
+  _populateCentreSelect(id, centres) {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    centres.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c;
+      o.textContent = c.replace('VILLAGE SPORTIF ','').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
+      sel.appendChild(o);
+    });
+  },
+
+  showLogin() {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('user-info-bar').style.display = 'none';
+  },
+
+  switchTab(tab) {
+    this.currentTab = tab;
+    ['admin','sud','nord'].forEach(t => {
+      const el  = document.getElementById('login-tab-' + t);
+      const btn = document.getElementById('tab-' + t);
+      if (el)  el.style.display = t === tab ? '' : 'none';
+      if (btn) {
+        btn.classList.remove('active-admin','active-sud','active-nord');
+        if (t === tab) btn.classList.add('active-' + t);
+      }
+    });
+    document.getElementById('login-error').style.display = 'none';
+  },
+
+  switchSubTab(region, sub) {
+    this.currentSubTab[region] = sub;
+    ['region','centre'].forEach(s => {
+      const el  = document.getElementById(`login-subtab-${region}-${s}`);
+      const btn = document.getElementById(`subtab-${region}-${s}`);
+      if (el)  el.style.display = s === sub ? '' : 'none';
+      if (btn) btn.classList.toggle('active', s === sub);
+    });
+    document.getElementById('login-error').style.display = 'none';
+  },
+
+  login() {
+    const err = document.getElementById('login-error');
+    err.style.display = 'none';
+
+    if (this.currentTab === 'admin') {
+      const user = (document.getElementById('login-user-admin').value || '').trim().toLowerCase();
+      const pass = (document.getElementById('login-pass-admin').value || '').trim().toLowerCase();
+      if (user === 'admin' && pass === 'admin') {
+        this.startSession('admin', 'ALL', 'ALL', '👑 Admin — Toutes régions');
+      } else { err.style.display='block'; err.textContent='Identifiant ou mot de passe Admin incorrect.'; }
+      return;
+    }
+
+    if (this.currentTab === 'sud') {
+      const sub = this.currentSubTab.sud;
+      if (sub === 'region') {
+        const user = (document.getElementById('login-user-sud').value || '').trim().toLowerCase();
+        const pass = (document.getElementById('login-pass-sud-region').value || '').trim().toLowerCase();
+        if (user === 'alpessud' && pass === 'alpessud') {
+          this.startSession('region', 'SUD', 'ALL', '▲ Alpes Sud — Tous les centres');
+        } else { err.style.display='block'; err.textContent='Identifiant ou mot de passe incorrect.'; }
+      } else {
+        const centre = document.getElementById('login-centre-sud').value;
+        const pass   = (document.getElementById('login-pass-sud-centre').value || '').trim().toLowerCase();
+        if (!centre) { err.style.display='block'; err.textContent='Sélectionnez un centre.'; return; }
+        if (pass === (CENTRE_PASSWORDS_SUD[centre] || '')) {
+          this.startSession('centre', 'SUD', centre, '🏔 ' + centre.replace('VILLAGE SPORTIF ','').replace('CENTRE AQUATIQUE ','CA '));
+        } else { err.style.display='block'; err.textContent='Mot de passe incorrect pour ce centre.'; }
+      }
+      return;
+    }
+
+    if (this.currentTab === 'nord') {
+      const sub = this.currentSubTab.nord;
+      if (sub === 'region') {
+        const user = (document.getElementById('login-user-nord').value || '').trim().toLowerCase();
+        const pass = (document.getElementById('login-pass-nord-region').value || '').trim().toLowerCase();
+        if (user === 'alpesnord' && pass === 'alpesnord') {
+          this.startSession('region', 'NORD', 'ALL', '▲ Alpes Nord — Tous les centres');
+        } else { err.style.display='block'; err.textContent='Identifiant ou mot de passe incorrect.'; }
+      } else {
+        const centre = document.getElementById('login-centre-nord').value;
+        const pass   = (document.getElementById('login-pass-nord-centre').value || '').trim().toLowerCase();
+        if (!centre) { err.style.display='block'; err.textContent='Sélectionnez un centre.'; return; }
+        if (pass === (CENTRE_PASSWORDS_NORD[centre] || '')) {
+          this.startSession('centre', 'NORD', centre, '🏔 ' + centre.replace('VILLAGE SPORTIF ','').replace('CENTRE NAUTIQUE ','CN '));
+        } else { err.style.display='block'; err.textContent='Mot de passe incorrect pour ce centre.'; }
+      }
+      return;
+    }
+  },
+
+  startSession(role, region, centre, label, fromStorage = false) {
+    sessionStorage.setItem('ucpa_session', JSON.stringify({role, region, centre, label}));
+
+    let activeCentres, regionLabel, storagePrefix;
+    if (role === 'admin') {
+      activeCentres = [...CENTRES_SUD, ...CENTRES_NORD];
+      regionLabel   = '▲ Alpes Sud + Nord · Admin';
+      storagePrefix = 'ucpa_admin_';
+      document.body.classList.add('region-admin');
+    } else if (region === 'NORD') {
+      activeCentres = CENTRES_NORD;
+      regionLabel   = '▲ Alpes Nord · ' + CENTRES_NORD.length + ' Centres';
+      storagePrefix = 'ucpa_nord_';
+      document.body.classList.add('region-nord');
+    } else {
+      activeCentres = CENTRES_SUD;
+      regionLabel   = '▲ Alpes Sud · ' + CENTRES_SUD.length + ' Centres';
+      storagePrefix = 'ucpa_sud_';
+    }
+
+    CENTRES.length = 0;
+    activeCentres.forEach(c => CENTRES.push(c));
+    App._storagePrefix = storagePrefix;
+
+    document.getElementById('sidebar-region-label').textContent = regionLabel;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('user-info-bar').style.display = 'flex';
+
+    const infoEl = document.getElementById('user-info-text');
+    let badge = '';
+    if (role === 'admin')        badge = '<span class="badge-admin">ADMIN</span>';
+    else if (region === 'NORD')  badge = '<span class="badge-region-nord">NORD</span>';
+    infoEl.innerHTML = label + badge +
+      ' &nbsp;<span style="font-size:9px;background:rgba(29,185,84,0.15);color:var(--green);padding:2px 7px;border-radius:10px;font-family:\'DM Mono\',monospace" id="firebase-badge">⏳</span>';
+
+    // Rebuild centre selector
+    const sel = document.getElementById('centre-select');
+    sel.innerHTML = '<option value="ALL">— Tous les centres —</option>';
+    activeCentres.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c;
+      o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
+      sel.appendChild(o);
+    });
+
+    if (role === 'centre') {
+      sel.value = centre;
+      Array.from(sel.options).forEach(o => { o.disabled = (o.value !== centre && o.value !== ''); });
+      sel.options[0].disabled = true;
+    }
+
+    if (role === 'admin') {
+      this._addAdminSwitcher();
+      const navAdmin = document.getElementById('nav-admin');
+      if (navAdmin) navAdmin.style.display = 'flex';
+    }
+
+    App.init().then(() => {
+      if (role === 'centre') App.selectCentre(centre);
+    });
+  },
+
+  _addAdminSwitcher() {
+    const head = document.getElementById('sidebar-head');
+    if (document.getElementById('admin-region-switcher')) return;
+    const sw = document.createElement('div');
+    sw.id = 'admin-region-switcher';
+    sw.className = 'region-switcher';
+    sw.style.marginTop = '10px';
+    sw.innerHTML = `
+      <button class="region-tab active-sud" id="admin-sw-sud" onclick="Auth.adminSwitchRegion('SUD')">▲ Sud</button>
+      <button class="region-tab" id="admin-sw-nord" onclick="Auth.adminSwitchRegion('NORD')">▲ Nord</button>
+      <button class="region-tab" id="admin-sw-all" onclick="Auth.adminSwitchRegion('ALL')">⊕ Tout</button>`;
+    head.appendChild(sw);
+  },
+
+  adminSwitchRegion(region) {
+    let activeCentres, label;
+    if (region === 'ALL')       { activeCentres=[...CENTRES_SUD,...CENTRES_NORD]; label='▲ Alpes Sud + Nord · Admin'; App._storagePrefix='ucpa_admin_'; }
+    else if (region === 'NORD') { activeCentres=CENTRES_NORD; label='▲ Alpes Nord · '+CENTRES_NORD.length+' Centres'; App._storagePrefix='ucpa_nord_'; }
+    else                        { activeCentres=CENTRES_SUD;  label='▲ Alpes Sud · '+CENTRES_SUD.length+' Centres';  App._storagePrefix='ucpa_sud_'; }
+
+    ['sud','nord','all'].forEach(r => {
+      const btn = document.getElementById('admin-sw-' + r);
+      if (btn) { btn.className='region-tab'; if (r===region.toLowerCase()||(r==='all'&&region==='ALL')) btn.classList.add(r==='all'?'active-admin':r==='sud'?'active-sud':'active-nord'); }
+    });
+
+    CENTRES.length = 0; activeCentres.forEach(c => CENTRES.push(c));
+    document.getElementById('sidebar-region-label').textContent = label;
+
+    const sel = document.getElementById('centre-select');
+    sel.innerHTML = '<option value="ALL">— Tous les centres —</option>';
+    activeCentres.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
+      sel.appendChild(o);
+    });
+    App.centre = 'ALL'; App.renderAll(); App.nav(App.page);
+  },
+
+  logout() {
+    sessionStorage.removeItem('ucpa_session');
+    location.reload();
+  }
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -6392,23 +6713,13 @@ const Theme = {
 // Initialiser le thème AVANT le rendu (évite le flash)
 Theme.init();
 
-// Démarrage — attendre Firebase si disponible, sinon démarrer en mode local
-window.addEventListener('DOMContentLoaded', async () => {
-  await Admin.loadPersistedCentres();
-
+// Démarrage
+window.addEventListener('DOMContentLoaded', () => {
   if (window._firebaseReady) {
-    // Firebase déjà prêt (chargement rapide)
     Auth.init();
   } else {
-    // Attendre Firebase jusqu'à 3 secondes, puis démarrer quand même
-    const timeout = setTimeout(() => {
-      console.warn('Firebase timeout — démarrage en mode local');
-      Auth.init();
-    }, 3000);
-    window.addEventListener('firebase-ready', () => {
-      clearTimeout(timeout);
-      Auth.init();
-    }, { once: true });
+    const timeout = setTimeout(() => Auth.init(), 3000);
+    window.addEventListener('firebase-ready', () => { clearTimeout(timeout); Auth.init(); }, { once: true });
   }
 });
 </script>
