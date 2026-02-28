@@ -24,7 +24,7 @@
     messagingSenderId: "972731430654",
     appId: "1:972731430654:web:86296aa0f6ff5e47b357af"
   };
-
+  
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
@@ -2355,34 +2355,44 @@ const App = {
       'sanitaire','rh','contrats','checklists','taches','investissements',
       'prevention','permisfeu','syntheses','ged','matrix','sauvegardes'];
 
+    // Vider le cache pour éviter les données périmées d'une session précédente
+    const prefix = this._storagePrefix;
+    KEYS.forEach(k => { delete this._cache[prefix + k]; });
+
     if (!window._firestore) {
       // Firebase pas encore prêt — lire depuis localStorage
       KEYS.forEach(k => {
         try {
-          const v = localStorage.getItem(this._storagePrefix + k);
-          if (v) this._cache[this._storagePrefix + k] = JSON.parse(v);
+          const v = localStorage.getItem(prefix + k);
+          if (v) this._cache[prefix + k] = JSON.parse(v);
         } catch(e) {}
       });
       return;
     }
 
+    // Indicateur de chargement
+    const badge = document.getElementById('firebase-badge');
+    if (badge) badge.textContent = '⏳ Chargement…';
+
     // Charger depuis Firestore en parallèle
     const promises = KEYS.map(async k => {
       try {
-        const raw = await window._firestore.get(this._storagePrefix + k);
+        const raw = await window._firestore.get(prefix + k);
         if (raw) {
           const parsed = JSON.parse(raw);
-          this._cache[this._storagePrefix + k] = parsed;
-          // Mettre à jour localStorage comme cache local
-          try { localStorage.setItem(this._storagePrefix + k, raw); } catch(e) {}
+          this._cache[prefix + k] = parsed;
+          try { localStorage.setItem(prefix + k, raw); } catch(e) {}
         } else {
-          // Pas de données Firestore → lire localStorage
-          const local = localStorage.getItem(this._storagePrefix + k);
-          if (local) this._cache[this._storagePrefix + k] = JSON.parse(local);
+          // Pas de données Firestore → lire localStorage comme fallback
+          const local = localStorage.getItem(prefix + k);
+          if (local) this._cache[prefix + k] = JSON.parse(local);
         }
-      } catch(e) {}
+      } catch(e) { console.warn('Firestore load error:', k, e); }
     });
     await Promise.all(promises);
+
+    if (badge) badge.textContent = '🟢 Firebase';
+    console.log(`✅ Firebase chargé — ${KEYS.length} clés depuis ${prefix}`);
   },
 
   // ── NAVIGATION ──
