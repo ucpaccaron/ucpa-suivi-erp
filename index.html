@@ -16,7 +16,7 @@
 
   // ── REMPLACEZ CES VALEURS PAR VOTRE CONFIGURATION FIREBASE ──
   // (Récupérez-les dans Firebase Console → Paramètres du projet → Vos applications)
-   const firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyA9x_KggOX9UVYh02TTb0oSUkIXsl2OCOM",
     authDomain: "ucpa-erp-49004.firebaseapp.com",
     projectId: "ucpa-erp-49004",
@@ -44,11 +44,17 @@
     // ── Écoute temps réel d'une clé ──
     watch(key, callback) {
       try {
+        let lastLocalWrite = 0;
+        // Enregistrer le timestamp de nos propres écritures pour éviter boucle
+        const origSet = this.set.bind(this);
         return onSnapshot(doc(db, 'ucpa_erp', key), (snap) => {
           if (snap.exists()) {
             const data = snap.data();
-            // Ignorer nos propres écritures
-            if (data.editedBy && data.editedBy === window._sessionId) return;
+            // Ignorer les mises à jour trop récentes de nous-mêmes (< 2s)
+            if (data.editedBy === window._sessionId && data.updatedAt) {
+              const age = Date.now() - new Date(data.updatedAt).getTime();
+              if (age < 2000) return;
+            }
             callback(data.value, data.editedBy, data.updatedAt);
           }
         });
@@ -297,6 +303,47 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);disp
 .kpi.danger .kpi-val{color:var(--red);}
 .kpi.warn .kpi-val{color:var(--amber);}
 .kpi.ok .kpi-val{color:var(--green);}
+
+/* ── CALENDRIER ── */
+.cal-filter{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;user-select:none;transition:.15s}
+.cal-filter input{accent-color:currentColor;width:13px;height:13px;cursor:pointer}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
+.cal-head{padding:8px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;background:var(--bg3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cal-cell{min-height:110px;padding:4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);vertical-align:top;position:relative;cursor:pointer;transition:background .1s}
+.cal-cell:hover{background:var(--bg3)}
+.cal-cell.today{background:rgba(232,84,26,.07)}
+.cal-cell.today .cal-day-num{background:var(--accent);color:#fff;border-radius:50%}
+.cal-cell.other-month{background:var(--bg3);opacity:.55}
+.cal-day-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;font-size:12px;font-weight:700;margin-bottom:3px}
+.cal-event{display:block;font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:.1s;line-height:1.4}
+.cal-event:hover{filter:brightness(.9);transform:translateX(1px)}
+.cal-more{font-size:10px;color:var(--muted);cursor:pointer;padding:1px 4px;border-radius:3px}
+.cal-more:hover{background:var(--bg3)}
+.cal-week-grid{display:grid;grid-template-columns:60px repeat(7,1fr);border-left:1px solid var(--border);border-top:1px solid var(--border)}
+.cal-week-cell{min-height:80px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:4px}
+.cal-week-time{border-right:1px solid var(--border);border-bottom:1px solid var(--border);font-size:10px;color:var(--muted);text-align:center;padding:4px 0;background:var(--bg3)}
+.cal-week-head{text-align:center;padding:8px 4px;font-size:11px;font-weight:700;background:var(--bg3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cal-week-head.today{color:var(--accent)}
+.cal-list-item{display:flex;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);align-items:flex-start;cursor:pointer;transition:background .1s}
+.cal-list-item:hover{background:var(--bg3)}
+.cal-list-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:80px;white-space:nowrap;padding-top:2px}
+.cal-list-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.cal-event-badge{font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;margin-left:4px}
+
+/* ── GAMME TABS + CHECKLIST ── */
+.gamme-tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;transition:.15s}
+.gamme-tab:hover{color:var(--text)}
+.gamme-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.gamme-check-item{display:flex;align-items:flex-start;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;user-select:none}
+.gamme-check-item:hover{background:var(--bg3)}
+.gamme-check-item.checked{background:rgba(5,150,105,.05)}
+.gamme-check-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);flex-shrink:0;cursor:pointer;margin-top:1px}
+.gamme-check-item label{cursor:pointer;flex:1;font-size:12px;font-weight:600;line-height:1.4}
+.gamme-check-item label.crossed{text-decoration:line-through;opacity:.45}
+.gamme-check-desc{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.35}
+.gamme-section-header{padding:7px 16px;background:rgba(232,84,26,.07);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1}
+
+
 
 .card{
   background:var(--panel);
@@ -1271,15 +1318,18 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
   <nav id="sidebar-nav">
     <div class="nav-section">Pilotage</div>
     <div class="nav-item active" onclick="App.nav('dashboard')" data-page="dashboard"><span class="icon">◈</span> Dashboard KPIs</div>
+    <div class="nav-item" onclick="App.nav('calendrier')" data-page="calendrier"><span class="icon">📅</span> Calendrier Opérations</div>
     <div class="nav-item" onclick="App.nav('synthese')" data-page="synthese"><span class="icon">🏢</span> Fiche Synthèse</div>
     <div class="nav-item" onclick="App.nav('matrix')" data-page="matrix"><span class="icon">⊞</span> Matrice Conformité</div>
     <div class="nav-section">Sécurité</div>
     <div class="nav-item" onclick="App.nav('registre')" data-page="registre"><span class="icon">🔥</span> Registre Sécurité <span class="nav-badge" id="badge-registre" style="display:none">0</span></div>
-    <div class="nav-item" onclick="App.nav('observations')" data-page="observations"><span class="icon">🔍</span> Findings</div>
+    <div class="nav-item" onclick="App.nav('commission')" data-page="commission"><span class="icon">🏛️</span> Commission Sécurité</div>
+    <div class="nav-item" onclick="App.nav('observations')" data-page="observations"><span class="icon">🔍</span> Observations</div>
 
     <div class="nav-section">Accessibilité</div>
     <div class="nav-item" onclick="App.nav('pmr')" data-page="pmr"><span class="icon">♿</span> Registre PMR</div>
     <div class="nav-section">Prévention</div>
+    <div class="nav-item" onclick="App.nav('duerp')" data-page="duerp"><span class="icon">🛡️</span> DUERP <span class="nav-badge" id="badge-duerp" style="display:none">0</span></div>
     <div class="nav-item" onclick="App.nav('prevention')" data-page="prevention"><span class="icon">⚠</span> Plan de Prévention</div>
     <div class="nav-item" onclick="App.nav('permisfeu')" data-page="permisfeu"><span class="icon">🔥</span> Permis de Feu</div>
     <div class="nav-section">Opérations</div>
@@ -1372,6 +1422,64 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
     <!-- DASHBOARD CENTRE -->
     <div id="page-centre-dashboard" class="page"></div>
+
+    <!-- CALENDRIER OPÉRATIONS -->
+    <div id="page-calendrier" class="page">
+      <!-- Barre de contrôle -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-hdr">
+          <span>📅</span><h3>Calendrier des Opérations</h3>
+          <div class="ml flex" style="gap:6px;flex-wrap:wrap;align-items:center">
+            <!-- Navigation mois -->
+            <button class="btn btn-ghost btn-sm" onclick="Cal.prevMonth()" style="padding:4px 10px;font-size:16px">‹</button>
+            <span id="cal-month-label" style="font-weight:700;font-size:14px;min-width:140px;text-align:center"></span>
+            <button class="btn btn-ghost btn-sm" onclick="Cal.nextMonth()" style="padding:4px 10px;font-size:16px">›</button>
+            <button class="btn btn-ghost btn-sm" onclick="Cal.goToday()" style="font-size:11px">Aujourd'hui</button>
+            <!-- Vues -->
+            <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-left:6px">
+              <button id="cal-view-month" class="btn btn-ghost btn-sm" onclick="Cal.setView('month')"
+                style="border-radius:0;border-right:1px solid var(--border);font-size:11px;padding:4px 10px">Mois</button>
+              <button id="cal-view-week"  class="btn btn-ghost btn-sm" onclick="Cal.setView('week')"
+                style="border-radius:0;border-right:1px solid var(--border);font-size:11px;padding:4px 10px">Semaine</button>
+              <button id="cal-view-list"  class="btn btn-ghost btn-sm" onclick="Cal.setView('list')"
+                style="border-radius:0;font-size:11px;padding:4px 10px">Liste</button>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="Cal.exportPDF()" style="margin-left:4px">📄 PDF</button>
+          </div>
+        </div>
+        <!-- Filtres catégories -->
+        <div style="padding:8px 16px;border-top:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:11px;color:var(--muted);font-weight:600">Filtres :</span>
+          <label class="cal-filter" data-cat="registre"   style="background:#e8541a20;border:1px solid #e8541a40;color:#e8541a"><input type="checkbox" checked onchange="Cal.toggleFilter('registre')">🔥 Contrôles</label>
+          <label class="cal-filter" data-cat="rh"         style="background:#7c3aed20;border:1px solid #7c3aed40;color:#7c3aed"><input type="checkbox" checked onchange="Cal.toggleFilter('rh')">👤 Habilitations</label>
+          <label class="cal-filter" data-cat="contrats"   style="background:#0284c720;border:1px solid #0284c740;color:#0284c7"><input type="checkbox" checked onchange="Cal.toggleFilter('contrats')">📋 Contrats</label>
+          <label class="cal-filter" data-cat="rondes"     style="background:#05966920;border:1px solid #05966940;color:#059669"><input type="checkbox" checked onchange="Cal.toggleFilter('rondes')">🔄 Rondes</label>
+          <label class="cal-filter" data-cat="commission" style="background:#dc262620;border:1px solid #dc262640;color:#dc2626"><input type="checkbox" checked onchange="Cal.toggleFilter('commission')">🏛️ Commission</label>
+          <label class="cal-filter" data-cat="findings"   style="background:#d9770620;border:1px solid #d9770640;color:#d97706"><input type="checkbox" checked onchange="Cal.toggleFilter('findings')">🔍 Observations</label>
+          <label class="cal-filter" data-cat="sanitaire"  style="background:#060f9020;border:1px solid #060f9040;color:#060f90"><input type="checkbox" checked onchange="Cal.toggleFilter('sanitaire')">💧 Sanitaire</label>
+        </div>
+      </div>
+
+      <!-- Vue calendrier -->
+      <div class="card">
+        <div class="card-body" id="cal-container" style="padding:0;overflow:hidden"></div>
+      </div>
+
+      <!-- Panneau détail événement -->
+      <div id="cal-detail-panel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+        background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;
+        min-width:320px;max-width:480px;z-index:1000;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <span id="cal-detail-title" style="font-weight:700;font-size:14px"></span>
+          <button onclick="document.getElementById('cal-detail-panel').style.display='none'"
+            style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted)">✕</button>
+        </div>
+        <div id="cal-detail-body"></div>
+        <div id="cal-detail-nav" style="margin-top:12px;display:flex;gap:6px"></div>
+      </div>
+      <div id="cal-backdrop" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.4)"
+        onclick="document.getElementById('cal-detail-panel').style.display='none';this.style.display='none'"></div>
+    </div>
 
     <!-- FICHE SYNTHÈSE CENTRE -->
     <div id="page-synthese" class="page">
@@ -1475,7 +1583,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
       <div class="reg-kpi-strip" id="finding-kpi-strip" style="margin-bottom:12px"></div>
       <div class="card">
         <div class="card-hdr">
-          <span>🔍</span><h3>Findings & Observations</h3>
+          <span>🔍</span><h3>Observations & Findings</h3>
           <div class="ml flex" style="gap:8px;flex-wrap:wrap">
             <!-- Filtres -->
             <select id="finding-filtre-statut" class="centre-selector" style="width:130px;font-size:11px" onchange="App.renderFindings()">
@@ -1506,6 +1614,31 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     </div>
 
     <!-- VEILLE -->
+
+    <!-- COMMISSION DE SÉCURITÉ -->
+    <div id="page-commission" class="page">
+      <!-- KPIs -->
+      <div class="reg-kpi-strip" id="commission-kpi-strip" style="margin-bottom:12px"></div>
+      <div class="card">
+        <div class="card-hdr">
+          <span>🏛️</span><h3>Commission de Sécurité</h3>
+          <div class="ml flex" style="gap:6px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="App.exportCommissionPDF()">📄 Rapport PDF</button>
+            <button class="btn btn-primary btn-sm" onclick="App.openCommissionModal()">+ Prescription</button>
+          </div>
+        </div>
+        <!-- Onglets internes -->
+        <div style="border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0">
+          <button class="btn btn-ghost" id="comm-tab-prescriptions" onclick="App.showCommTab('prescriptions')"
+            style="border-radius:0;border-bottom:2px solid var(--accent);font-weight:600;font-size:12px;padding:8px 14px">📋 Prescriptions</button>
+          <button class="btn btn-ghost" id="comm-tab-visites"        onclick="App.showCommTab('visites')"
+            style="border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:8px 14px">📅 Visites</button>
+          <button class="btn btn-ghost" id="comm-tab-historique"     onclick="App.showCommTab('historique')"
+            style="border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:8px 14px">🕐 Historique</button>
+        </div>
+        <div class="card-body" id="commission-content"></div>
+      </div>
+    </div>
 
     <!-- PMR -->
     <div id="page-pmr" class="page">
@@ -1625,6 +1758,37 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     </div>
 
     <!-- PERMIS DE FEU -->
+    <!-- ══ DUERP ══ -->
+    <div id="page-duerp" class="page">
+
+      <!-- KPIs -->
+      <div class="reg-kpi-strip" id="duerp-kpi-strip" style="margin-bottom:12px"></div>
+
+      <!-- Onglets internes -->
+      <div class="card">
+        <div class="card-hdr">
+          <span>🛡️</span><h3>Document Unique d'Évaluation des Risques Professionnels</h3>
+          <div class="ml flex" style="gap:6px;flex-wrap:wrap">
+            <select id="duerp-filtre-centre" class="centre-selector" style="width:200px;font-size:11px" onchange="DUERP.render()">
+              <option value="">Tous les centres</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="DUERP.exportPDF()">📄 Export PDF</button>
+            <button class="btn btn-primary btn-sm"   onclick="DUERP.openRisqueModal()">+ Risque</button>
+          </div>
+        </div>
+
+        <!-- Onglets -->
+        <div style="border-bottom:1px solid var(--border);padding:0 16px;display:flex;gap:0;overflow-x:auto;scrollbar-width:none">
+          <button class="gamme-tab active" id="duerp-tab-risques"   onclick="DUERP.showTab('risques')">📋 Unités de travail &amp; Risques</button>
+          <button class="gamme-tab"        id="duerp-tab-actions"   onclick="DUERP.showTab('actions')">✅ Plan d'actions</button>
+          <button class="gamme-tab"        id="duerp-tab-historique"onclick="DUERP.showTab('historique')">🕐 Historique versions</button>
+        </div>
+
+        <div id="duerp-content" class="card-body" style="padding:0"></div>
+      </div>
+
+    </div>
+
     <div id="page-permisfeu" class="page">
       <div class="card">
         <div class="card-hdr">
@@ -1664,55 +1828,67 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
       <!-- KPIs Rondes -->
       <div class="reg-kpi-strip" id="rondes-kpi-strip" style="margin-bottom:12px"></div>
 
-      <!-- Sélecteur de type de gamme -->
+      <!-- GAMME CHECKLIST - visible directement -->
       <div class="card" style="margin-bottom:12px">
-        <div class="card-hdr">
-          <span>🔄</span><h3>Gammes & Rondes</h3>
-          <div class="ml flex" style="gap:6px;flex-wrap:wrap">
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Quotidien" onclick="App.showGamme('Quotidien')">📋 Quotidien</button>
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Hebdo"      onclick="App.showGamme('Hebdo')">📋 Hebdo</button>
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Mensuel"    onclick="App.showGamme('Mensuel')">📋 Mensuel</button>
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Ouverture"  onclick="App.showGamme('Ouverture')">🏠 Ouverture</button>
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Journalier" onclick="App.showGamme('Journalier')">📋 Journalier</button>
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Fermeture"  onclick="App.showGamme('Fermeture')">🔒 Fermeture</button>
-            <button class="btn btn-secondary btn-sm" id="gamme-btn-Prestations" onclick="App.showGamme('Prestations')">🔧 Prestations</button>
-            <div style="margin-left:auto;display:flex;gap:6px">
-              <button class="btn btn-ghost btn-sm" onclick="App.exportRondesExcel()">📊 Export</button>
-              <button class="btn btn-primary btn-sm" onclick="App.openRondeModal()">+ Enregistrer ronde</button>
+        <div class="card-hdr" style="padding-bottom:10px">
+          <span>📋</span><h3>Gamme de ronde</h3>
+          <div class="ml flex" style="gap:6px;flex-wrap:wrap;align-items:center">
+            <!-- Barre de progression -->
+            <div style="display:flex;align-items:center;gap:8px;margin-right:8px">
+              <div style="width:120px;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+                <div id="gamme-progress-bar" style="height:100%;background:var(--accent);border-radius:4px;transition:.3s;width:0%"></div>
+              </div>
+              <span id="gamme-progress-label" style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">0/0</span>
             </div>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="App.resetGammeChecks()">↺ Réinitialiser</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.exportGammePDF()" style="font-size:11px">📄 Imprimer</button>
+            <button class="btn btn-primary btn-sm" onclick="App.validerRonde()" style="font-size:11px" id="gamme-valider-btn">✅ Valider la ronde</button>
           </div>
         </div>
-        <!-- Panneau gamme -->
-        <div id="gamme-panel" style="display:none">
-          <div class="card-body" style="padding-top:8px">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-              <span id="gamme-title" style="font-weight:700;font-size:13px"></span>
-              <input type="text" id="gamme-search" placeholder="🔍 Filtrer…" class="reg-search" style="max-width:200px;font-size:12px" oninput="App.filterGamme()">
-              <select id="gamme-filtre-domaine" class="centre-selector" style="width:150px;font-size:11px;display:none" onchange="App.filterGamme()">
-                <option value="">Tous domaines</option>
-              </select>
-              <select id="gamme-filtre-freq" class="centre-selector" style="width:130px;font-size:11px;display:none" onchange="App.filterGamme()">
-                <option value="">Toutes fréquences</option>
-                <option>Annuel</option><option>Semest</option><option>Trimest</option><option>Mensuel</option><option>Hebdo</option><option>Quotidien</option>
-              </select>
-              <button class="btn btn-ghost btn-sm" onclick="App.exportGammePDF()" style="margin-left:auto">📄 Imprimer gamme</button>
-            </div>
-            <div id="gamme-list"></div>
-          </div>
+        <!-- Onglets gammes -->
+        <div style="padding:0 16px;border-bottom:1px solid var(--border);display:flex;gap:0;overflow-x:auto;scrollbar-width:none">
+          <button class="gamme-tab active" id="gtab-Quotidien"   onclick="App.showGamme('Quotidien')">📋 Quotidien</button>
+          <button class="gamme-tab"        id="gtab-Hebdo"       onclick="App.showGamme('Hebdo')">Hebdo</button>
+          <button class="gamme-tab"        id="gtab-Mensuel"     onclick="App.showGamme('Mensuel')">Mensuel</button>
+          <button class="gamme-tab"        id="gtab-Journalier"  onclick="App.showGamme('Journalier')">🌅 Journalier</button>
+          <button class="gamme-tab"        id="gtab-Ouverture"   onclick="App.showGamme('Ouverture')">🏠 Ouverture</button>
+          <button class="gamme-tab"        id="gtab-Fermeture"   onclick="App.showGamme('Fermeture')">🔒 Fermeture</button>
+          <button class="gamme-tab"        id="gtab-Prestations" onclick="App.showGamme('Prestations')">🔧 Prestations</button>
         </div>
+        <!-- Barre de recherche -->
+        <div style="padding:8px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="gamme-search" placeholder="🔍 Rechercher dans la gamme…" class="reg-search"
+            style="max-width:220px;font-size:12px" oninput="App.filterGamme()">
+          <select id="gamme-filtre-domaine" class="centre-selector"
+            style="width:160px;font-size:11px;display:none" onchange="App.filterGamme()">
+            <option value="">Tous domaines</option>
+          </select>
+          <select id="gamme-filtre-freq" class="centre-selector"
+            style="width:140px;font-size:11px;display:none" onchange="App.filterGamme()">
+            <option value="">Toutes fréquences</option>
+            <option>Annuel</option><option>Semest</option><option>Trimest</option>
+            <option>Mensuel</option><option>Hebdo</option><option>Quotidien</option>
+          </select>
+          <span id="gamme-title" style="font-size:11px;color:var(--muted);margin-left:auto"></span>
+        </div>
+        <!-- Liste checklist -->
+        <div id="gamme-list" style="padding:0;max-height:600px;overflow-y:auto"></div>
       </div>
 
       <!-- Historique rondes réalisées -->
       <div class="card">
-        <div class="card-hdr"><span>📝</span><h3>Rondes réalisées</h3>
+        <div class="card-hdr">
+          <span>📝</span><h3>Rondes réalisées</h3>
           <div class="ml flex" style="gap:6px">
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer">📥 Import Excel
-              <input type="file" id="rondes-excel-input" accept=".xlsx,.xls" onchange="ExcelImport.importRondes(event)" style="display:none">
+            <label class="btn btn-ghost btn-sm" style="cursor:pointer;font-size:11px">📥 Import Excel
+              <input type="file" id="rondes-excel-input" accept=".xlsx,.xls"
+                onchange="ExcelImport.importRondes(event)" style="display:none">
             </label>
+            <button class="btn btn-primary btn-sm" onclick="App.openRondeModal()">+ Enregistrer ronde</button>
           </div>
         </div>
-        <div class="card-body" id="rondes-list">
-          <div class="empty-state"><div class="icon">🔄</div><div>Aucune ronde enregistrée</div></div>
+        <div class="card-body" style="padding:0">
+          <div id="rondes-list"></div>
         </div>
       </div>
     </div>
@@ -3215,7 +3391,7 @@ const App = {
   async _loadAllFromStorage() {
     const KEYS = ['registre','pmr','observations','rondes',
       'sanitaire','rh','contrats','investissements',
-      'prevention','permisfeu','syntheses','ged','matrix','sauvegardes'];
+      'prevention','permisfeu','syntheses','ged','matrix','sauvegardes','commission','duerp'];
 
     // Vider le cache pour éviter les données périmées d'une session précédente
     const prefix = this._storagePrefix;
@@ -3301,6 +3477,7 @@ const App = {
   renderPage(p) {
     switch(p) {
       case 'dashboard': this.renderDashboard(); break;
+      case 'calendrier': Cal.render(); break;
       case 'centre-dashboard':
         const cd = document.getElementById('page-centre-dashboard');
         if (cd && this.centre !== 'ALL') cd.innerHTML = this.renderCentreDashboard(this.centre);
@@ -3309,10 +3486,15 @@ const App = {
       case 'matrix': this.renderMatrix(); break;
       case 'registre': this.renderRegistre(); break;
       case 'observations': this.renderFindings(); break;
+      case 'commission':   this.renderCommission(); break;
       case 'pmr': this.loadPMR(); break;
       case 'prevention': this.loadPrev(); break;
+      case 'duerp':      DUERP.init(); break;
       case 'permisfeu': this.loadPF(); break;
-      case 'rondes': this.renderRondesKPI(); this.renderList('rondes', 'rondes-list', this.renderRondeItem.bind(this)); break;
+      case 'rondes': this.renderRondesKPI(); this.renderList('rondes', 'rondes-list', this.renderRondeItem.bind(this));
+        // Initialiser la gamme par défaut dès le chargement de la page
+        setTimeout(() => { this.showGamme(this._currentGamme || 'Quotidien'); }, 0);
+        break;
       case 'sanitaire': this.renderSanitaire(); break;
       case 'rh': this.renderRH(); break;
       case 'contrats': this.renderList('contrats', 'contrats-list', this.renderContratItem.bind(this)); break;
@@ -3454,7 +3636,7 @@ const App = {
         <div class="kpi-sub">à renouveler</div>
       </div>
       <div class="kpi ${findOuverts>0?'warn':'ok'}">
-        <div class="kpi-label">Findings ouverts</div>
+        <div class="kpi-label">Observations</div>
         <div class="kpi-val">${findOuverts}</div>
         <div class="kpi-sub">${findRetard>0?`🔥 ${findRetard} en retard`:'à traiter'}</div>
       </div>
@@ -3462,7 +3644,23 @@ const App = {
         <div class="kpi-label">Centres pilotés</div>
         <div class="kpi-val">${nbCentres}</div>
         <div class="kpi-sub">${this.centre==='ALL'?'Vue globale':'Centre sélectionné'}</div>
-      </div>`;
+      </div>
+      ${(() => {
+        const duerp = App.load('duerp') || {risques:[], actions:[]};
+        const risques = duerp.risques || [];
+        const actions = duerp.actions || [];
+        const cf = r => this.centre==='ALL' || r.centre===this.centre || !r.centre;
+        const rFilt = risques.filter(cf);
+        const critiques = rFilt.filter(r => (r.probabilite||1)*(r.gravite||1) >= 12).length;
+        const actOuvertes = (actions||[]).filter(a=>cf(a)&&a.statut!=='Réalisée').length;
+        const badge = document.getElementById('badge-duerp');
+        if (badge) { badge.textContent=critiques; badge.style.display=critiques>0?'inline-flex':'none'; }
+        return `<div class="kpi ${critiques>0?'danger':rFilt.length>0?'ok':''}" style="cursor:pointer" onclick="App.nav('duerp')">
+          <div class="kpi-label">DUERP</div>
+          <div class="kpi-val">${critiques}</div>
+          <div class="kpi-sub">${critiques>0?'risques critiques':'risques évalués: '+rFilt.length}</div>
+        </div>`;
+      })()}`;
 
     // ── Alertes bannières ──
     const az = document.getElementById('alerts-zone');
@@ -4164,7 +4362,7 @@ const App = {
       <th style="width:28px"><input type="checkbox" class="reg-select-cb" id="reg-select-all" onchange="App.toggleSelectAll(this.checked)" title="Tout sélectionner"></th>
       <th>Cat.</th><th>Groupe</th><th>Libellé</th><th>Périodicité</th>
       <th>Dernier contrôle</th><th>Résultat</th><th>Organisme</th>
-      <th>Prochain contrôle</th><th>Observations</th><th>État</th>
+      <th>Prochain contrôle</th><th>Observations</th><th>📎 Doc</th><th>État</th>
     </tr></thead><tbody>`;
 
     centres.forEach(c => {
@@ -4225,6 +4423,13 @@ const App = {
             onchange="App.updateRegistreField('${c}',${idx},'prochainControle',this.value)" style="width:126px;color:inherit"></td>
           <td><input class="editable-cell" type="text" value="${r.observations||''}" placeholder="Observations"
             onchange="App.updateRegistreField('${c}',${idx},'observations',this.value)" style="width:140px"></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:4px">
+              <input class="editable-cell" type="url" value="${r.lien||''}" placeholder="Lien / Drive"
+                onchange="App.updateRegistreField('${c}',${idx},'lien',this.value)" style="width:100px;font-size:10px" title="Lien vers document PDF, Google Drive…">
+              ${r.lien?`<a href="${r.lien}" target="_blank" style="font-size:14px;line-height:1" title="Ouvrir">📄</a>`:''}
+            </div>
+          </td>
           <td style="white-space:nowrap">${daysLabel}</td>
         </tr>`;
       });
@@ -4617,6 +4822,281 @@ const App = {
     }
   },
 
+  // ── COMMISSION DE SÉCURITÉ ──
+  _commTab: 'prescriptions',
+
+  renderCommission() {
+    this._commTab = this._commTab || 'prescriptions';
+    this.renderCommissionKPI();
+    this.showCommTab(this._commTab);
+  },
+
+  renderCommissionKPI() {
+    const el = document.getElementById('commission-kpi-strip');
+    if (!el) return;
+    const data = this._getCommData();
+    const prescriptions = data.prescriptions || [];
+    const centreFilt = this.centre === 'ALL' ? null : this.centre;
+    const pres = centreFilt ? prescriptions.filter(p => p.centre === centreFilt) : prescriptions;
+    const ouvertes  = pres.filter(p => p.statut !== 'Levée' && p.statut !== 'Sans suite').length;
+    const levees    = pres.filter(p => p.statut === 'Levée').length;
+    const enRetard  = pres.filter(p => p.statut !== 'Levée' && p.dateEcheance && this.isExpired(p.dateEcheance)).length;
+    const urgentes  = pres.filter(p => p.priorite === 'Majeure' && p.statut !== 'Levée').length;
+    el.innerHTML = `
+      <div class="kpi ${enRetard>0?'danger':'ok'}"><div class="kpi-label">En retard</div><div class="kpi-val">${enRetard}</div><div class="kpi-sub">prescriptions</div></div>
+      <div class="kpi ${urgentes>0?'danger':''}"><div class="kpi-label">Majeures</div><div class="kpi-val">${urgentes}</div><div class="kpi-sub">non levées</div></div>
+      <div class="kpi warn"><div class="kpi-label">Ouvertes</div><div class="kpi-val">${ouvertes}</div><div class="kpi-sub">prescriptions</div></div>
+      <div class="kpi ok"><div class="kpi-label">Levées</div><div class="kpi-val">${levees}</div><div class="kpi-sub">clôturées</div></div>
+      <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val">${pres.length}</div><div class="kpi-sub">prescriptions</div></div>`;
+  },
+
+  showCommTab(tab) {
+    this._commTab = tab;
+    ['prescriptions','visites','historique'].forEach(t => {
+      const btn = document.getElementById('comm-tab-'+t);
+      if (btn) btn.style.borderBottom = t===tab?'2px solid var(--accent)':'2px solid transparent';
+      if (btn) btn.style.fontWeight   = t===tab?'600':'400';
+    });
+    const el = document.getElementById('commission-content');
+    if (!el) return;
+    if (tab === 'prescriptions') el.innerHTML = this._renderCommPrescriptions();
+    else if (tab === 'visites')  el.innerHTML = this._renderCommVisites();
+    else                          el.innerHTML = this._renderCommHistorique();
+  },
+
+  _getCommData() {
+    return this.load('commission') || {prescriptions:[], visites:[]};
+  },
+
+  _renderCommPrescriptions() {
+    const data   = this._getCommData();
+    const pres   = data.prescriptions || [];
+    const centreFilt = this.centre === 'ALL' ? null : this.centre;
+    const filtered   = centreFilt ? pres.filter(p=>p.centre===centreFilt) : pres;
+
+    const filtreStat = (document.getElementById('comm-filtre-statut')||{}).value||'';
+    const filtrePrio = (document.getElementById('comm-filtre-prio')||{}).value||'';
+    let shown = filtered;
+    if (filtreStat) shown = shown.filter(p=>p.statut===filtreStat);
+    if (filtrePrio) shown = shown.filter(p=>p.priorite===filtrePrio);
+
+    if (!shown.length) return `<div class="empty-state"><div class="icon">📋</div><div>Aucune prescription — cliquez "+ Prescription" pour commencer</div></div>`;
+
+    return `
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <select id="comm-filtre-statut" class="centre-selector" style="width:140px;font-size:11px" onchange="App.showCommTab('prescriptions')">
+          <option value="">Tous statuts</option>
+          <option>Prescrite</option><option>En cours</option><option>Levée</option><option>Sans suite</option>
+        </select>
+        <select id="comm-filtre-prio" class="centre-selector" style="width:120px;font-size:11px" onchange="App.showCommTab('prescriptions')">
+          <option value="">Toutes priorités</option>
+          <option>Majeure</option><option>Importante</option><option>Mineure</option>
+        </select>
+        <span style="font-size:11px;color:var(--muted);align-self:center">${shown.length} prescription(s)</span>
+      </div>
+      <div style="overflow-x:auto"><table style="font-size:12px;min-width:800px">
+        <thead><tr>
+          <th>Date visite</th><th>Centre</th><th>Priorité</th><th>N° PV</th>
+          <th>Description</th><th>Délai</th><th>Statut</th><th>Doc</th><th></th>
+        </tr></thead>
+        <tbody>
+        ${shown.map((p,i) => {
+          const retard = p.statut !== 'Levée' && p.dateEcheance && this.isExpired(p.dateEcheance);
+          const prioCls = p.priorite==='Majeure'?'ko':p.priorite==='Importante'?'warn':'na';
+          const statCls = p.statut==='Levée'?'ok':p.statut==='En cours'?'warn':retard?'ko':'';
+          const lienBtn = p.lien?`<a href="${p.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>';
+          return `<tr style="${retard?'background:rgba(232,54,26,0.04)':''}">
+            <td style="font-family:'DM Mono';font-size:10px;white-space:nowrap">${this.fmtDate(p.dateVisite)||'—'}</td>
+            <td style="font-size:11px;color:var(--muted)">${(p.centre||'—').replace('VILLAGE SPORTIF ','VS ')}</td>
+            <td><span class="pill pill-${prioCls}" style="font-size:10px">${p.priorite||'—'}</span></td>
+            <td style="font-family:'DM Mono';font-size:10px">${p.numPV||'—'}</td>
+            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(p.description||'').replace(/"/g,'')}">${p.description||'—'}</td>
+            <td style="font-family:'DM Mono';font-size:10px;color:${retard?'var(--red)':'var(--text)'}">
+              ${this.fmtDate(p.dateEcheance)||'—'}${retard?' 🔥':''}
+            </td>
+            <td><span class="pill pill-${statCls}" style="font-size:10px">${p.statut||'Prescrite'}</span></td>
+            <td>${lienBtn}</td>
+            <td style="display:flex;gap:3px">
+              <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="App.editCommPrescription(${pres.indexOf(p)})">✏️</button>
+              <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="App.deleteCommItem('prescriptions',${pres.indexOf(p)})">🗑</button>
+            </td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table></div>`;
+  },
+
+  _renderCommVisites() {
+    const data   = this._getCommData();
+    const visites= data.visites || [];
+    const centreFilt = this.centre === 'ALL' ? null : this.centre;
+    const filtered   = centreFilt ? visites.filter(v=>v.centre===centreFilt) : visites;
+
+    if (!filtered.length) return `<div class="empty-state"><div class="icon">📅</div><div>Aucune visite enregistrée</div>
+      <button class="btn btn-primary" style="margin-top:12px" onclick="App.openVisiteModal()">+ Visite Commission</button></div>`;
+
+    return `
+      <div style="text-align:right;margin-bottom:10px"><button class="btn btn-primary btn-sm" onclick="App.openVisiteModal()">+ Visite Commission</button></div>
+      <div style="overflow-x:auto"><table style="font-size:12px">
+        <thead><tr><th>Date</th><th>Centre</th><th>Type</th><th>Résultat</th><th>N° PV</th><th>Prescriptions</th><th>Doc</th><th></th></tr></thead>
+        <tbody>
+        ${filtered.map((v,i)=>{
+          const pres = (data.prescriptions||[]).filter(p=>p.numPV===v.numPV&&v.numPV).length;
+          const lienBtn = v.lien?`<a href="${v.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'—';
+          return `<tr>
+            <td style="font-family:'DM Mono';font-size:10px">${this.fmtDate(v.date)}</td>
+            <td style="font-size:11px;color:var(--muted)">${(v.centre||'—').replace('VILLAGE SPORTIF ','VS ')}</td>
+            <td>${v.type||'—'}</td>
+            <td><span class="pill pill-${v.resultat==='Favorable'?'ok':v.resultat==='Défavorable'?'ko':'warn'}" style="font-size:10px">${v.resultat||'—'}</span></td>
+            <td style="font-family:'DM Mono';font-size:10px">${v.numPV||'—'}</td>
+            <td style="text-align:center">${pres?`<span style="background:var(--amber);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">${pres}</span>`:'—'}</td>
+            <td>${lienBtn}</td>
+            <td><button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="App.deleteCommItem('visites',${visites.indexOf(v)})">🗑</button></td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table></div>`;
+  },
+
+  _renderCommHistorique() {
+    const data = this._getCommData();
+    const all  = [...(data.prescriptions||[]), ...(data.visites||[])].sort((a,b)=>(b.dateVisite||b.date||'').localeCompare(a.dateVisite||a.date||''));
+    if (!all.length) return `<div class="empty-state"><div class="icon">🕐</div><div>Aucun historique disponible</div></div>`;
+    return `<div style="max-height:500px;overflow-y:auto">
+      ${all.map(item=>`
+      <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start">
+        <div style="font-size:18px;width:28px;text-align:center;flex-shrink:0">${item.description?'📋':'📅'}</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600">${item.description||item.type||'Visite'}</div>
+          <div style="font-size:11px;color:var(--muted)">${(item.centre||'').replace('VILLAGE SPORTIF ','VS ')} · ${this.fmtDate(item.dateVisite||item.date)}</div>
+          ${item.priorite?`<span class="pill pill-${item.priorite==='Majeure'?'ko':'warn'}" style="font-size:10px;margin-top:4px">${item.priorite}</span>`:''}
+          ${item.statut?`<span class="pill pill-${item.statut==='Levée'?'ok':''}" style="font-size:10px;margin-top:4px;margin-left:4px">${item.statut}</span>`:''}
+        </div>
+      </div>`).join('')}
+    </div>`;
+  },
+
+  openCommissionModal() {
+    this.openModal('Nouvelle Prescription', `
+      <div class="form-grid">
+        <div class="form-group"><label>Centre</label><select id="m-centre">${this.centreOptions(this.centre==='ALL'?'':this.centre)}</select></div>
+        <div class="form-group"><label>Date de la visite</label><input type="date" id="m-date-visite" value="${this.today()}"></div>
+        <div class="form-group"><label>N° PV Commission</label><input type="text" id="m-num-pv" placeholder="Ex: PV-2024-001"></div>
+        <div class="form-group"><label>Priorité</label>
+          <select id="m-priorite">
+            <option value="Majeure">🔴 Majeure</option>
+            <option value="Importante">🟡 Importante</option>
+            <option value="Mineure" selected>🟢 Mineure</option>
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>Description de la prescription</label>
+          <textarea id="m-description" rows="3" placeholder="Décrivez la prescription imposée par la commission…"></textarea>
+        </div>
+        <div class="form-group"><label>Date d'échéance</label><input type="date" id="m-echeance"></div>
+        <div class="form-group"><label>Statut</label>
+          <select id="m-statut">
+            <option value="Prescrite">Prescrite</option>
+            <option value="En cours">En cours</option>
+            <option value="Levée">Levée</option>
+            <option value="Sans suite">Sans suite</option>
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien PV / Document Drive</label>
+          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
+        </div>
+      </div>`, 'commission');
+  },
+
+  openVisiteModal() {
+    this.openModal('Nouvelle Visite Commission', `
+      <div class="form-grid">
+        <div class="form-group"><label>Centre</label><select id="m-centre">${this.centreOptions(this.centre==='ALL'?'':this.centre)}</select></div>
+        <div class="form-group"><label>Date de visite</label><input type="date" id="m-date" value="${this.today()}"></div>
+        <div class="form-group"><label>Type</label>
+          <select id="m-type"><option>Visite périodique</option><option>Visite de levée</option><option>Visite inopinée</option><option>Contre-visite</option></select>
+        </div>
+        <div class="form-group"><label>Résultat</label>
+          <select id="m-resultat"><option>Favorable</option><option value="Favorable avec réserves">Avec réserves</option><option>Défavorable</option></select>
+        </div>
+        <div class="form-group"><label>N° PV</label><input type="text" id="m-num-pv" placeholder="Ex: PV-2024-001"></div>
+        <div class="form-group"><label>Prochain passage</label><input type="date" id="m-echeance"></div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien PV (Google Drive…)</label>
+          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
+        </div>
+      </div>`, 'visite-commission');
+  },
+
+  editCommPrescription(idx) {
+    const data = this._getCommData();
+    const p = (data.prescriptions||[])[idx];
+    if (!p) return;
+    this._editCommIdx = idx;
+    this.openModal('Modifier la Prescription', `
+      <div class="form-grid">
+        <div class="form-group"><label>Statut</label>
+          <select id="m-statut">
+            <option ${p.statut==='Prescrite'?'selected':''}>Prescrite</option>
+            <option ${p.statut==='En cours'?'selected':''}>En cours</option>
+            <option ${p.statut==='Levée'?'selected':''}>Levée</option>
+            <option ${p.statut==='Sans suite'?'selected':''}>Sans suite</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Date d'échéance</label><input type="date" id="m-echeance" value="${p.dateEcheance||''}"></div>
+        <div class="form-group full" style="grid-column:span 2"><label>Description</label>
+          <textarea id="m-description" rows="3">${p.description||''}</textarea>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document</label>
+          <input type="url" id="m-lien" value="${p.lien||''}" placeholder="https://drive.google.com/...">
+        </div>
+      </div>`, 'commission-edit');
+  },
+
+  deleteCommItem(type, idx) {
+    if (!confirm('Supprimer cet élément ?')) return;
+    const data = this._getCommData();
+    if (type === 'prescriptions') data.prescriptions.splice(idx, 1);
+    else if (type === 'visites')  data.visites.splice(idx, 1);
+    this.save('commission', data);
+    this.renderCommission();
+    this.renderAll();
+  },
+
+  exportCommissionPDF() {
+    if (!window.jspdf) { alert('jsPDF non disponible'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc  = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const data = this._getCommData();
+    const pres = data.prescriptions || [];
+    const today = new Date().toLocaleDateString('fr-FR');
+    doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('UCPA — Commission de Sécurité · Prescriptions', 14, 11);
+    doc.setFontSize(8); doc.text(today, 260, 11);
+    let y = 24;
+    const headers = ['Centre','N° PV','Priorité','Description','Échéance','Statut'];
+    const colWidths = [35,22,20,100,25,20];
+    let x = 14;
+    doc.setFontSize(8); doc.setFont('helvetica','bold'); doc.setTextColor(80,80,80);
+    headers.forEach((h,i) => { doc.text(h, x+1, y); x+=colWidths[i]; });
+    y += 5;
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30);
+    pres.forEach(p => {
+      if (y > 185) { doc.addPage(); y = 20; }
+      const retard = p.statut!=='Levée' && p.dateEcheance && this.isExpired(p.dateEcheance);
+      if (retard) { doc.setFillColor(255,240,240); doc.rect(14, y-3, 269, 6, 'F'); }
+      x = 14;
+      const row = [
+        (p.centre||'').replace('VILLAGE SPORTIF ','VS ').slice(0,20),
+        p.numPV||'', p.priorite||'',
+        (p.description||'').slice(0,65),
+        p.dateEcheance||'', p.statut||''
+      ];
+      row.forEach((v,i) => { doc.text(String(v), x+1, y); x+=colWidths[i]; });
+      y += 7;
+    });
+    doc.save(`UCPA_Commission_${today.replace(/\//g,'-')}.pdf`);
+  },
+
   // ── FINDINGS (format Finding.csv) ──
   renderFindings() {
     const findings = this.load('observations') || [];
@@ -4661,6 +5141,7 @@ const App = {
           <th>Détails</th>
           <th style="width:80px">Échéance</th>
           <th style="width:90px">Statut</th>
+          <th style="width:40px">Doc</th>
           <th style="width:50px"></th>
         </tr></thead>
         <tbody>
@@ -4677,6 +5158,7 @@ const App = {
             <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(f.details||'').replace(/"/g,'&quot;')}">${f.details||f.description||'—'}</td>
             <td style="font-family:'DM Mono';font-size:10px;color:${retard?'var(--red)':'var(--muted)'};white-space:nowrap">${this.fmtDate(f.dateEcheance)||'—'}</td>
             <td><span class="pill pill-${pillCls}" style="font-size:10px">${label}</span></td>
+            <td>${f.lien?`<a href="${f.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir document">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>'}</td>
             <td style="display:flex;gap:4px">
               <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="App.editFinding(${findings.indexOf(f)})">✏️</button>
               <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="App.deleteItem('observations',${findings.indexOf(f)})">🗑</button>
@@ -4761,6 +5243,10 @@ const App = {
         <div class="form-group"><label>Équipement</label>
           <input type="text" id="m-equipement" placeholder="Équipement concerné">
         </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label>📎 Lien document / Google Drive</label>
+          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
+        </div>
       </div>`, 'finding');
   },
 
@@ -4831,20 +5317,24 @@ const App = {
     this._download('\uFEFF' + csvContent, `Findings_${new Date().toLocaleDateString('fr-FR').replace(/\//g,'-')}.csv`, 'text/csv;charset=utf-8');
   },
   renderRondeItem(item, header, i) {
-    if (header) return '<th>Date</th><th>Centre</th><th>Type</th><th>Agent</th><th>Observations</th><th></th>';
+    if (header) return '<th>Date</th><th>Centre</th><th>Type</th><th>Agent</th><th>Observations</th><th>Doc</th><th></th>';
+    const shortCentre = (item.centre||'—').replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
+    const lienBtn = item.lien ? `<a href="${item.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px" title="Ouvrir document">📄</a>` : '<span style="color:var(--muted);font-size:10px">—</span>';
     return `<tr>
-      <td style="font-family:'DM Mono';font-size:11px">${this.fmtDate(item.date)}</td>
-      <td style="font-size:11px;color:var(--muted)">${item.centre||'—'}</td>
-      <td>${item.type||'—'}</td>
-      <td>${item.agent||'—'}</td>
-      <td>${item.observations||'—'}</td>
-      <td><button class="btn btn-ghost btn-sm" onclick="App.deleteItem('rondes',${i})">🗑</button></td>
+      <td style="font-family:'DM Mono';font-size:11px;white-space:nowrap">${this.fmtDate(item.date)}</td>
+      <td style="font-size:11px;color:var(--muted)" title="${item.centre||''}">${shortCentre}</td>
+      <td style="font-size:11px">${item.type||'—'}</td>
+      <td style="font-size:11px">${item.agent||'—'}</td>
+      <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.observations||'').replace(/"/g,'')}">${item.observations||'—'}</td>
+      <td>${lienBtn}</td>
+      <td><button class="btn btn-ghost btn-sm" style="padding:2px 5px" onclick="App.deleteItem('rondes',${i})">🗑</button></td>
     </tr>`;
   },
   renderContratItem(item, header, i) {
-    if (header) return '<th>Prestataire</th><th>Objet</th><th>Centre</th><th>Début</th><th>Fin</th><th>Statut</th><th></th>';
+    if (header) return '<th>Prestataire</th><th>Objet</th><th>Centre</th><th>Début</th><th>Fin</th><th>Statut</th><th>Doc</th><th></th>';
     const expired = this.isExpired(item.fin);
     const soon = this.isSoonExpiring(item.fin, 90);
+    const lienBtn = item.lien ? `<a href="${item.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px" title="Ouvrir document">📄</a>` : '<span style="color:var(--muted);font-size:10px">—</span>';
     return `<tr>
       <td style="font-weight:600">${item.prestataire||'—'}</td>
       <td>${item.objet||'—'}</td>
@@ -4852,6 +5342,7 @@ const App = {
       <td style="font-family:'DM Mono';font-size:11px">${this.fmtDate(item.debut)}</td>
       <td style="font-family:'DM Mono';font-size:11px;color:${expired?'var(--red)':soon?'var(--amber)':'var(--text)'}">${this.fmtDate(item.fin)}</td>
       <td><span class="pill pill-${expired?'ko':soon?'warn':'ok'}">${expired?'Échu':soon?'Bientôt':'Actif'}</span></td>
+      <td>${lienBtn}</td>
       <td><button class="btn btn-ghost btn-sm" onclick="App.deleteItem('contrats',${i})">🗑</button></td>
     </tr>`;
   },
@@ -5248,6 +5739,7 @@ const App = {
           dateEcheance: document.getElementById('m-echeance').value,
           acteur:       document.getElementById('m-acteur').value,
           equipement:   document.getElementById('m-equipement').value,
+          lien:         (document.getElementById('m-lien')||{}).value || '',
           source:       'manuel'
         });
         this.save('observations', items);
@@ -5308,11 +5800,13 @@ const App = {
       ronde: () => {
         const items = this.load('rondes') || [];
         items.unshift({
-          id: this.uuid(), date: this.today(),
-          centre: document.getElementById('m-centre').value,
-          type: document.getElementById('m-type').value,
-          agent: document.getElementById('m-agent').value,
-          observations: document.getElementById('m-observations').value
+          id:           this.uuid(),
+          date:         (document.getElementById('m-date')||{}).value || this.today(),
+          centre:       document.getElementById('m-centre').value,
+          type:         document.getElementById('m-type').value,
+          agent:        document.getElementById('m-agent').value,
+          observations: document.getElementById('m-observations').value,
+          lien:         (document.getElementById('m-lien')||{}).value || ''
         });
         this.save('rondes', items);
         this.renderPage('rondes');
@@ -5326,7 +5820,8 @@ const App = {
           poste: document.getElementById('m-poste').value,
           habilitation: document.getElementById('m-habilitation').value,
           dateObtention: document.getElementById('m-dateObtention').value,
-          expiration: document.getElementById('m-expiration').value
+          expiration: document.getElementById('m-expiration').value,
+          lien: (document.getElementById('m-lien')||{}).value || ''
         });
         this.save('rh', items);
         this.renderRH();
@@ -5340,7 +5835,8 @@ const App = {
           prestataire: document.getElementById('m-prestataire').value,
           objet: document.getElementById('m-objet').value,
           debut: document.getElementById('m-debut').value,
-          fin: document.getElementById('m-fin').value
+          fin: document.getElementById('m-fin').value,
+          lien: (document.getElementById('m-lien')||{}).value || ''
         });
         this.save('contrats', items);
         this.renderList('contrats', 'contrats-list', this.renderContratItem.bind(this));
@@ -5364,6 +5860,129 @@ const App = {
         });
         this.save('investissements', items);
         this.renderInvestissements();
+      },
+      'duerp-risque': () => {
+        const d = DUERP.getData();
+        if (!d.risques) d.risques = [];
+        d.risques.push({
+          id:          App.uuid(),
+          unite:       (document.getElementById('m-unite')||{}).value||'',
+          centre:      (document.getElementById('m-centre')||{}).value||'',
+          danger:      (document.getElementById('m-danger')||{}).value||'',
+          famille:     (document.getElementById('m-famille')||{}).value||'',
+          situation:   (document.getElementById('m-situation')||{}).value||'',
+          probabilite: parseInt((document.getElementById('m-probabilite')||{}).value||3),
+          gravite:     parseInt((document.getElementById('m-gravite')||{}).value||3),
+          mesures:     (document.getElementById('m-mesures')||{}).value||'',
+          lien:        (document.getElementById('m-lien')||{}).value||'',
+          date:        App.today()
+        });
+        DUERP.saveData(d);
+        DUERP.renderKPI();
+        DUERP.showTab('risques');
+      },
+      'duerp-risque-edit': () => {
+        const d   = DUERP.getData();
+        const idx = DUERP._editRisqueIdx;
+        if (idx !== undefined && d.risques && d.risques[idx]) {
+          Object.assign(d.risques[idx], {
+            unite:       (document.getElementById('m-unite')||{}).value||'',
+            centre:      (document.getElementById('m-centre')||{}).value||'',
+            danger:      (document.getElementById('m-danger')||{}).value||'',
+            famille:     (document.getElementById('m-famille')||{}).value||'',
+            situation:   (document.getElementById('m-situation')||{}).value||'',
+            probabilite: parseInt((document.getElementById('m-probabilite')||{}).value||3),
+            gravite:     parseInt((document.getElementById('m-gravite')||{}).value||3),
+            mesures:     (document.getElementById('m-mesures')||{}).value||'',
+            lien:        (document.getElementById('m-lien')||{}).value||''
+          });
+        }
+        DUERP.saveData(d);
+        DUERP.renderKPI();
+        DUERP.showTab('risques');
+      },
+      'duerp-action': () => {
+        const d = DUERP.getData();
+        if (!d.actions) d.actions = [];
+        d.actions.push({
+          id:          App.uuid(),
+          action:      (document.getElementById('m-action')||{}).value||'',
+          risqueRef:   (document.getElementById('m-risque-ref')||{}).value||'',
+          centre:      (document.getElementById('m-centre')||{}).value||'',
+          responsable: (document.getElementById('m-responsable')||{}).value||'',
+          echeance:    (document.getElementById('m-echeance')||{}).value||'',
+          priorite:    (document.getElementById('m-priorite')||{}).value||'Moyenne',
+          statut:      (document.getElementById('m-statut')||{}).value||'À réaliser',
+          lien:        (document.getElementById('m-lien')||{}).value||'',
+          date:        App.today()
+        });
+        DUERP.saveData(d);
+        DUERP.renderKPI();
+        DUERP.showTab('actions');
+      },
+      'duerp-action-edit': () => {
+        const d   = DUERP.getData();
+        const idx = DUERP._editActionIdx;
+        if (idx !== undefined && d.actions && d.actions[idx]) {
+          Object.assign(d.actions[idx], {
+            action:      (document.getElementById('m-action')||{}).value||'',
+            responsable: (document.getElementById('m-responsable')||{}).value||'',
+            echeance:    (document.getElementById('m-echeance')||{}).value||'',
+            priorite:    (document.getElementById('m-priorite')||{}).value||'Moyenne',
+            statut:      (document.getElementById('m-statut')||{}).value||'À réaliser',
+            lien:        (document.getElementById('m-lien')||{}).value||''
+          });
+        }
+        DUERP.saveData(d);
+        DUERP.renderKPI();
+        DUERP.showTab('actions');
+      },
+      commission: () => {
+        const data = this._getCommData();
+        if (!data.prescriptions) data.prescriptions = [];
+        data.prescriptions.unshift({
+          id:           this.uuid(),
+          centre:       (document.getElementById('m-centre')||{}).value || '',
+          dateVisite:   (document.getElementById('m-date-visite')||{}).value || this.today(),
+          numPV:        (document.getElementById('m-num-pv')||{}).value || '',
+          priorite:     (document.getElementById('m-priorite')||{}).value || 'Mineure',
+          description:  (document.getElementById('m-description')||{}).value || '',
+          dateEcheance: (document.getElementById('m-echeance')||{}).value || '',
+          statut:       (document.getElementById('m-statut')||{}).value || 'Prescrite',
+          lien:         (document.getElementById('m-lien')||{}).value || ''
+        });
+        this.save('commission', data);
+        this.renderCommission();
+        this.renderAll();
+      },
+      'commission-edit': () => {
+        const data = this._getCommData();
+        const idx  = this._editCommIdx;
+        if (idx !== undefined && data.prescriptions && data.prescriptions[idx]) {
+          data.prescriptions[idx].statut       = (document.getElementById('m-statut')||{}).value || '';
+          data.prescriptions[idx].dateEcheance = (document.getElementById('m-echeance')||{}).value || '';
+          data.prescriptions[idx].description  = (document.getElementById('m-description')||{}).value || '';
+          data.prescriptions[idx].lien         = (document.getElementById('m-lien')||{}).value || '';
+        }
+        this.save('commission', data);
+        this.renderCommission();
+        this.renderAll();
+      },
+      'visite-commission': () => {
+        const data = this._getCommData();
+        if (!data.visites) data.visites = [];
+        data.visites.unshift({
+          id:       this.uuid(),
+          centre:   (document.getElementById('m-centre')||{}).value || '',
+          date:     (document.getElementById('m-date')||{}).value || this.today(),
+          type:     (document.getElementById('m-type')||{}).value || '',
+          resultat: (document.getElementById('m-resultat')||{}).value || '',
+          numPV:    (document.getElementById('m-num-pv')||{}).value || '',
+          echeance: (document.getElementById('m-echeance')||{}).value || '',
+          lien:     (document.getElementById('m-lien')||{}).value || ''
+        });
+        this.save('commission', data);
+        this.renderCommission();
       }
     };
     if (this.modalType && handlers[this.modalType]) handlers[this.modalType]();
@@ -5418,14 +6037,21 @@ const App = {
   },
 
   openRondeModal() {
+    const gammeTypes = ['Ronde sécurité','Ronde technique','Ronde ouverture','Ronde fermeture','Ronde quotidienne','Ronde hebdomadaire','Ronde mensuelle'];
     this.openModal('Enregistrer une Ronde', `
       <div class="form-grid">
         <div class="form-group"><label>Centre</label><select id="m-centre">${this.centreOptions(this.centre==='ALL'?'':this.centre)}</select></div>
-        <div class="form-group"><label>Type</label>
-          <select id="m-type"><option>Ronde sécurité</option><option>Ronde technique</option><option>Ronde ouverture</option><option>Ronde fermeture</option></select>
+        <div class="form-group"><label>Type de ronde</label>
+          <select id="m-type">${gammeTypes.map(t=>`<option>${t}</option>`).join('')}</select>
         </div>
-        <div class="form-group"><label>Agent</label><input type="text" id="m-agent"></div>
-        <div class="form-group full" style="grid-column:span 2"><label>Observations</label><textarea id="m-observations" rows="2"></textarea></div>
+        <div class="form-group"><label>Agent</label><input type="text" id="m-agent" placeholder="Nom de l'agent"></div>
+        <div class="form-group"><label>Date</label><input type="date" id="m-date" value="${this.today()}"></div>
+        <div class="form-group full" style="grid-column:span 2"><label>Observations / Anomalies constatées</label><textarea id="m-observations" rows="3" placeholder="Décrivez les anomalies ou confirmez le bon état général…"></textarea></div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label>📎 Lien document / Google Drive</label>
+          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Collez un lien Google Drive, PDF en ligne, ou toute URL de document</div>
+        </div>
       </div>`, 'ronde');
   },
 
@@ -5440,6 +6066,7 @@ const App = {
         </div>
         <div class="form-group"><label>Date obtention</label><input type="date" id="m-dateObtention"></div>
         <div class="form-group"><label>Expiration</label><input type="date" id="m-expiration"></div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document (attestation, certificat…)</label><input type="url" id="m-lien" placeholder="https://drive.google.com/..."></div>
       </div>`, 'rh');
   },
 
@@ -5451,6 +6078,7 @@ const App = {
         <div class="form-group"><label>Centre</label><select id="m-centre">${this.centreOptions(this.centre==='ALL'?'':this.centre)}</select></div>
         <div class="form-group"><label>Début</label><input type="date" id="m-debut"></div>
         <div class="form-group"><label>Fin</label><input type="date" id="m-fin"></div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien contrat (PDF, Drive…)</label><input type="url" id="m-lien" placeholder="https://drive.google.com/..."></div>
       </div>`, 'contrat');
   },
 
@@ -7048,7 +7676,7 @@ const Backup = {
     this._realtimeUnsubs = [];
 
     const KEYS = ['registre','pmr','observations','rondes','rh','contrats',
-      'sanitaire','prevention','permisfeu','matrix','investissements','syntheses','ged'];
+      'sanitaire','prevention','permisfeu','matrix','investissements','syntheses','ged','commission'];
 
     const prefix = this._storagePrefix;
 
@@ -7306,95 +7934,198 @@ const Backup = {
 
   showGamme(type) {
     this._currentGamme = type;
-    document.getElementById('gamme-panel').style.display = 'block';
+    // Activer l'onglet cliqué
     ['Quotidien','Hebdo','Mensuel','Journalier','Ouverture','Fermeture','Prestations'].forEach(t => {
-      const btn = document.getElementById('gamme-btn-' + t);
-      if (btn) btn.className = t === type ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+      const tab = document.getElementById('gtab-' + t);
+      if (tab) { tab.className = t === type ? 'gamme-tab active' : 'gamme-tab'; }
     });
+    // Titre + filtres
     const icons = {
       Quotidien:'📋 Ronde Quotidienne', Hebdo:'📋 Ronde Hebdomadaire', Mensuel:'📋 Ronde Mensuelle',
       Journalier:'🌅 Ronde Journalière', Ouverture:'🏠 Ouverture Centre', Fermeture:'🔒 Fermeture Centre',
       Prestations:'🔧 Prestations Techniques'
     };
     const titleEl = document.getElementById('gamme-title');
-    if (titleEl) titleEl.textContent = `${icons[type]||type} — ${(GAMMES_DATA[type]||[]).length} points`;
+    const items   = GAMMES_DATA[type] || [];
+    if (titleEl) titleEl.textContent = `${icons[type]||type} — ${items.length} points`;
     const domFilt  = document.getElementById('gamme-filtre-domaine');
     const freqFilt = document.getElementById('gamme-filtre-freq');
     if (type === 'Prestations') {
-      domFilt.style.display  = 'inline-block';
-      freqFilt.style.display = 'inline-block';
-      const domaines = [...new Set((GAMMES_DATA.Prestations||[]).map(p=>p.domaine))].sort();
-      domFilt.innerHTML = '<option value="">Tous domaines</option>' + domaines.map(d=>`<option>${d}</option>`).join('');
+      if (domFilt) {
+        domFilt.style.display  = 'inline-block';
+        const domaines = [...new Set((GAMMES_DATA.Prestations||[]).map(p=>p.domaine))].sort();
+        domFilt.innerHTML = '<option value="">Tous domaines</option>' + domaines.map(d=>`<option>${d}</option>`).join('');
+      }
+      if (freqFilt) freqFilt.style.display = 'inline-block';
     } else {
       if (domFilt) domFilt.style.display = 'none';
       if (freqFilt) freqFilt.style.display = 'none';
     }
+    // Réinitialiser la recherche
+    const searchEl = document.getElementById('gamme-search');
+    if (searchEl) searchEl.value = '';
+    // Rendre la liste
     this.filterGamme();
   },
 
   filterGamme() {
-    const type    = this._currentGamme;
+    const type = this._currentGamme || 'Quotidien';
     if (!type) return;
     const search  = ((document.getElementById('gamme-search')||{}).value||'').toLowerCase();
     const domaine = (document.getElementById('gamme-filtre-domaine')||{}).value || '';
     const freq    = (document.getElementById('gamme-filtre-freq')||{}).value || '';
-    const items   = GAMMES_DATA[type] || [];
     const el      = document.getElementById('gamme-list');
     if (!el) return;
-    let filtered = items;
+
+    const all = GAMMES_DATA[type] || [];
+    let filtered = all;
     if (search)  filtered = filtered.filter(i => JSON.stringify(i).toLowerCase().includes(search));
     if (domaine) filtered = filtered.filter(i => i.domaine === domaine);
     if (freq)    filtered = filtered.filter(i => (i.frequence||'').toLowerCase().includes(freq.toLowerCase()));
 
     const SECTION_TYPES = ['Journalier','Ouverture','Fermeture'];
+    const checkKey = `gamme_checks_${type}`;
+    const saved = JSON.parse(sessionStorage.getItem(checkKey)||'{}');
+
+    if (!filtered.length) {
+      el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Aucun résultat</div>';
+      return;
+    }
 
     if (type === 'Prestations') {
+      // Vue tableau pour les prestations
       const byDomaine = {};
       filtered.forEach(p => { if (!byDomaine[p.domaine]) byDomaine[p.domaine]=[]; byDomaine[p.domaine].push(p); });
-      el.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${filtered.length} prestations</div>` +
-        Object.entries(byDomaine).map(([dom,items])=>`
-        <div style="margin-bottom:14px">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;padding:4px 8px;background:rgba(232,84,26,0.08);border-radius:4px">${dom} <span style="opacity:0.6;font-weight:400">(${items.length})</span></div>
+      el.innerHTML = Object.entries(byDomaine).map(([dom,items])=>`
+        <div>
+          <div class="gamme-section-header">${dom} <span style="font-weight:400;opacity:.6">(${items.length})</span></div>
           <div style="overflow-x:auto"><table style="font-size:11px;width:100%;min-width:600px">
-            <thead><tr><th>Famille</th><th>Équipement</th><th>Fréquence</th><th>Descriptif</th><th>Prestataire</th></tr></thead>
-            <tbody>${items.map(p=>`<tr>
-              <td style="color:var(--muted)">${p.famille}</td>
-              <td style="font-weight:600">${p.equipement}</td>
-              <td><span style="background:var(--bg3);padding:1px 6px;border-radius:3px;font-family:'DM Mono';font-size:10px">${p.frequence}</span></td>
-              <td style="color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.descriptif}">${p.descriptif}</td>
-              <td style="color:var(--muted)">${p.prestataire}</td>
+            <thead><tr style="background:var(--bg3)"><th style="padding:6px 8px">Famille</th><th>Équipement</th><th>Fréquence</th><th>Descriptif</th><th>Prestataire</th></tr></thead>
+            <tbody>${items.map(p=>`<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:5px 8px;color:var(--muted)">${p.famille}</td>
+              <td style="padding:5px 8px;font-weight:600">${p.equipement}</td>
+              <td style="padding:5px 8px"><span style="background:var(--bg3);padding:1px 6px;border-radius:3px;font-family:'DM Mono';font-size:10px">${p.frequence}</span></td>
+              <td style="padding:5px 8px;color:var(--muted);max-width:200px" title="${p.descriptif}">${p.descriptif}</td>
+              <td style="padding:5px 8px;color:var(--muted)">${p.prestataire}</td>
             </tr>`).join('')}</tbody>
           </table></div>
         </div>`).join('');
+
     } else if (SECTION_TYPES.includes(type)) {
+      // Vue checklist groupée par section
       const bySection = {};
       filtered.forEach(i => { if (!bySection[i.section]) bySection[i.section]=[]; bySection[i.section].push(i); });
-      el.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${filtered.length} points de contrôle</div>` +
-        Object.entries(bySection).map(([sec,items])=>`
-        <div style="margin-bottom:10px">
-          <div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:4px;padding:3px 8px;background:rgba(232,84,26,0.08);border-radius:4px">${sec}</div>
-          ${items.map((i,idx)=>`
-          <div style="display:flex;align-items:flex-start;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border);font-size:12px">
-            <input type="checkbox" id="gchk-${type.slice(0,3)}${sec.replace(/\W/g,'').slice(0,4)}${idx}" style="margin-top:2px;flex-shrink:0" onchange="App.toggleGammeItem(this)">
-            <label for="gchk-${type.slice(0,3)}${sec.replace(/\W/g,'').slice(0,4)}${idx}" style="cursor:pointer;flex:1">${i.libelle}</label>
-          </div>`).join('')}
-        </div>`).join('');
+      let html = '';
+      let globalIdx = 0;
+      Object.entries(bySection).forEach(([sec, items]) => {
+        html += `<div class="gamme-section-header">${sec} <span style="font-weight:400;opacity:.6">(${items.length})</span></div>`;
+        items.forEach(item => {
+          const key = `${sec}_${globalIdx}`;
+          const isChecked = !!saved[key];
+          html += `<div class="gamme-check-item${isChecked?' checked':''}" onclick="App._toggleCheck(this,'${checkKey}','${key}')">
+            <input type="checkbox" id="gck-${globalIdx}" ${isChecked?'checked':''} onclick="event.stopPropagation();App._toggleCheck(this.closest('.gamme-check-item'),'${checkKey}','${key}')">
+            <div style="flex:1">
+              <label class="${isChecked?'crossed':''}" style="cursor:pointer">${item.libelle}</label>
+            </div>
+          </div>`;
+          globalIdx++;
+        });
+      });
+      el.innerHTML = html;
+
     } else {
-      el.innerHTML = `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">${filtered.length} points</div>
-        <div style="column-count:${window.innerWidth>900?2:1};column-gap:20px">
-        ${filtered.map((i,idx)=>`
-        <div style="display:flex;align-items:flex-start;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border);font-size:12px;break-inside:avoid">
-          <input type="checkbox" id="gq${type}${idx}" style="margin-top:2px;flex-shrink:0" onchange="App.toggleGammeItem(this)">
+      // Vue checklist simple (Quotidien, Hebdo, Mensuel)
+      let html = '';
+      filtered.forEach((item, idx) => {
+        const key = `${idx}`;
+        const isChecked = !!saved[key];
+        html += `<div class="gamme-check-item${isChecked?' checked':''}" onclick="App._toggleCheck(this,'${checkKey}','${key}')">
+          <input type="checkbox" id="gcq-${idx}" ${isChecked?'checked':''} onclick="event.stopPropagation();App._toggleCheck(this.closest('.gamme-check-item'),'${checkKey}','${key}')">
           <div style="flex:1">
-            <label for="gq${type}${idx}" style="cursor:pointer;font-weight:600">${i.equipement}</label>
-            ${i.descriptif?`<div style="font-size:11px;color:var(--muted);margin-top:1px">${i.descriptif}</div>`:''}
+            <label class="${isChecked?'crossed':''}" style="cursor:pointer;font-weight:600">${item.equipement}</label>
+            ${item.descriptif?`<div class="gamme-check-desc">${item.descriptif}</div>`:''}
           </div>
-        </div>`).join('')}
         </div>`;
+      });
+      el.innerHTML = html;
     }
+
+    // Mettre à jour la progression
+    this._updateGammeProgress(type, all.length, saved);
+  },
+
+  _toggleCheck(itemEl, checkKey, key) {
+    const cb     = itemEl.querySelector('input[type=checkbox]');
+    const label  = itemEl.querySelector('label');
+    const isNow  = !cb.checked;
+    cb.checked   = isNow;
+    if (isNow) { itemEl.classList.add('checked'); if(label) label.classList.add('crossed'); }
+    else        { itemEl.classList.remove('checked'); if(label) label.classList.remove('crossed'); }
+    // Persister dans sessionStorage
+    const saved = JSON.parse(sessionStorage.getItem(checkKey)||'{}');
+    if (isNow) saved[key] = 1; else delete saved[key];
+    sessionStorage.setItem(checkKey, JSON.stringify(saved));
+    // MAJ progression
+    const type = this._currentGamme || 'Quotidien';
+    this._updateGammeProgress(type, (GAMMES_DATA[type]||[]).length, saved);
+  },
+
+  _updateGammeProgress(type, total, saved) {
+    const checked = Object.keys(saved).length;
+    const bar   = document.getElementById('gamme-progress-bar');
+    const label = document.getElementById('gamme-progress-label');
+    if (!bar || !label || !total) return;
+    const pct = Math.round(checked / total * 100);
+    bar.style.width = pct + '%';
+    bar.style.background = pct===100 ? '#059669' : pct > 50 ? '#d97706' : 'var(--accent)';
+    label.textContent = `${checked}/${total}`;
+    // Bouton valider
+    const btn = document.getElementById('gamme-valider-btn');
+    if (btn) { btn.style.opacity = pct===100?'1':'.5'; btn.title = pct<100?`Complétez tous les points (${total-checked} restants)`:'';}
+  },
+
+  resetGammeChecks() {
+    const type = this._currentGamme || 'Quotidien';
+    const checkKey = `gamme_checks_${type}`;
+    sessionStorage.removeItem(checkKey);
+    this.filterGamme();
+  },
+
+  validerRonde() {
+    const type = this._currentGamme || 'Quotidien';
+    const checkKey = `gamme_checks_${type}`;
+    const saved = JSON.parse(sessionStorage.getItem(checkKey)||'{}');
+    const total = (GAMMES_DATA[type]||[]).length;
+    const checked = Object.keys(saved).length;
+    if (checked < total) {
+      if (!confirm(`Seulement ${checked}/${total} points cochés. Valider quand même ?`)) return;
+    }
+    // Enregistrer la ronde
+    const items = this.load('rondes') || [];
+    const typeLabel = {Quotidien:'Ronde quotidienne',Hebdo:'Ronde hebdomadaire',Mensuel:'Ronde mensuelle',
+      Journalier:'Ronde journalière',Ouverture:'Ronde ouverture centre',Fermeture:'Ronde fermeture centre'}[type] || ('Ronde ' + type);
+    items.unshift({
+      id:           this.uuid(),
+      date:         this.today(),
+      centre:       this.centre === 'ALL' ? '' : this.centre,
+      type:         typeLabel,
+      agent:        '',
+      observations: `Gamme ${type} — ${checked}/${total} points validés`,
+      lien:         '',
+      source:       'gamme'
+    });
+    this.save('rondes', items);
+    sessionStorage.removeItem(checkKey);
+    this.renderRondesKPI();
+    this.renderList('rondes', 'rondes-list', this.renderRondeItem.bind(this));
+    this.filterGamme();
+    // Feedback
+    const btn = document.getElementById('gamme-valider-btn');
+    if (btn) { const orig=btn.textContent; btn.textContent='✅ Enregistrée !'; setTimeout(()=>btn.textContent=orig, 2000); }
   },
 
   toggleGammeItem(cb) {
+    // Garde pour compatibilité
     const label = document.querySelector(`label[for="${cb.id}"]`);
     if (label) { label.style.textDecoration = cb.checked?'line-through':''; label.style.opacity = cb.checked?'0.4':''; }
   },
@@ -7441,11 +8172,17 @@ const Backup = {
     const byType = {};
     data.forEach(r => { byType[r.type]=(byType[r.type]||0)+1; });
     const topType = Object.entries(byType).sort((a,b)=>b[1]-a[1])[0];
+    // Total points de gamme (safe — GAMMES_DATA peut ne pas être chargé)
+    const totalPoints = (typeof GAMMES_DATA !== 'undefined') ?
+      (GAMMES_DATA.Quotidien||[]).length + (GAMMES_DATA.Hebdo||[]).length + (GAMMES_DATA.Mensuel||[]).length +
+      (GAMMES_DATA.Journalier||[]).length + (GAMMES_DATA.Ouverture||[]).length + (GAMMES_DATA.Fermeture||[]).length : 0;
+    const totalPrest  = (typeof GAMMES_DATA !== 'undefined') ? (GAMMES_DATA.Prestations||[]).length : 0;
     el.innerHTML = `
       <div class="kpi ok"><div class="kpi-label">Ce mois</div><div class="kpi-val">${thisMonth.length}</div><div class="kpi-sub">rondes réalisées</div></div>
-      <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">rondes enregistrées</div></div>
+      <div class="kpi"><div class="kpi-label">Total rondes</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">enregistrées</div></div>
       <div class="kpi"><div class="kpi-label">Type dominant</div><div class="kpi-val" style="font-size:14px">${topType?topType[0].split(' ')[0]:'—'}</div><div class="kpi-sub">${topType?topType[1]+' rondes':'aucune'}</div></div>
-      <div class="kpi"><div class="kpi-label">Gammes disponibles</div><div class="kpi-val">6</div><div class="kpi-sub">Q·H·M·O·F·Prest.</div></div>`;
+      <div class="kpi ok"><div class="kpi-label">Points de gamme</div><div class="kpi-val">${totalPoints}</div><div class="kpi-sub">Q·H·M·J·O·F</div></div>
+      <div class="kpi"><div class="kpi-label">Prestations</div><div class="kpi-val">${totalPrest}</div><div class="kpi-sub">techniques</div></div>`;
   },
 
   toggleQuickEntry() {
@@ -8399,6 +9136,1164 @@ const Theme = {
 
   current() {
     return document.documentElement.getAttribute('data-theme');
+  }
+};
+
+// ════════════════════════════════════════════
+// ── DUERP — Document Unique ──
+// ════════════════════════════════════════════
+const DUERP = {
+
+  // Grille de cotation risque (probabilité × gravité)
+  NIVEAUX: [
+    {min:1,  max:3,  label:'Faible',    cls:'ok',     color:'#059669'},
+    {min:4,  max:8,  label:'Modéré',    cls:'',       color:'#0284c7'},
+    {min:9,  max:11, label:'Important', cls:'warn',   color:'#d97706'},
+    {min:12, max:25, label:'Critique',  cls:'danger', color:'#dc2626'},
+  ],
+
+  // Unités de travail UCPA pré-définies (personnalisables)
+  UNITES_DEFAULT: [
+    'Accueil / Administration','Activités outdoor','Cuisine / Restauration',
+    'Entretien / Maintenance','Espaces aquatiques','Encadrement sportif',
+    'Hébergement','Transport / Véhicules','Ménage / Nettoyage','Direction'
+  ],
+
+  // Familles de risques réglementaires
+  FAMILLES: [
+    'Chutes de plain-pied','Chutes de hauteur','Manutention manuelle',
+    'Risques chimiques','Risques électriques','Incendie / Explosion',
+    'Risques biologiques','Bruit','Vibrations','Stress / RPS',
+    'Travail isolé','Circulation / Véhicules','Noyade','Intempéries',
+    'Équipements / Machines','Autres'
+  ],
+
+  _tab: 'risques',
+
+  // ── Données ──
+  getData() { return App.load('duerp') || {risques:[], actions:[], versions:[]}; },
+  saveData(d) { App.save('duerp', d); this.updateBadge(); },
+
+  updateBadge() {
+    const d = this.getData();
+    const cf = r => App.centre==='ALL' || r.centre===App.centre || !r.centre;
+    const critiques = (d.risques||[]).filter(cf).filter(r=>(r.probabilite||1)*(r.gravite||1)>=12).length;
+    const badge = document.getElementById('badge-duerp');
+    if (badge) { badge.textContent = critiques; badge.style.display = critiques>0?'inline-flex':'none'; }
+  },
+
+  cotation(r) { return (r.probabilite||1) * (r.gravite||1); },
+
+  niveau(score) {
+    return this.NIVEAUX.find(n => score >= n.min && score <= n.max) || this.NIVEAUX[0];
+  },
+
+  // ── Init + render ──
+  init() {
+    // Remplir le filtre centre
+    const sel = document.getElementById('duerp-filtre-centre');
+    if (sel && sel.options.length <= 1) {
+      (window.CENTRES||[]).forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ');
+        sel.appendChild(o);
+      });
+      if (App.centre !== 'ALL') sel.value = App.centre;
+    }
+    this.renderKPI();
+    this.showTab(this._tab);
+  },
+
+  render() { this.init(); },
+
+  showTab(tab) {
+    this._tab = tab;
+    ['risques','actions','historique'].forEach(t => {
+      const btn = document.getElementById('duerp-tab-'+t);
+      if (btn) {
+        btn.className = t===tab ? 'gamme-tab active' : 'gamme-tab';
+      }
+    });
+    const el = document.getElementById('duerp-content');
+    if (!el) return;
+    if (tab==='risques')    this.renderRisques(el);
+    else if (tab==='actions') this.renderActions(el);
+    else                    this.renderHistorique(el);
+  },
+
+  getCentreFilt() {
+    const sel = document.getElementById('duerp-filtre-centre');
+    return (sel && sel.value) ? sel.value : (App.centre==='ALL' ? '' : App.centre);
+  },
+
+  // ── KPIs ──
+  renderKPI() {
+    const el = document.getElementById('duerp-kpi-strip');
+    if (!el) return;
+    const d   = this.getData();
+    const cf  = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
+    const ris = (d.risques||[]).filter(cf);
+    const act = (d.actions||[]).filter(cf);
+    const critiques   = ris.filter(r=>this.cotation(r)>=12).length;
+    const importants  = ris.filter(r=>{const s=this.cotation(r);return s>=9&&s<12;}).length;
+    const moderes     = ris.filter(r=>{const s=this.cotation(r);return s>=4&&s<9;}).length;
+    const actOuvertes = act.filter(a=>a.statut!=='Réalisée').length;
+    const actRetard   = act.filter(a=>a.statut!=='Réalisée'&&a.echeance&&App.isExpired(a.echeance)).length;
+    const taux        = ris.length ? Math.round(ris.filter(r=>r.mesures&&r.mesures.length>0).length/ris.length*100) : 0;
+    el.innerHTML = `
+      <div class="kpi ${critiques>0?'danger':'ok'}">
+        <div class="kpi-label">🔴 Critiques</div>
+        <div class="kpi-val">${critiques}</div>
+        <div class="kpi-sub">Priorité immédiate</div>
+      </div>
+      <div class="kpi ${importants>0?'warn':'ok'}">
+        <div class="kpi-label">🟡 Importants</div>
+        <div class="kpi-val">${importants}</div>
+        <div class="kpi-sub">À planifier</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">🔵 Modérés</div>
+        <div class="kpi-val">${moderes}</div>
+        <div class="kpi-sub">Surveillance</div>
+      </div>
+      <div class="kpi ${actRetard>0?'danger':actOuvertes>0?'warn':'ok'}">
+        <div class="kpi-label">Actions ouvertes</div>
+        <div class="kpi-val">${actOuvertes}</div>
+        <div class="kpi-sub">${actRetard>0?'🔥 '+actRetard+' en retard':'à réaliser'}</div>
+      </div>
+      <div class="kpi ${taux>=80?'ok':taux>=50?'warn':'danger'}">
+        <div class="kpi-label">Risques maîtrisés</div>
+        <div class="kpi-val">${taux}%</div>
+        <div class="kpi-sub">${ris.length} risques évalués</div>
+      </div>`;
+  },
+
+  // ── VUE RISQUES ──
+  renderRisques(el) {
+    const d   = this.getData();
+    const cf  = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
+    const ris = (d.risques||[]).filter(cf).sort((a,b)=>this.cotation(b)-this.cotation(a));
+
+    if (!ris.length) {
+      el.innerHTML = `
+        <div class="empty-state" style="padding:48px 24px">
+          <div class="icon">🛡️</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Aucun risque évalué</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Commencez par ajouter une unité de travail et ses risques associés.</div>
+          <button class="btn btn-primary" onclick="DUERP.openRisqueModal()">+ Ajouter un risque</button>
+        </div>`;
+      return;
+    }
+
+    // Grouper par unité de travail
+    const byUnite = {};
+    ris.forEach(r => {
+      const u = r.unite || 'Sans unité';
+      if (!byUnite[u]) byUnite[u] = [];
+      byUnite[u].push(r);
+    });
+
+    let html = '';
+    Object.entries(byUnite).forEach(([unite, items]) => {
+      const critCount = items.filter(r=>this.cotation(r)>=12).length;
+      html += `
+        <div style="border-bottom:2px solid var(--border)">
+          <div style="padding:10px 16px;background:var(--bg3);display:flex;align-items:center;gap:10px;cursor:pointer"
+            onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+            <span style="font-weight:800;font-size:13px">🏭 ${unite}</span>
+            <span style="font-size:11px;color:var(--muted)">${items.length} risque(s)</span>
+            ${critCount>0?`<span class="pill pill-ko" style="font-size:10px">⚠ ${critCount} critique(s)</span>`:''}
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:10px;padding:2px 8px"
+              onclick="event.stopPropagation();DUERP.openRisqueModal('${unite.replace(/'/g,'\\x27')}')">+ Risque</button>
+          </div>
+          <div>
+            <table style="font-size:12px;width:100%">
+              <thead><tr style="background:var(--bg3)">
+                <th style="padding:6px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Danger / Situation</th>
+                <th style="padding:6px 8px;width:100px">Famille</th>
+                <th style="padding:6px 8px;width:50px;text-align:center">Prob.</th>
+                <th style="padding:6px 8px;width:50px;text-align:center">Grav.</th>
+                <th style="padding:6px 8px;width:70px;text-align:center">Cote</th>
+                <th style="padding:6px 8px;width:80px;text-align:center">Niveau</th>
+                <th style="padding:6px 12px">Mesures existantes</th>
+                <th style="padding:6px 8px;width:50px"></th>
+              </tr></thead>
+              <tbody>
+              ${items.map((r,i)=>{
+                const score = this.cotation(r);
+                const niv   = this.niveau(score);
+                const ridx  = (d.risques||[]).indexOf(r);
+                return `<tr style="border-bottom:1px solid var(--border);${score>=12?'background:rgba(220,38,38,.04)':score>=9?'background:rgba(217,119,6,.04)':''}">
+                  <td style="padding:8px 12px;font-weight:600">${r.danger||'—'}
+                    ${r.situation?`<div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px">${r.situation}</div>`:''}
+                    ${r.centre&&!this.getCentreFilt()?`<div style="font-size:10px;color:var(--accent);margin-top:2px">📍 ${(r.centre||'').replace('VILLAGE SPORTIF ','VS ')}</div>`:''}
+                  </td>
+                  <td style="padding:8px;font-size:10px;color:var(--muted)">${r.famille||'—'}</td>
+                  <td style="padding:8px;text-align:center">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--bg3);font-weight:800;font-size:13px">${r.probabilite||'—'}</span>
+                  </td>
+                  <td style="padding:8px;text-align:center">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--bg3);font-weight:800;font-size:13px">${r.gravite||'—'}</span>
+                  </td>
+                  <td style="padding:8px;text-align:center">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:${niv.color}22;color:${niv.color};font-weight:900;font-size:16px">${score}</span>
+                  </td>
+                  <td style="padding:8px;text-align:center">
+                    <span class="pill pill-${niv.cls}" style="font-size:10px">${niv.label}</span>
+                  </td>
+                  <td style="padding:8px 12px;font-size:11px;color:var(--muted)">${r.mesures||'—'}
+                    ${r.lien?`<br><a href="${r.lien}" target="_blank" style="font-size:10px;color:var(--accent)">📄 Document</a>`:''}
+                  </td>
+                  <td style="padding:8px;white-space:nowrap">
+                    <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.editRisque(${ridx})" title="Modifier">✏️</button>
+                    <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.addAction(${ridx})" title="Ajouter action">➕</button>
+                    <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.deleteRisque(${ridx})" title="Supprimer">🗑</button>
+                  </td>
+                </tr>`;
+              }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    });
+
+    // Légende cotation
+    html += `
+      <div style="padding:12px 16px;display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--bg3)">
+        <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;align-self:center">Cotation P×G :</span>
+        ${this.NIVEAUX.map(n=>`<span style="font-size:10px;padding:3px 10px;border-radius:12px;background:${n.color}22;color:${n.color};font-weight:700">${n.label} : ${n.min}–${n.max}</span>`).join('')}
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:11px" onclick="DUERP.openRisqueModal()">+ Nouveau risque</button>
+      </div>`;
+
+    el.innerHTML = html;
+  },
+
+  // ── VUE PLAN D'ACTIONS ──
+  renderActions(el) {
+    const d   = this.getData();
+    const cf  = a => !this.getCentreFilt() || a.centre===this.getCentreFilt();
+    const act = (d.actions||[]).filter(cf).sort((a,b)=>{
+      // Tri : en retard > ouvert > réalisé, puis par date
+      const score = x => x.statut==='Réalisée'?2:App.isExpired(x.echeance)?0:1;
+      return score(a)-score(b) || (a.echeance||'').localeCompare(b.echeance||'');
+    });
+
+    let html = `
+      <div style="padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+        <select id="duerp-act-filtre" class="centre-selector" style="width:160px;font-size:11px" onchange="DUERP.renderActions(document.getElementById('duerp-content'))">
+          <option value="">Tous statuts</option>
+          <option>À réaliser</option><option>En cours</option><option>Réalisée</option>
+        </select>
+        <span style="font-size:11px;color:var(--muted)">${act.length} action(s)</span>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="DUERP.openActionModal()">+ Action</button>
+      </div>`;
+
+    const filtreStat = (document.getElementById('duerp-act-filtre')||{}).value||'';
+    const shown = filtreStat ? act.filter(a=>a.statut===filtreStat) : act;
+
+    if (!shown.length) {
+      html += `<div class="empty-state" style="padding:40px"><div class="icon">✅</div><div>Aucune action corrective — cliquez "+ Action" pour commencer</div></div>`;
+      el.innerHTML = html; return;
+    }
+
+    html += `<div style="overflow-x:auto"><table style="font-size:12px;width:100%">
+      <thead><tr style="background:var(--bg3)">
+        <th style="padding:8px 12px;text-align:left">Action corrective</th>
+        <th style="padding:8px;width:120px">Risque associé</th>
+        <th style="padding:8px;width:110px">Responsable</th>
+        <th style="padding:8px;width:90px">Échéance</th>
+        <th style="padding:8px;width:80px">Priorité</th>
+        <th style="padding:8px;width:90px">Statut</th>
+        <th style="padding:8px;width:40px">Doc</th>
+        <th style="padding:8px;width:60px"></th>
+      </tr></thead>
+      <tbody>
+      ${shown.map((a,i)=>{
+        const retard  = a.statut!=='Réalisée' && a.echeance && App.isExpired(a.echeance);
+        const prioCls = a.priorite==='Haute'?'ko':a.priorite==='Moyenne'?'warn':'ok';
+        const statCls = a.statut==='Réalisée'?'ok':a.statut==='En cours'?'warn':retard?'ko':'';
+        const aidx    = (d.actions||[]).indexOf(a);
+        const lienBtn = a.lien?`<a href="${a.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'—';
+        return `<tr style="border-bottom:1px solid var(--border);${retard?'background:rgba(220,38,38,.04)':''}">
+          <td style="padding:8px 12px;font-weight:600">${a.action||'—'}
+            ${a.centre&&!this.getCentreFilt()?`<div style="font-size:10px;color:var(--accent)">📍 ${(a.centre||'').replace('VILLAGE SPORTIF ','VS ')}</div>`:''}
+          </td>
+          <td style="padding:8px;font-size:10px;color:var(--muted)">${a.risqueRef||'—'}</td>
+          <td style="padding:8px;font-size:11px">${a.responsable||'—'}</td>
+          <td style="padding:8px;font-family:'DM Mono',monospace;font-size:11px;color:${retard?'var(--red)':'var(--text)'}">
+            ${App.fmtDate(a.echeance)||'—'}${retard?' 🔥':''}
+          </td>
+          <td style="padding:8px"><span class="pill pill-${prioCls}" style="font-size:10px">${a.priorite||'—'}</span></td>
+          <td style="padding:8px">
+            <select class="editable-cell" style="font-size:10px;padding:2px 4px"
+              onchange="DUERP.updateActionStatut(${aidx},this.value)">
+              <option ${a.statut==='À réaliser'?'selected':''}>À réaliser</option>
+              <option ${a.statut==='En cours'?'selected':''}>En cours</option>
+              <option ${a.statut==='Réalisée'?'selected':''}>Réalisée</option>
+            </select>
+          </td>
+          <td style="padding:8px">${lienBtn}</td>
+          <td style="padding:8px;white-space:nowrap">
+            <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="DUERP.editAction(${aidx})">✏️</button>
+            <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="DUERP.deleteAction(${aidx})">🗑</button>
+          </td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table></div>`;
+
+    el.innerHTML = html;
+  },
+
+  // ── VUE HISTORIQUE DES VERSIONS ──
+  renderHistorique(el) {
+    const d = this.getData();
+    const versions = (d.versions||[]).slice().reverse();
+    if (!versions.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:40px"><div class="icon">🕐</div>
+        <div>Aucune version archivée</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px">Chaque "Valider & Archiver" crée une snapshot horodatée</div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="DUERP.archiver()">📸 Archiver la version actuelle</button>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div style="padding:12px 16px;text-align:right;border-bottom:1px solid var(--border)">
+        <button class="btn btn-primary btn-sm" onclick="DUERP.archiver()">📸 Archiver version actuelle</button>
+      </div>
+      <div style="max-height:500px;overflow-y:auto">
+        ${versions.map((v,i)=>`
+        <div style="display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);align-items:flex-start">
+          <div style="font-size:24px;width:32px;text-align:center;flex-shrink:0">📋</div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:13px">Version du ${new Date(v.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">
+              ${v.nbRisques} risques · ${v.nbActions} actions · ${v.nbCritiques} critiques
+              ${v.auteur?` · par ${v.auteur}`:''}
+            </div>
+            ${v.commentaire?`<div style="font-size:11px;margin-top:4px;font-style:italic">"${v.commentaire}"</div>`:''}
+          </div>
+          <button class="btn btn-ghost btn-sm" style="font-size:10px" onclick="DUERP.exportVersionPDF(${versions.length-1-i})">📄 PDF</button>
+        </div>`).join('')}
+      </div>`;
+  },
+
+  // ── MODALS ──
+  openRisqueModal(preUnite) {
+    const unites = this.UNITES_DEFAULT;
+    const sel = document.getElementById('duerp-filtre-centre');
+    const centreCurrent = (sel&&sel.value) ? sel.value : (App.centre!=='ALL'?App.centre:'');
+    App.openModal('Nouveau Risque', `
+      <div class="form-grid">
+        <div class="form-group"><label>Unité de travail</label>
+          <input type="text" id="m-unite" list="dl-unites" value="${preUnite||''}" placeholder="Ex: Cuisine, Activités outdoor…">
+          <datalist id="dl-unites">${unites.map(u=>`<option value="${u}">`).join('')}</datalist>
+        </div>
+        <div class="form-group"><label>Centre</label>
+          <select id="m-centre">${App.centreOptions(centreCurrent)}</select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label>Danger / Situation dangereuse</label>
+          <input type="text" id="m-danger" placeholder="Ex: Manipulation de produits chimiques de nettoyage">
+        </div>
+        <div class="form-group"><label>Famille de risque</label>
+          <select id="m-famille">${this.FAMILLES.map(f=>`<option>${f}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Situation de travail</label>
+          <input type="text" id="m-situation" placeholder="Ex: Lors de la désinfection des sanitaires">
+        </div>
+        <div class="form-group"><label>Probabilité (1 à 5)</label>
+          <select id="m-probabilite">
+            <option value="1">1 — Improbable</option>
+            <option value="2">2 — Peu probable</option>
+            <option value="3" selected>3 — Probable</option>
+            <option value="4">4 — Très probable</option>
+            <option value="5">5 — Quasi certain</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Gravité (1 à 5)</label>
+          <select id="m-gravite">
+            <option value="1">1 — Négligeable</option>
+            <option value="2">2 — Mineure</option>
+            <option value="3" selected>3 — Sérieuse</option>
+            <option value="4">4 — Grave</option>
+            <option value="5">5 — Très grave / Mortelle</option>
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>Mesures de prévention existantes</label>
+          <textarea id="m-mesures" rows="2" placeholder="EPI, procédure, formation, affichage…"></textarea>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document (fiche produit, procédure…)</label>
+          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
+        </div>
+      </div>`, 'duerp-risque');
+  },
+
+  editRisque(idx) {
+    const d = this.getData();
+    const r = (d.risques||[])[idx];
+    if (!r) return;
+    this._editRisqueIdx = idx;
+    App.openModal('Modifier le Risque', `
+      <div class="form-grid">
+        <div class="form-group"><label>Unité de travail</label>
+          <input type="text" id="m-unite" list="dl-unites2" value="${r.unite||''}">
+          <datalist id="dl-unites2">${this.UNITES_DEFAULT.map(u=>`<option value="${u}">`).join('')}</datalist>
+        </div>
+        <div class="form-group"><label>Centre</label>
+          <select id="m-centre">${App.centreOptions(r.centre||'')}</select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>Danger / Situation</label>
+          <input type="text" id="m-danger" value="${r.danger||''}">
+        </div>
+        <div class="form-group"><label>Famille</label>
+          <select id="m-famille">${this.FAMILLES.map(f=>`<option${f===r.famille?' selected':''}>${f}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label>Situation</label>
+          <input type="text" id="m-situation" value="${r.situation||''}">
+        </div>
+        <div class="form-group"><label>Probabilité</label>
+          <select id="m-probabilite">
+            ${[1,2,3,4,5].map(n=>`<option value="${n}"${n==r.probabilite?' selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Gravité</label>
+          <select id="m-gravite">
+            ${[1,2,3,4,5].map(n=>`<option value="${n}"${n==r.gravite?' selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>Mesures existantes</label>
+          <textarea id="m-mesures" rows="2">${r.mesures||''}</textarea>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document</label>
+          <input type="url" id="m-lien" value="${r.lien||''}">
+        </div>
+      </div>`, 'duerp-risque-edit');
+  },
+
+  openActionModal(risqueRef) {
+    const sel = document.getElementById('duerp-filtre-centre');
+    const centreCurrent = (sel&&sel.value) ? sel.value : (App.centre!=='ALL'?App.centre:'');
+    App.openModal('Nouvelle Action Corrective', `
+      <div class="form-grid">
+        <div class="form-group full" style="grid-column:span 2"><label>Action corrective à mener</label>
+          <textarea id="m-action" rows="2" placeholder="Ex: Fournir des gants résistants aux produits chimiques, Former le personnel…"></textarea>
+        </div>
+        <div class="form-group"><label>Risque associé</label>
+          <input type="text" id="m-risque-ref" value="${risqueRef||''}" placeholder="Réf. du risque ou danger concerné">
+        </div>
+        <div class="form-group"><label>Centre</label>
+          <select id="m-centre">${App.centreOptions(centreCurrent)}</select>
+        </div>
+        <div class="form-group"><label>Responsable</label>
+          <input type="text" id="m-responsable" placeholder="Nom / Fonction">
+        </div>
+        <div class="form-group"><label>Échéance</label>
+          <input type="date" id="m-echeance">
+        </div>
+        <div class="form-group"><label>Priorité</label>
+          <select id="m-priorite">
+            <option value="Haute">🔴 Haute</option>
+            <option value="Moyenne" selected>🟡 Moyenne</option>
+            <option value="Basse">🟢 Basse</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="m-statut">
+            <option>À réaliser</option><option>En cours</option><option>Réalisée</option>
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document / preuve</label>
+          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
+        </div>
+      </div>`, 'duerp-action');
+  },
+
+  editAction(idx) {
+    const d = this.getData();
+    const a = (d.actions||[])[idx];
+    if (!a) return;
+    this._editActionIdx = idx;
+    App.openModal('Modifier l\'Action', `
+      <div class="form-grid">
+        <div class="form-group full" style="grid-column:span 2"><label>Action</label>
+          <textarea id="m-action" rows="2">${a.action||''}</textarea>
+        </div>
+        <div class="form-group"><label>Responsable</label>
+          <input type="text" id="m-responsable" value="${a.responsable||''}">
+        </div>
+        <div class="form-group"><label>Échéance</label>
+          <input type="date" id="m-echeance" value="${a.echeance||''}">
+        </div>
+        <div class="form-group"><label>Priorité</label>
+          <select id="m-priorite">
+            ${['Haute','Moyenne','Basse'].map(p=>`<option${p===a.priorite?' selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Statut</label>
+          <select id="m-statut">
+            ${['À réaliser','En cours','Réalisée'].map(s=>`<option${s===a.statut?' selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document</label>
+          <input type="url" id="m-lien" value="${a.lien||''}">
+        </div>
+      </div>`, 'duerp-action-edit');
+  },
+
+  addAction(risqueIdx) {
+    const d = this.getData();
+    const r = (d.risques||[])[risqueIdx];
+    this.openActionModal(r ? (r.danger||'').slice(0,40) : '');
+    this.showTab('actions');
+  },
+
+  // ── Mutations données ──
+  deleteRisque(idx) {
+    if (!confirm('Supprimer ce risque ?')) return;
+    const d = this.getData();
+    d.risques.splice(idx, 1);
+    this.saveData(d);
+    this.renderKPI();
+    this.renderRisques(document.getElementById('duerp-content'));
+  },
+
+  deleteAction(idx) {
+    if (!confirm('Supprimer cette action ?')) return;
+    const d = this.getData();
+    d.actions.splice(idx, 1);
+    this.saveData(d);
+    this.renderKPI();
+    this.renderActions(document.getElementById('duerp-content'));
+  },
+
+  updateActionStatut(idx, val) {
+    const d = this.getData();
+    if (d.actions && d.actions[idx]) {
+      d.actions[idx].statut = val;
+      this.saveData(d);
+      this.renderKPI();
+    }
+  },
+
+  // ── Archivage ──
+  archiver() {
+    const d = this.getData();
+    const cf = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
+    const ris = (d.risques||[]).filter(cf);
+    const act = (d.actions||[]).filter(cf);
+    const comment = prompt('Commentaire de version (optionnel) :','');
+    if (!d.versions) d.versions = [];
+    d.versions.push({
+      date:        new Date().toISOString(),
+      auteur:      (window.Auth && Auth._currentUser) ? Auth._currentUser : 'utilisateur',
+      commentaire: comment||'',
+      nbRisques:   ris.length,
+      nbActions:   act.length,
+      nbCritiques: ris.filter(r=>this.cotation(r)>=12).length,
+      snapshot:    {risques: JSON.parse(JSON.stringify(ris)), actions: JSON.parse(JSON.stringify(act))}
+    });
+    this.saveData(d);
+    this.renderHistorique(document.getElementById('duerp-content'));
+    alert('✅ Version archivée avec succès');
+  },
+
+  // ── Export PDF ──
+  exportPDF() {
+    if (!window.jspdf) { alert('jsPDF non disponible'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc  = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    const d    = this.getData();
+    const cf   = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
+    const ris  = (d.risques||[]).filter(cf).sort((a,b)=>this.cotation(b)-this.cotation(a));
+    const today= new Date().toLocaleDateString('fr-FR');
+    const centreName = this.getCentreFilt() || 'Tous centres';
+
+    // Header
+    doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
+    doc.text(`UCPA — DUERP · ${centreName}`, 14, 11);
+    doc.setFontSize(8); doc.text(today, 250, 11);
+
+    // Sous-titre
+    doc.setTextColor(60,60,60); doc.setFontSize(9); doc.setFont('helvetica','italic');
+    doc.text('Document Unique d\'Évaluation des Risques Professionnels', 14, 22);
+
+    // Table
+    let y = 30;
+    const cols = [{label:'Unité de travail',w:40},{label:'Danger',w:65},{label:'Famille',w:30},
+                  {label:'P',w:8},{label:'G',w:8},{label:'P×G',w:10},{label:'Niveau',w:22},{label:'Mesures',w:104}];
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(80,80,80);
+    let x=14; cols.forEach(c=>{doc.text(c.label,x+1,y);x+=c.w;}); y+=5;
+
+    doc.setFont('helvetica','normal');
+    ris.forEach(r => {
+      if (y > 190) { doc.addPage(); y = 20; }
+      const score = this.cotation(r);
+      const niv   = this.niveau(score);
+      const row   = [r.unite,r.danger,r.famille,r.probabilite,r.gravite,score,niv.label,(r.mesures||'').slice(0,80)];
+      // Fond coloré si critique
+      if (score >= 12) { doc.setFillColor(220,38,38,0.08); doc.rect(14,y-3,269,6,'F'); }
+      else if (score >= 9) { doc.setFillColor(217,119,6,0.08); doc.rect(14,y-3,269,6,'F'); }
+      x=14;
+      row.forEach((v,i)=>{
+        const hex = i===6?niv.color:'#333333';
+        const r2=parseInt(hex.slice(1,3),16)||50, g2=parseInt(hex.slice(3,5),16)||50, b2=parseInt(hex.slice(5,7),16)||50;
+        if(i===6) doc.setTextColor(r2,g2,b2); else doc.setTextColor(50,50,50);
+        doc.text(String(v||'—').slice(0,Math.floor(cols[i].w/1.8)), x+1, y);
+        x+=cols[i].w;
+      });
+      y+=7;
+    });
+
+    // Légende
+    y+=5;
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
+    doc.text('Grille de cotation (Probabilité × Gravité) :', 14, y); y+=5;
+    this.NIVEAUX.forEach(n => {
+      const r2=parseInt(n.color.slice(1,3),16), g2=parseInt(n.color.slice(3,5),16), b2=parseInt(n.color.slice(5,7),16);
+      doc.setTextColor(r2,g2,b2); doc.setFont('helvetica','normal');
+      doc.text(`${n.label} : ${n.min}–${n.max}     `, 14+this.NIVEAUX.indexOf(n)*45, y);
+    });
+
+    doc.save(`UCPA_DUERP_${centreName.replace(/\s/g,'_')}_${today.replace(/\//g,'-')}.pdf`);
+  },
+
+  exportVersionPDF(vIdx) {
+    const d = this.getData();
+    const v = (d.versions||[])[vIdx];
+    if (!v) return;
+    alert(`Export PDF de la version du ${new Date(v.date).toLocaleDateString('fr-FR')} — ${v.nbRisques} risques, ${v.nbCritiques} critiques`);
+    // Même logique que exportPDF mais avec v.snapshot.risques
+  },
+};
+
+// ── DUERP save handlers (injectés dans App.saveModal) ──
+// Seront appelés via App.saveModal() → handlers['duerp-risque'] etc.
+
+// ════════════════════════════════════════════
+// ── CALENDRIER DES OPÉRATIONS ──
+// ════════════════════════════════════════════
+const Cal = {
+  _year:    new Date().getFullYear(),
+  _month:   new Date().getMonth(),  // 0-based
+  _view:    'month',  // 'month' | 'week' | 'list'
+  _filters: {registre:true, rh:true, contrats:true, rondes:true, commission:true, findings:true, sanitaire:true},
+  _weekStart: 0, // lundi=1, dimanche=0 → on veut lundi
+
+  // ── Couleurs par catégorie ──
+  CAT: {
+    registre:   {color:'#e8541a', bg:'#e8541a20', label:'🔥 Contrôle', icon:'🔥'},
+    rh:         {color:'#7c3aed', bg:'#7c3aed20', label:'👤 Habilitation', icon:'👤'},
+    contrats:   {color:'#0284c7', bg:'#0284c720', label:'📋 Contrat', icon:'📋'},
+    rondes:     {color:'#059669', bg:'#05966920', label:'🔄 Ronde', icon:'🔄'},
+    commission: {color:'#dc2626', bg:'#dc262620', label:'🏛️ Commission', icon:'🏛️'},
+    findings:   {color:'#d97706', bg:'#d9770620', label:'🔍 Observation', icon:'🔍'},
+    sanitaire:  {color:'#0369a1', bg:'#0369a120', label:'💧 Sanitaire', icon:'💧'},
+  },
+
+  // ── Collecte de tous les événements depuis les données ERP ──
+  getEvents() {
+    const events = [];
+    const centre = App.centre;
+    const cf = c => centre === 'ALL' || c === centre || !c;
+
+    // 1. Registre sécurité — prochains contrôles
+    const reg = App.load('registre') || {};
+    Object.entries(reg).forEach(([c, rows]) => {
+      if (!cf(c)) return;
+      (rows || []).forEach(r => {
+        if (r.prochainControle) {
+          const expired = App.isExpired(r.prochainControle);
+          const soon    = App.isSoonExpiring(r.prochainControle, 60);
+          events.push({
+            date: r.prochainControle, cat: 'registre',
+            title: r.libelle || r.catId || 'Contrôle',
+            sub: (c||'').replace('VILLAGE SPORTIF ','VS '),
+            urgent: expired, warn: soon && !expired,
+            detail: {centre:c, periodicite:r.periodicite, resultat:r.resultat, organisme:r.organisme},
+            action: () => { App.selectCentre(c); App.nav('registre'); }
+          });
+        }
+      });
+    });
+
+    // 2. RH habilitations — expirations
+    const rh = App.load('rh') || [];
+    rh.filter(r => cf(r.centre) && r.expiration).forEach(r => {
+      const expired = App.isExpired(r.expiration);
+      const soon    = App.isSoonExpiring(r.expiration, 90);
+      events.push({
+        date: r.expiration, cat: 'rh',
+        title: r.habilitation || r.nom || 'Habilitation',
+        sub: (r.nom||'') + (r.centre ? ' · '+(r.centre||'').replace('VILLAGE SPORTIF ','VS ') : ''),
+        urgent: expired, warn: soon && !expired,
+        detail: {nom:r.nom, poste:r.poste, habilitation:r.habilitation, lien:r.lien},
+        action: () => App.nav('rh')
+      });
+    });
+
+    // 3. Contrats — fins
+    const contrats = App.load('contrats') || [];
+    contrats.filter(c => cf(c.centre) && c.fin).forEach(c => {
+      const expired = App.isExpired(c.fin);
+      const soon    = App.isSoonExpiring(c.fin, 90);
+      events.push({
+        date: c.fin, cat: 'contrats',
+        title: c.objet || c.prestataire || 'Contrat',
+        sub: (c.prestataire||'') + (c.centre ? ' · '+(c.centre||'').replace('VILLAGE SPORTIF ','VS ') : ''),
+        urgent: expired, warn: soon && !expired,
+        detail: {prestataire:c.prestataire, objet:c.objet, debut:c.debut, lien:c.lien},
+        action: () => App.nav('contrats')
+      });
+    });
+
+    // 4. Rondes — réalisées (dates passées en vert)
+    const rondes = App.load('rondes') || [];
+    rondes.filter(r => cf(r.centre) && r.date).slice(0, 200).forEach(r => {
+      events.push({
+        date: r.date, cat: 'rondes',
+        title: r.type || 'Ronde',
+        sub: (r.agent||'') + (r.centre ? ' · '+(r.centre||'').replace('VILLAGE SPORTIF ','VS ') : ''),
+        urgent: false, warn: false, done: true,
+        detail: {agent:r.agent, type:r.type, observations:r.observations, lien:r.lien},
+        action: () => App.nav('rondes')
+      });
+    });
+
+    // 5. Commission — prescriptions avec échéance
+    const comm = App.load('commission') || {};
+    (comm.prescriptions || []).filter(p => cf(p.centre) && p.dateEcheance).forEach(p => {
+      const expired = App.isExpired(p.dateEcheance) && p.statut !== 'Levée';
+      const soon    = App.isSoonExpiring(p.dateEcheance, 60) && p.statut !== 'Levée';
+      events.push({
+        date: p.dateEcheance, cat: 'commission',
+        title: (p.priorite==='Majeure'?'🔴 ':'') + (p.description||'Prescription').slice(0,40),
+        sub: (p.centre||'').replace('VILLAGE SPORTIF ','VS ') + (p.numPV?' · PV:'+p.numPV:''),
+        urgent: expired, warn: soon && !expired, done: p.statut === 'Levée',
+        detail: {description:p.description, priorite:p.priorite, statut:p.statut, numPV:p.numPV, lien:p.lien},
+        action: () => App.nav('commission')
+      });
+    });
+    // Visites commission
+    (comm.visites || []).filter(v => cf(v.centre) && v.date).forEach(v => {
+      events.push({
+        date: v.date, cat: 'commission',
+        title: v.type || 'Visite Commission',
+        sub: (v.centre||'').replace('VILLAGE SPORTIF ','VS ') + (v.resultat?' · '+v.resultat:''),
+        urgent: false, warn: false, done: true,
+        detail: {type:v.type, resultat:v.resultat, numPV:v.numPV, lien:v.lien},
+        action: () => App.nav('commission')
+      });
+    });
+
+    // 6. Findings — échéances
+    const findings = App.load('observations') || [];
+    findings.filter(f => {
+      const site = f.site||f.ville||'';
+      return (centre==='ALL' || site.toUpperCase().includes(centre.replace('VILLAGE SPORTIF ','').replace('CENTRE AQUATIQUE ',''))) && f.dateEcheance && f.traitement !== 'Traitée';
+    }).forEach(f => {
+      const expired = App.isExpired(f.dateEcheance);
+      const soon    = App.isSoonExpiring(f.dateEcheance, 30);
+      events.push({
+        date: f.dateEcheance, cat: 'findings',
+        title: (f.domaine||'Observation').slice(0,30),
+        sub: (f.details||'').slice(0,45),
+        urgent: expired, warn: soon && !expired,
+        detail: {site:f.site||f.ville, domaine:f.domaine, details:f.details, traitement:f.traitement},
+        action: () => App.nav('observations')
+      });
+    });
+
+    // 7. Sanitaire — dernières rondes ECS
+    const san = App.load('sanitaire') || {};
+    Object.entries(san).forEach(([c, releves]) => {
+      if (!cf(c)) return;
+      (releves||[]).slice(0,30).forEach(rel => {
+        if (rel.datetime) {
+          const d = rel.datetime.split('T')[0];
+          events.push({
+            date: d, cat: 'sanitaire',
+            title: 'Ronde ECS',
+            sub: (c||'').replace('VILLAGE SPORTIF ','VS ') + (rel.agent?' · '+rel.agent:''),
+            urgent: false, warn: false, done: true,
+            detail: {centre:c, agent:rel.agent, datetime:rel.datetime},
+            action: () => App.nav('sanitaire')
+          });
+        }
+      });
+    });
+
+    return events;
+  },
+
+  // ── Filtrer les événements par catégorie ──
+  filtered() {
+    return this.getEvents().filter(e => this._filters[e.cat] !== false);
+  },
+
+  // ── Événements pour une date donnée (YYYY-MM-DD) ──
+  forDate(dateStr) {
+    return this.filtered().filter(e => e.date === dateStr);
+  },
+
+  // ── Entrée principale ──
+  render() {
+    this.updateLabel();
+    this.updateViewButtons();
+    const container = document.getElementById('cal-container');
+    if (!container) return;
+    if (this._view === 'month') this.renderMonth(container);
+    else if (this._view === 'week') this.renderWeek(container);
+    else this.renderList(container);
+  },
+
+  updateLabel() {
+    const el = document.getElementById('cal-month-label');
+    if (!el) return;
+    const d = new Date(this._year, this._month, 1);
+    if (this._view === 'month') {
+      el.textContent = d.toLocaleDateString('fr-FR', {month:'long', year:'numeric'}).replace(/^\w/, c=>c.toUpperCase());
+    } else if (this._view === 'week') {
+      const start = this._weekStart;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const day0  = new Date(today);
+      const dow   = today.getDay();
+      const diff  = (dow + 6) % 7; // lundi = 0
+      day0.setDate(today.getDate() - diff + start);
+      const end = new Date(day0); end.setDate(day0.getDate() + 6);
+      el.textContent = `${day0.toLocaleDateString('fr-FR',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'})}`;
+    } else {
+      el.textContent = 'Liste · 3 mois';
+    }
+  },
+
+  updateViewButtons() {
+    ['month','week','list'].forEach(v => {
+      const btn = document.getElementById('cal-view-'+v);
+      if (btn) {
+        btn.style.background = v === this._view ? 'var(--accent)' : '';
+        btn.style.color      = v === this._view ? '#fff' : '';
+      }
+    });
+  },
+
+  // ── VUE MENSUELLE ──
+  renderMonth(container) {
+    const year = this._year, month = this._month;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const firstDay = new Date(year, month, 1);
+    const lastDay  = new Date(year, month+1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7; // 0=lundi
+    const DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+    let html = `<div class="cal-grid">`;
+    // Headers
+    DAYS.forEach(d => { html += `<div class="cal-head">${d}</div>`; });
+
+    // Cellules
+    const totalCells = Math.ceil((startDow + lastDay.getDate()) / 7) * 7;
+    for (let i = 0; i < totalCells; i++) {
+      const dayOffset = i - startDow;
+      const cellDate  = new Date(year, month, dayOffset + 1);
+      const isToday   = cellDate.getTime() === today.getTime();
+      const otherMon  = cellDate.getMonth() !== month;
+      const dateStr   = this.toStr(cellDate);
+      const evts      = this.forDate(dateStr);
+
+      const urgentCnt = evts.filter(e=>e.urgent).length;
+      const warnCnt   = evts.filter(e=>e.warn).length;
+
+      let cellClass = 'cal-cell';
+      if (isToday) cellClass += ' today';
+      if (otherMon) cellClass += ' other-month';
+
+      html += `<div class="${cellClass}" onclick="Cal.openDay('${dateStr}')">`;
+      html += `<div class="cal-day-num">${cellDate.getDate()}</div>`;
+
+      // Afficher max 3 événements
+      const shown = evts.slice(0, 3);
+      shown.forEach(e => {
+        const cat = this.CAT[e.cat]||{};
+        const bg  = e.urgent ? '#dc262630' : e.done ? cat.bg.replace('20','15') : cat.bg;
+        const col = e.urgent ? '#dc2626' : e.done ? cat.color+'99' : cat.color;
+        html += `<span class="cal-event" style="background:${bg};color:${col};${e.done?'text-decoration:line-through;opacity:.7':''}"
+          onclick="event.stopPropagation();Cal.openEvent(${JSON.stringify(dateStr)},${evts.indexOf(e)})"
+          title="${(e.title+' · '+e.sub).replace(/"/g,'')}">${e.title}</span>`;
+      });
+      if (evts.length > 3) {
+        html += `<span class="cal-more" onclick="event.stopPropagation();Cal.openDay('${dateStr}')">+${evts.length-3} autres</span>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+    container.innerHTML = html;
+  },
+
+  // ── VUE SEMAINE ──
+  renderWeek(container) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dow   = (today.getDay() + 6) % 7; // 0=lundi
+    const weekOffset = this._weekStart || 0;
+    const day0  = new Date(today);
+    day0.setDate(today.getDate() - dow + weekOffset * 7);
+    const DAYS  = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+    let html = `<div class="cal-week-grid">`;
+    // Corner
+    html += `<div class="cal-week-time" style="border-bottom:none;padding:8px"></div>`;
+    // Headers
+    for (let d = 0; d < 7; d++) {
+      const dt = new Date(day0); dt.setDate(day0.getDate() + d);
+      const isToday = dt.getTime() === today.getTime();
+      const dayStr  = this.toStr(dt);
+      html += `<div class="cal-week-head${isToday?' today':''}" onclick="Cal.openDay('${dayStr}')" style="cursor:pointer">
+        <div>${DAYS[d]}</div>
+        <div style="font-size:18px;font-weight:900;${isToday?'color:var(--accent)':''}">${dt.getDate()}</div>
+      </div>`;
+    }
+    // Ligne événements (sans créneaux horaires)
+    html += `<div class="cal-week-time" style="font-size:10px;color:var(--muted)">Evt.</div>`;
+    for (let d = 0; d < 7; d++) {
+      const dt = new Date(day0); dt.setDate(day0.getDate() + d);
+      const dateStr = this.toStr(dt);
+      const evts = this.forDate(dateStr);
+      html += `<div class="cal-week-cell" onclick="Cal.openDay('${dateStr}')">`;
+      evts.forEach((e, idx) => {
+        const cat = this.CAT[e.cat]||{};
+        const col = e.urgent ? '#dc2626' : e.done ? cat.color+'90' : cat.color;
+        const bg  = e.urgent ? '#dc262620' : cat.bg;
+        html += `<span class="cal-event" style="background:${bg};color:${col}"
+          onclick="event.stopPropagation();Cal.openEvent('${dateStr}',${idx})">${e.title}</span>`;
+      });
+      html += `</div>`;
+    }
+    html += `</div>`;
+    container.innerHTML = html;
+  },
+
+  // ── VUE LISTE ──
+  renderList(container) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const start = new Date(today); start.setDate(today.getDate() - 30);
+    const end   = new Date(today); end.setDate(today.getDate() + 60);
+
+    const evts = this.filtered()
+      .filter(e => { if (!e.date) return false; const d = new Date(e.date); return d >= start && d <= end; })
+      .sort((a,b) => a.date.localeCompare(b.date));
+
+    if (!evts.length) {
+      container.innerHTML = `<div class="empty-state" style="padding:40px"><div class="icon">📅</div><div>Aucun événement sur cette période</div></div>`;
+      return;
+    }
+
+    let html = '';
+    let lastDate = '';
+    evts.forEach((e, idx) => {
+      if (e.date !== lastDate) {
+        lastDate = e.date;
+        const d = new Date(e.date+'T00:00:00');
+        const isToday = d.getTime() === today.getTime();
+        const isPast  = d < today;
+        html += `<div style="padding:8px 16px;background:${isToday?'rgba(232,84,26,.08)':'var(--bg3)'};
+          font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+          color:${isToday?'var(--accent)':isPast?'var(--muted)':'var(--text)'};
+          border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1">
+          ${isToday ? '⭐ AUJOURD\'HUI · ' : ''}${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+        </div>`;
+      }
+      const cat = this.CAT[e.cat]||{color:'#888',bg:'#88888820',icon:'•'};
+      const col = e.urgent ? '#dc2626' : e.done ? cat.color+'80' : cat.color;
+      html += `<div class="cal-list-item" onclick="Cal._showDetail(e${idx})">
+        <div class="cal-list-dot" style="background:${col}"></div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:${col};${e.done?'text-decoration:line-through;opacity:.65':''}">${cat.icon} ${e.title}
+            ${e.urgent?'<span class="cal-event-badge" style="background:#dc2626;color:#fff">URGENT</span>':''}
+            ${e.warn?'<span class="cal-event-badge" style="background:var(--amber);color:#fff">Bientôt</span>':''}
+            ${e.done?'<span class="cal-event-badge" style="background:#059669;color:#fff">✓</span>':''}
+          </div>
+          ${e.sub?`<div style="font-size:11px;color:var(--muted)">${e.sub}</div>`:''}
+        </div>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:10px;flex-shrink:0"
+          onclick="event.stopPropagation();(${e.action.toString()})()">→</button>
+      </div>`;
+      // Stocker la ref pour onclick
+      window[`Cal_e${idx}`] = e;
+    });
+    container.innerHTML = `<div style="max-height:70vh;overflow-y:auto">${html}</div>`;
+    // Stocker les refs proprement
+    evts.forEach((e,i) => { window[`e${i}`] = e; });
+  },
+
+  // ── Ouvrir un jour ──
+  openDay(dateStr) {
+    const evts = this.forDate(dateStr);
+    if (!evts.length) return;
+    if (evts.length === 1) { this._showDetail(evts[0]); return; }
+    const d = new Date(dateStr+'T00:00:00');
+    this._showPanel(
+      `📅 ${d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}`,
+      `<div style="max-height:300px;overflow-y:auto">
+        ${evts.map((e,i) => {
+          const cat = this.CAT[e.cat]||{color:'#888',icon:'•'};
+          const col = e.urgent ? '#dc2626' : e.done ? cat.color+'80' : cat.color;
+          return `<div class="cal-list-item" onclick="Cal._showDetail(Cal.forDate('${dateStr}')[${i}])" style="padding:8px 0">
+            <div class="cal-list-dot" style="background:${col}"></div>
+            <div><div style="font-size:12px;font-weight:600;color:${col}">${cat.icon} ${e.title}</div>
+            <div style="font-size:11px;color:var(--muted)">${e.sub||''}</div></div>
+          </div>`;
+        }).join('')}
+      </div>`,
+      []
+    );
+  },
+
+  openEvent(dateStr, idx) {
+    const evts = this.forDate(dateStr);
+    if (evts[idx]) this._showDetail(evts[idx]);
+  },
+
+  _showDetail(e) {
+    if (!e) return;
+    const cat = this.CAT[e.cat]||{color:'#888',icon:'•'};
+    const col = e.urgent ? '#dc2626' : cat.color;
+    let body = '';
+    if (e.detail) {
+      Object.entries(e.detail).forEach(([k,v]) => {
+        if (!v) return;
+        const labels = {centre:'Centre',periodicite:'Périodicité',resultat:'Résultat',organisme:'Organisme',
+          nom:'Nom',poste:'Poste',habilitation:'Habilitation',prestataire:'Prestataire',objet:'Objet',
+          debut:'Début',agent:'Agent',type:'Type',observations:'Observations',
+          description:'Description',priorite:'Priorité',statut:'Statut',numPV:'N° PV',
+          site:'Site',domaine:'Domaine',details:'Détails',traitement:'Traitement',datetime:'Date/heure'};
+        if (k === 'lien') {
+          body += `<div style="margin-bottom:6px"><a href="${v}" target="_blank" class="btn btn-secondary btn-sm" style="font-size:11px">📄 Ouvrir document</a></div>`;
+        } else {
+          body += `<div style="margin-bottom:6px"><span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">${labels[k]||k}</span><br><span style="font-size:13px">${v}</span></div>`;
+        }
+      });
+    }
+    const navBtn = e.action ? `<button class="btn btn-primary btn-sm" onclick="(${e.action.toString()})();document.getElementById('cal-detail-panel').style.display='none';document.getElementById('cal-backdrop').style.display='none'">Voir dans l'onglet →</button>` : '';
+    this._showPanel(`${cat.icon} ${e.title}`, body, [navBtn]);
+    // Badges statut
+    if (e.urgent) document.getElementById('cal-detail-title').innerHTML += ' <span class="cal-event-badge" style="background:#dc2626;color:#fff">URGENT</span>';
+    if (e.done)   document.getElementById('cal-detail-title').innerHTML += ' <span class="cal-event-badge" style="background:#059669;color:#fff">✓ Réalisé</span>';
+    document.getElementById('cal-detail-title').style.color = col;
+  },
+
+  _showPanel(title, body, buttons) {
+    document.getElementById('cal-detail-title').textContent  = title;
+    document.getElementById('cal-detail-body').innerHTML     = body;
+    document.getElementById('cal-detail-nav').innerHTML      = buttons.join('');
+    document.getElementById('cal-detail-panel').style.display = 'block';
+    document.getElementById('cal-backdrop').style.display     = 'block';
+  },
+
+  // ── Navigation ──
+  prevMonth() {
+    if (this._view === 'week') { this._weekStart = (this._weekStart||0) - 1; }
+    else { this._month--; if (this._month < 0) { this._month=11; this._year--; } }
+    this.render();
+  },
+  nextMonth() {
+    if (this._view === 'week') { this._weekStart = (this._weekStart||0) + 1; }
+    else { this._month++; if (this._month > 11) { this._month=0; this._year++; } }
+    this.render();
+  },
+  goToday() {
+    const t = new Date();
+    this._year = t.getFullYear(); this._month = t.getMonth(); this._weekStart = 0;
+    this.render();
+  },
+  setView(v) { this._view = v; this._weekStart = 0; this.render(); },
+  toggleFilter(cat) { this._filters[cat] = !this._filters[cat]; this.render(); },
+
+  // ── Utilitaires ──
+  toStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  },
+
+  // ── Export PDF du calendrier ──
+  exportPDF() {
+    if (!window.jspdf) { alert('jsPDF non disponible'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    const year = this._year, month = this._month;
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    // Header
+    doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
+    const monthLabel = new Date(year, month, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    doc.text(`UCPA — Calendrier des Opérations · ${monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1)}`, 14, 11);
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.text(new Date().toLocaleDateString('fr-FR'), 255, 11);
+
+    // Jours de la semaine
+    const DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    const colW = 38, startX = 14, startY = 22, rowH = 28;
+    doc.setTextColor(80,80,80); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    DAYS.forEach((d,i) => {
+      doc.text(d, startX + i*colW + colW/2, startY, {align:'center'});
+    });
+
+    // Grille
+    const firstDay = new Date(year, month, 1);
+    const lastDay  = new Date(year, month+1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7;
+    const totalCells = Math.ceil((startDow + lastDay.getDate()) / 7) * 7;
+
+    for (let i = 0; i < totalCells; i++) {
+      const row = Math.floor(i / 7);
+      const col = i % 7;
+      const x   = startX + col * colW;
+      const y   = startY + 4 + row * rowH;
+      const dayOffset = i - startDow;
+      const cellDate  = new Date(year, month, dayOffset + 1);
+      const isToday   = cellDate.getTime() === today.getTime();
+      const otherMon  = cellDate.getMonth() !== month;
+      const dateStr   = this.toStr(cellDate);
+      const evts      = this.forDate(dateStr);
+
+      // Cellule fond
+      if (isToday) { doc.setFillColor(232,84,26,0.08); doc.rect(x, y, colW, rowH, 'F'); }
+      if (otherMon){ doc.setFillColor(248,248,248); doc.rect(x, y, colW, rowH, 'F'); }
+      doc.setDrawColor(220,220,220); doc.rect(x, y, colW, rowH);
+
+      // Numéro jour
+      doc.setFont('helvetica', isToday?'bold':'normal');
+      doc.setTextColor(otherMon?180:isToday?232:40, otherMon?180:isToday?84:40, otherMon?180:isToday?26:40);
+      doc.setFontSize(9);
+      doc.text(String(cellDate.getDate()), x+2, y+5);
+
+      // Événements (max 3)
+      doc.setFontSize(6); doc.setFont('helvetica','normal');
+      evts.slice(0,3).forEach((e, ei) => {
+        const cat = this.CAT[e.cat]||{color:'#888'};
+        const hex = e.urgent ? '#dc2626' : cat.color;
+        const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+        doc.setTextColor(r,g,b);
+        const txt = (e.title||'').slice(0,22);
+        doc.text(txt, x+2, y+9+ei*6);
+      });
+      if (evts.length > 3) {
+        doc.setTextColor(150,150,150);
+        doc.text(`+${evts.length-3}`, x+2, y+9+3*6);
+      }
+    }
+
+    // Légende
+    const legendY = startY + 4 + Math.ceil((startDow + lastDay.getDate()) / 7) * rowH + 6;
+    doc.setFontSize(7); let lx = 14;
+    Object.entries(this.CAT).forEach(([k,v]) => {
+      if (!this._filters[k]) return;
+      const r=parseInt(v.color.slice(1,3),16), g=parseInt(v.color.slice(3,5),16), b=parseInt(v.color.slice(5,7),16);
+      doc.setFillColor(r,g,b); doc.rect(lx,legendY,4,4,'F');
+      doc.setTextColor(60,60,60); doc.text(v.label.replace(/^.\s/,''), lx+6, legendY+3);
+      lx += 35;
+    });
+
+    doc.save(`UCPA_Calendrier_${monthLabel.replace(' ','_')}.pdf`);
   }
 };
 
