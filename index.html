@@ -2408,17 +2408,131 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
           <div class="section-title">Vérifications obligatoires</div>
           <div id="pf-checklist"></div>
           <div class="sep"></div>
-          <div class="section-title">Signature responsable</div>
-          <div class="form-group" style="margin-bottom:10px">
-            <label>Nom signataire</label><input type="text" id="pf-signataire" onchange="App.savePF()">
+          <div class="section-title">Signatures</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+            <!-- Signature UCPA (émetteur) -->
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                <span style="background:var(--accent);color:#fff;border-radius:4px;padding:1px 7px;font-size:9px;letter-spacing:.5px">UCPA</span>
+                Responsable / Émetteur du permis
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <input type="text" id="pf-signataire" onchange="App.savePF()" placeholder="Nom Prénom — Responsable UCPA">
+              </div>
+              <div class="sig-wrap" style="margin-bottom:6px">
+                <div class="sig-hint" id="sig-hint-pf-ucpa">✍️ Signature UCPA</div>
+                <canvas id="sig-canvas-pf" width="500" height="120"></canvas>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn btn-ghost btn-sm" onclick="App.clearSigPF()">🗑 Effacer</button>
+                <span id="sig-ts-pf" style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:auto"></span>
+              </div>
+            </div>
+
+            <!-- Signature Prestataire (bénéficiaire) -->
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+                <span style="background:var(--blue,#3a7bd5);color:#fff;border-radius:4px;padding:1px 7px;font-size:9px;letter-spacing:.5px">EE</span>
+                Prestataire / Bénéficiaire du permis
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <input type="text" id="pf-signataire-ee" onchange="App.savePF()" placeholder="Nom Prénom — Représentant EE">
+              </div>
+              <div class="sig-wrap" style="margin-bottom:6px">
+                <div class="sig-hint" id="sig-hint-pf-ee">✍️ Signature Prestataire</div>
+                <canvas id="sig-canvas-pf-ee" width="500" height="120"></canvas>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn btn-ghost btn-sm" onclick="App.clearSigPFEE()">🗑 Effacer</button>
+                <span id="sig-ts-pf-ee" style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-left:auto"></span>
+              </div>
+            </div>
+
           </div>
-          <div class="sig-wrap">
-            <div class="sig-hint">✍️ Signez ici</div>
-            <canvas id="sig-canvas-pf" width="500" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALE PERSONNALISATION CARNET SANITAIRE -->
+    <div id="ecs-manager-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;width:min(780px,96vw);box-shadow:0 12px 48px rgba(0,0,0,.5)">
+
+        <!-- Header modale -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border)">
+          <div>
+            <h3 style="font-size:15px;font-weight:700;margin:0">⚙️ Personnalisation du Carnet Sanitaire</h3>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Modifier, ajouter ou supprimer des points de mesure par section</div>
           </div>
-          <div style="margin-top:8px">
-            <button class="btn btn-ghost btn-sm" onclick="App.clearSigPF()">🗑 Effacer</button>
+          <button onclick="ECS.closeSectionManager()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;padding:0;line-height:1">✕</button>
+        </div>
+
+        <!-- Corps -->
+        <div style="padding:20px" id="ecs-manager-body">
+          <!-- Contenu généré dynamiquement -->
+        </div>
+
+        <!-- Footer -->
+        <div style="display:flex;gap:10px;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--border)">
+          <button class="btn btn-ghost btn-sm" onclick="ECS.addNewSection()">+ Nouvelle section</button>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost btn-sm" onclick="ECS.resetSections()" style="color:var(--red)">↺ Réinitialiser</button>
+            <button class="btn btn-primary" onclick="ECS.saveSectionManager()">💾 Enregistrer</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODALE ÉDITION D'UN POINT DE MESURE -->
+    <div id="ecs-row-editor-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:3100;align-items:center;justify-content:center">
+      <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;width:min(520px,94vw);padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3 style="font-size:14px;font-weight:700;margin:0" id="ecs-row-editor-title">Point de mesure</h3>
+          <button onclick="ECS.closeRowEditor()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px">✕</button>
+        </div>
+        <div class="form-grid">
+          <div class="form-group full" style="grid-column:span 2">
+            <label>Libellé <span style="color:var(--red)">*</span></label>
+            <input type="text" id="ecs-re-label" placeholder="Ex: Température départ chaudière n°4">
+          </div>
+          <div class="form-group">
+            <label>Type de saisie</label>
+            <select id="ecs-re-type" onchange="ECS._rowEditorToggle()">
+              <option value="number">Valeur numérique</option>
+              <option value="bool">Oui / Non (booléen)</option>
+              <option value="text">Texte libre</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Unité <span style="font-size:10px;color:var(--muted)">(°C, bar, mg/L…)</span></label>
+            <input type="text" id="ecs-re-unit" placeholder="°C">
+          </div>
+          <div class="form-group full" style="grid-column:span 2">
+            <label>Référence / Valeur attendue</label>
+            <input type="text" id="ecs-re-ref" placeholder="Ex: 55°C &lt; T &lt; 65°C">
+          </div>
+          <div id="ecs-re-seuils" style="grid-column:span 2;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+            <div class="form-group">
+              <label>Min strict</label>
+              <input type="number" step="any" id="ecs-re-min" placeholder="—">
+            </div>
+            <div class="form-group">
+              <label>Max strict</label>
+              <input type="number" step="any" id="ecs-re-max" placeholder="—">
+            </div>
+            <div class="form-group">
+              <label>Seuil min</label>
+              <input type="number" step="any" id="ecs-re-minv" placeholder="—">
+            </div>
+            <div class="form-group">
+              <label>Seuil max</label>
+              <input type="number" step="any" id="ecs-re-maxv" placeholder="—">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-ghost btn-sm" onclick="ECS.closeRowEditor()">Annuler</button>
+          <button class="btn btn-primary" onclick="ECS.saveRowEditor()">💾 Enregistrer le point</button>
         </div>
       </div>
     </div>
@@ -2506,6 +2620,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
           <div class="ml flex" style="gap:8px">
             <button class="btn btn-ghost btn-sm" onclick="ECS.exportExcel()">📊 Excel</button>
             <button class="btn btn-ghost btn-sm" onclick="ECS.exportPDF()">📄 PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="ECS.openSectionManager()" title="Gérer les sections et points de mesure">⚙️ Personnaliser</button>
             <button class="btn btn-primary btn-sm" onclick="ECS.saveReleve()">💾 Enregistrer le relevé</button>
           </div>
         </div>
@@ -3258,6 +3373,9 @@ const ECS_SECTIONS = [
   },
 ];
 
+
+// Copie immuable des sections par défaut (pour le reset)
+const _ECS_SECTIONS_DEFAULT = JSON.parse(JSON.stringify(ECS_SECTIONS));
 
 const PREV_RISKS = [
   // ── Annexe I art. R.4534-1 (travaux dangereux) ──
@@ -4196,6 +4314,13 @@ const App = {
     // Badge Firebase
     const badge = document.getElementById('firebase-badge');
     if (badge) badge.textContent = window._firebaseReady ? '🟢 Firebase' : '🟡 Local';
+
+    // Charger les sections ECS personnalisées si elles existent
+    const savedSections = ECS._loadSections();
+    if (savedSections) {
+      ECS_SECTIONS.length = 0;
+      savedSections.forEach(s => ECS_SECTIONS.push(s));
+    }
 
     this.renderAll();
     this.nav('dashboard');
@@ -6907,21 +7032,34 @@ const App = {
 
   loadPF() {
     const pf = this.load('permisfeu') || {};
-    ['num','date','entreprise','local','signataire'].forEach(f => {
+    ['num','date','entreprise','local','signataire','signataire-ee'].forEach(f => {
       const el = document.getElementById('pf-'+f);
-      if (el) el.value = pf[f] || '';
+      if (el) el.value = pf[f.replace(/-/g,'_')] || '';
     });
-    // Charger heures validité
     const hd = document.getElementById('pf-heure-debut');
     const hf = document.getElementById('pf-heure-fin');
     if (hd) hd.value = pf.heure_debut || '';
     if (hf) hf.value = pf.heure_fin || '';
     this.renderPFChecklist();
+    // Init canvas EE après rendu
+    setTimeout(() => {
+      this._initSigCanvas('sig-canvas-pf-ee', 'sigCanvasPFEE', 'sigCtxPFEE', 'sigDrawingPFEE', 'sig-ts-pf-ee');
+      // Restaurer sig EE si déjà sauvegardée
+      if (pf.signature_ee && this.sigCanvasPFEE) {
+        const img = new Image();
+        img.onload = () => { if (this.sigCtxPFEE) this.sigCtxPFEE.drawImage(img, 0, 0, this.sigCanvasPFEE.width, this.sigCanvasPFEE.height); };
+        img.src = pf.signature_ee;
+        const h = document.getElementById('sig-hint-pf-ee');
+        if (h) h.style.display = 'none';
+        const ts = document.getElementById('sig-ts-pf-ee');
+        if (ts) ts.textContent = pf.signature_ts || '';
+      }
+    }, 150);
   },
 
   savePF() {
     const pf = this.load('permisfeu') || {checks:{}};
-    ['num','date','heure-debut','heure-fin','entreprise','local','signataire'].forEach(f => {
+    ['num','date','heure-debut','heure-fin','entreprise','local','signataire','signataire-ee'].forEach(f => {
       const el = document.getElementById('pf-'+f);
       if (el) pf[f.replace(/-/g,'_')] = el.value;
     });
@@ -6933,6 +7071,11 @@ const App = {
       if (diffMin < 0) diffMin += 24 * 60; // passage minuit
       pf.duree_validite_min = diffMin;
     }
+    // Sauvegarder signature EE (canvas → base64)
+    if (this.sigCanvasPFEE) {
+      try { pf.signature_ee = this.sigCanvasPFEE.toDataURL('image/png'); } catch(e) {}
+    }
+    if (!pf.signature_ts) pf.signature_ts = new Date().toLocaleString('fr-FR');
     this.save('permisfeu', pf);
   },
 
@@ -7154,7 +7297,26 @@ const App = {
   clearSigPF() {
     if (this.sigCtxPF && this.sigCanvasPF) {
       this.sigCtxPF.clearRect(0, 0, this.sigCanvasPF.width, this.sigCanvasPF.height);
+      const h = document.getElementById('sig-hint-pf-ucpa');
+      if (h) h.style.display = '';
+      const ts = document.getElementById('sig-ts-pf');
+      if (ts) ts.textContent = '';
     }
+  },
+
+  clearSigPFEE() {
+    if (this.sigCtxPFEE && this.sigCanvasPFEE) {
+      this.sigCtxPFEE.clearRect(0, 0, this.sigCanvasPFEE.width, this.sigCanvasPFEE.height);
+    }
+    const h = document.getElementById('sig-hint-pf-ee');
+    if (h) h.style.display = '';
+    const ts = document.getElementById('sig-ts-pf-ee');
+    if (ts) ts.textContent = '';
+    this.sigCanvasPFEE = null; this.sigCtxPFEE = null;
+    // Supprimer la signature EE sauvegardée
+    const pf = this.load('permisfeu') || {};
+    delete pf.signature_ee;
+    this.save('permisfeu', pf);
   },
 
   // ── MODALS ──
@@ -8326,23 +8488,129 @@ Enregistrer quand même ?`)) return;
     if (!allChecked) { if (!confirm('Toutes les vérifications ne sont pas cochées. Exporter quand même ?')) return; }
     if (!window.jspdf) { alert('jsPDF non disponible'); return; }
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    let y = this.pdfHeader(doc, 'Permis de Feu');
-    doc.setFontSize(10);
-    doc.text(`N° Permis : ${pf.num||'—'}`, 14, y); y+=8;
-    doc.text(`Date : ${pf.date||'—'}`, 14, y); y+=8;
-    doc.text(`Entreprise : ${pf.entreprise||'—'}`, 14, y); y+=8;
-    doc.text(`Localisation : ${pf.local||'—'}`, 14, y); y+=12;
-    doc.setFont('helvetica','bold'); doc.text("Vérifications :", 14, y); y+=8; doc.setFont("helvetica",'normal');
-    PF_CHECKS.forEach((c, i) => {
-      doc.text(`${pf.checks&&pf.checks[i]?'✓':'○'} ${c}`, 14, y); y+=7;
+    const doc    = new jsPDF();
+    const centre = this.centre === 'ALL' ? (CENTRES[0] || 'UCPA') : this.centre;
+    const ts     = new Date().toLocaleString('fr-FR');
+    let y = this.pdfHeader(doc, 'Permis de Feu — NF EN ISO 35001');
+
+    // ── Section 1 : Identification ──────────────────────────────
+    doc.setFillColor(232,84,26); doc.rect(14,y-4,182,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+    doc.text('1. IDENTIFICATION', 16, y+0.5); y+=10; doc.setTextColor(0,0,0);
+
+    const field = (lbl, val) => {
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(90,90,90);
+      doc.text(lbl + ' :', 14, y);
+      doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
+      const lines = doc.splitTextToSize(String(val||'—'), 148);
+      doc.text(lines, 56, y);
+      y += Math.max(6, lines.length * 5);
+    };
+    field('N° Permis',       pf.num);
+    field('Date',            pf.date ? new Date(pf.date).toLocaleDateString('fr-FR') : '—');
+    field('Heure début',     pf.heure_debut || '—');
+    field('Heure fin',       pf.heure_fin   || '—');
+    field('Entreprise / EE', pf.entreprise);
+    field('Localisation',    pf.local);
+    field('Centre UCPA',     centre);
+    y += 4;
+
+    // ── Section 2 : Vérifications ───────────────────────────────
+    doc.setFillColor(232,84,26); doc.rect(14,y-4,182,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+    doc.text('2. VÉRIFICATIONS OBLIGATOIRES', 16, y+0.5); y+=10; doc.setTextColor(0,0,0);
+
+    PF_CHECKS.forEach((chk, i) => {
+      if (y > 265) { doc.addPage(); y = 20; }
+      const ok  = pf.checks && pf.checks[i];
+      doc.setFont('helvetica','normal'); doc.setFontSize(9);
+      doc.setTextColor(ok ? 0 : 160, ok ? 120 : 160, ok ? 0 : 160);
+      const lines = doc.splitTextToSize((ok ? '✓  ' : '○  ') + chk, 178);
+      doc.text(lines, 14, y);
+      y += Math.max(6, lines.length * 5);
+      doc.setDrawColor(230,230,230); doc.line(14, y-1, 196, y-1);
     });
-    y+=6; doc.text(`Signataire : ${pf.signataire||'—'}`, 14, y); y+=6;
-    doc.text(`Horodatage : ${new Date().toLocaleString('fr-FR')}`, 14, y); y+=10;
+    y += 6;
+
+    // ── Section 3 : Signatures ──────────────────────────────────
+    if (y > 210) { doc.addPage(); y = 20; }
+    doc.setFillColor(232,84,26); doc.rect(14,y-4,182,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+    doc.text('3. SIGNATURES ET ENGAGEMENTS', 16, y+0.5); y+=10; doc.setTextColor(0,0,0);
+
+    doc.setFontSize(8); doc.setTextColor(80,80,80);
+    doc.text('Document horodaté le : ' + ts + '  |  Conformément à la norme NF EN ISO 35001', 14, y); y+=8;
+    doc.setTextColor(0,0,0);
+
+    // Colonnes : gauche = UCPA, droite = EE
+    const SIG_Y  = y;
+    const SIG_W  = 85;
+    const SIG_H  = 28;
+    const COL_L  = 14;
+    const COL_R  = 111;
+
+    // En-têtes colonnes
+    doc.setFillColor(248,250,252);
+    doc.rect(COL_L, SIG_Y,   SIG_W, 8, 'F');
+    doc.rect(COL_R, SIG_Y,   SIG_W, 8, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(232,84,26);
+    doc.text('Émetteur — UCPA', COL_L+2, SIG_Y+5.5);
+    doc.setTextColor(58,123,213);
+    doc.text('Bénéficiaire — Prestataire (EE)', COL_R+2, SIG_Y+5.5);
+    doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+
+    const nameY = SIG_Y + 11;
+    doc.setFontSize(8.5);
+    doc.text('Nom : ' + (pf.signataire    || '— non renseigné —'), COL_L+2, nameY);
+    doc.text('Nom : ' + (pf.signataire_ee || '— non renseigné —'), COL_R+2, nameY);
+
+    const tsY = nameY + 5;
+    doc.setFontSize(7.5); doc.setTextColor(100,100,100);
+    doc.text('Horodatage : ' + ts, COL_L+2, tsY);
+    doc.text('Horodatage : ' + ts, COL_R+2, tsY);
+    doc.setTextColor(0,0,0);
+
+    const boxY = tsY + 4;
+    // Cadre signature UCPA
+    doc.setDrawColor(200,200,200); doc.rect(COL_L, boxY, SIG_W, SIG_H);
     if (this.sigCanvasPF) {
-      try { doc.addImage(this.sigCanvasPF.toDataURL('image/png'), 'PNG', 14, y, 80, 24); } catch(e) {}
+      try { doc.addImage(this.sigCanvasPF.toDataURL('image/png'), 'PNG', COL_L, boxY, SIG_W, SIG_H); }
+      catch(e) {
+        doc.setFontSize(8); doc.setTextColor(180,180,180);
+        doc.text('Signature UCPA', COL_L+28, boxY+16);
+        doc.setTextColor(0,0,0);
+      }
+    } else {
+      doc.setFontSize(8); doc.setTextColor(180,180,180);
+      doc.text('Signature UCPA', COL_L+28, boxY+16);
+      doc.setTextColor(0,0,0);
     }
-    doc.save(`UCPA_AlpesSud_PermisFeu_${this.today()}.pdf`);
+
+    // Cadre signature EE
+    doc.setDrawColor(200,200,200); doc.rect(COL_R, boxY, SIG_W, SIG_H);
+    if (pf.signature_ee) {
+      try { doc.addImage(pf.signature_ee, 'PNG', COL_R, boxY, SIG_W, SIG_H); }
+      catch(e) {
+        doc.setFontSize(8); doc.setTextColor(180,180,180);
+        doc.text('Signature Prestataire', COL_R+22, boxY+16);
+        doc.setTextColor(0,0,0);
+      }
+    } else {
+      doc.setFontSize(8); doc.setTextColor(180,180,180);
+      doc.text('Signature Prestataire', COL_R+22, boxY+16);
+      doc.setTextColor(0,0,0);
+    }
+
+    // Pied de page
+    const pages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(7); doc.setTextColor(150,150,150);
+      doc.text('UCPA · Permis de Feu · ' + centre + ' · ' + ts + ' · Page ' + p + '/' + pages, 14, 291);
+    }
+    doc.setTextColor(0,0,0);
+    const nom = centre.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'').substring(0,20);
+    doc.save('UCPA_PermisFeu_' + nom + '_' + this.today() + '.pdf');
   },
 
   exportSanitairePDF() { ECS.exportPDF(); },
@@ -9515,9 +9783,21 @@ const Auth = {
 
   googleSignIn() {
     if (!this.GOOGLE_CLIENT_ID) {
+      // Afficher le message inline — pas de popup
       const msg = document.getElementById('google-signin-msg');
-      if (msg) { msg.style.display = ''; setTimeout(() => { msg.style.display = 'none'; }, 5000); }
-      alert('Connexion Google non configurée.\n\nPour activer :\n1. Créez un projet Google Cloud Console\n2. Activez l\'API Google Identity Services\n3. Créez un Client ID OAuth2 (type Web)\n4. Renseignez Auth.GOOGLE_CLIENT_ID dans le code\n5. Ajoutez les emails autorisés dans Auth.GOOGLE_ROLE_MAP');
+      if (msg) {
+        msg.style.display = '';
+        msg.innerHTML = '<div style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--text,#e8d5c0);text-align:left;line-height:1.6">' +
+          '<strong style="color:#f59e0b">⚙️ Google OAuth2 non configuré</strong><br>' +
+          'Pour activer la connexion Google :<br>' +
+          '1. Créez un projet <a href="https://console.cloud.google.com" target="_blank" style="color:#60a5fa">Google Cloud Console</a><br>' +
+          '2. Activez l\'API <em>Google Identity Services</em><br>' +
+          '3. Créez un <strong>Client ID OAuth2</strong> (type Web)<br>' +
+          '4. Renseignez <code>Auth.GOOGLE_CLIENT_ID</code> dans le code<br>' +
+          '5. Ajoutez les emails dans <code>Auth.GOOGLE_ROLE_MAP</code>' +
+          '</div>';
+        setTimeout(() => { msg.style.display = 'none'; }, 12000);
+      }
       return;
     }
     if (!window.google?.accounts?.id) {
@@ -9531,7 +9811,7 @@ const Auth = {
   },
 
   _initGoogleAuth() {
-    if (!window.google?.accounts?.id) { alert('Erreur chargement Google Auth'); return; }
+    if (!window.google?.accounts?.id) { console.error('[UCPA ERP] Google Identity Services non chargé'); return; }
     google.accounts.id.initialize({
       client_id:             this.GOOGLE_CLIENT_ID,
       callback:              (resp) => this._handleGoogleCredential(resp),
@@ -9549,13 +9829,13 @@ const Auth = {
       const name    = payload.name  || email;
       const mapping = this.GOOGLE_ROLE_MAP[email];
       if (!mapping) {
-        alert('Compte Google non autorisé : ' + email + '\nContactez l\'administrateur UCPA.');
+        console.warn('[UCPA ERP] Compte Google non autorisé :', email); const msg2 = document.getElementById('google-signin-msg'); if (msg2) { msg2.style.display = ''; msg2.textContent = '⛔ Compte non autorisé : ' + email; setTimeout(() => { msg2.style.display = 'none'; }, 6000); }
         return;
       }
       this.startSession(mapping.role, mapping.region || '', mapping.centre || '', mapping.label || name, false);
       App._logAction('Connexion Google OAuth2', mapping.role);
     } catch(e) {
-      alert('Erreur connexion Google : ' + e.message);
+      console.error('[UCPA ERP] Erreur connexion Google :', e.message);
     }
   }
 };
@@ -9588,6 +9868,7 @@ const ECS = {
           <span>${section.icon}</span>
           <h3 style="font-size:13px">${section.label}</h3>
           <span class="ecs-badge" style="font-size:9px;font-family:'DM Mono',monospace;background:rgba(232,84,26,0.12);color:var(--accent);padding:2px 8px;border-radius:4px;margin-left:6px">${section.badge}</span>
+          <button class="btn btn-ghost btn-sm ml" onclick="ECS.editSection('${section.id}')" title="Modifier les points de mesure" style="font-size:11px;padding:2px 8px;margin-left:auto">✏️ Modifier</button>
         </div>
         <div class="card-body" style="padding:12px 16px">
           
@@ -9745,6 +10026,281 @@ const ECS = {
     document.getElementById('ecs-obs-general').value = '';
     this._updateSummary();
     this.renderHistory();
+  },
+
+  // ════════════════════════════════════════════════════
+  // PERSONNALISATION DES POINTS DE MESURE
+  // Sections + lignes éditables, persistées par centre
+  // ════════════════════════════════════════════════════
+
+  // Clé de stockage des sections personnalisées (par centre)
+  _sectionsKey() {
+    return 'ecs_sections_' + (App._storagePrefix || '') + (App.centre !== 'ALL' ? App.centre : 'default');
+  },
+
+  // Charger les sections (personnalisées ou par défaut)
+  _loadSections() {
+    try {
+      const saved = localStorage.getItem(this._sectionsKey());
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return null; // null = utiliser ECS_SECTIONS par défaut
+  },
+
+  // Sauvegarder les sections personnalisées
+  _persistSections(sections) {
+    try {
+      localStorage.setItem(this._sectionsKey(), JSON.stringify(sections));
+      // Mettre à jour ECS_SECTIONS en mémoire pour la session
+      ECS_SECTIONS.length = 0;
+      sections.forEach(s => ECS_SECTIONS.push(s));
+    } catch(e) {}
+  },
+
+  // Ouvrir le gestionnaire de sections
+  openSectionManager() {
+    // Charger les sections actuelles (personnalisées ou défaut)
+    const saved = this._loadSections();
+    this._editingSections = JSON.parse(JSON.stringify(saved || ECS_SECTIONS));
+    this._renderManagerBody();
+    const overlay = document.getElementById('ecs-manager-overlay');
+    if (overlay) overlay.style.display = 'flex';
+  },
+
+  closeSectionManager() {
+    const overlay = document.getElementById('ecs-manager-overlay');
+    if (overlay) overlay.style.display = 'none';
+    this._editingSections = null;
+  },
+
+  // Ouvrir directement une section spécifique
+  editSection(sectionId) {
+    const saved = this._loadSections();
+    this._editingSections = JSON.parse(JSON.stringify(saved || ECS_SECTIONS));
+    this._renderManagerBody();
+    const overlay = document.getElementById('ecs-manager-overlay');
+    if (overlay) overlay.style.display = 'flex';
+    // Scroller vers la bonne section après rendu
+    setTimeout(() => {
+      const el = document.getElementById('ecs-mgr-sec-' + sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  },
+
+  _renderManagerBody() {
+    const body = document.getElementById('ecs-manager-body');
+    if (!body || !this._editingSections) return;
+
+    body.innerHTML = this._editingSections.map((sec, si) => `
+      <div id="ecs-mgr-sec-${sec.id}" style="border:1px solid var(--border);border-radius:10px;margin-bottom:14px;overflow:hidden">
+
+        <!-- En-tête section -->
+        <div style="background:var(--bg3);padding:10px 14px;display:flex;align-items:center;gap:10px">
+          <input type="text" value="${sec.icon||'📍'}" id="ecs-sec-icon-${si}"
+            style="width:36px;text-align:center;font-size:18px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:2px">
+          <input type="text" value="${sec.label||''}" id="ecs-sec-label-${si}"
+            placeholder="Nom de la section"
+            style="flex:1;font-size:13px;font-weight:600;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text)">
+          <input type="text" value="${sec.badge||''}" id="ecs-sec-badge-${si}"
+            placeholder="Badge"
+            style="width:120px;font-size:11px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text)">
+          <button onclick="ECS._moveSection(${si},-1)" title="Monter" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" ${si===0?'disabled':''}>↑</button>
+          <button onclick="ECS._moveSection(${si},1)" title="Descendre" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" ${si===this._editingSections.length-1?'disabled':''}>↓</button>
+          <button onclick="ECS._deleteSection(${si})" title="Supprimer la section" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:18px">🗑</button>
+        </div>
+
+        <!-- Tableau des points -->
+        <div style="padding:10px 14px">
+          <div style="display:grid;grid-template-columns:1fr 80px 70px 60px 60px 60px 60px 64px;gap:6px;font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-family:'DM Mono',monospace;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:4px">
+            <div>Libellé</div><div>Type</div><div>Unité</div><div>Min</div><div>Max</div><div>Seuil↓</div><div>Seuil↑</div><div>Actions</div>
+          </div>
+          ${sec.rows.map((row, ri) => `
+            <div style="display:grid;grid-template-columns:1fr 80px 70px 60px 60px 60px 60px 64px;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:center" id="ecs-row-${si}-${ri}">
+              <div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.label}">${row.label}</div>
+              <div style="font-size:10px;color:var(--muted)">${row.type==='bool'?'Oui/Non':row.type==='text'?'Texte':'Nombre'}</div>
+              <div style="font-size:11px;font-family:'DM Mono',monospace">${row.unit||'—'}</div>
+              <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">${row.min!==undefined?row.min:'—'}</div>
+              <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">${row.max!==undefined?row.max:'—'}</div>
+              <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">${row.minV!==undefined?row.minV:'—'}</div>
+              <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--muted)">${row.maxV!==undefined?row.maxV:'—'}</div>
+              <div style="display:flex;gap:4px">
+                <button onclick="ECS.openRowEditor(${si},${ri})" title="Modifier" style="background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;padding:2px 7px;font-size:12px;color:var(--text)">✏️</button>
+                <button onclick="ECS._moveRow(${si},${ri},-1)" title="Monter" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px" ${ri===0?'disabled':''}>↑</button>
+                <button onclick="ECS._moveRow(${si},${ri},1)" title="Descendre" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px" ${ri===sec.rows.length-1?'disabled':''}>↓</button>
+                <button onclick="ECS._deleteRow(${si},${ri})" title="Supprimer" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:15px">✕</button>
+              </div>
+            </div>`).join('')}
+          <button onclick="ECS.openRowEditor(${si}, null)" class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px;font-size:11px;border-style:dashed">+ Ajouter un point de mesure</button>
+        </div>
+      </div>`).join('');
+  },
+
+  // Déplacer une section
+  _moveSection(si, dir) {
+    const s = this._editingSections;
+    const ti = si + dir;
+    if (ti < 0 || ti >= s.length) return;
+    [s[si], s[ti]] = [s[ti], s[si]];
+    this._renderManagerBody();
+  },
+
+  // Supprimer une section
+  _deleteSection(si) {
+    if (!confirm('Supprimer cette section et tous ses points de mesure ?')) return;
+    this._editingSections.splice(si, 1);
+    this._renderManagerBody();
+  },
+
+  // Déplacer une ligne dans une section
+  _moveRow(si, ri, dir) {
+    const rows = this._editingSections[si].rows;
+    const ti = ri + dir;
+    if (ti < 0 || ti >= rows.length) return;
+    [rows[ri], rows[ti]] = [rows[ti], rows[ri]];
+    this._renderManagerBody();
+  },
+
+  // Supprimer une ligne
+  _deleteRow(si, ri) {
+    this._editingSections[si].rows.splice(ri, 1);
+    this._renderManagerBody();
+  },
+
+  // Ajouter une nouvelle section
+  addNewSection() {
+    const id = 'custom_' + Date.now();
+    this._editingSections.push({
+      id, label: 'Nouvelle section', icon: '📍', badge: 'Personnalisé', rows: []
+    });
+    this._renderManagerBody();
+    setTimeout(() => {
+      const el = document.getElementById('ecs-mgr-sec-' + id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  },
+
+  // Sauvegarder les changements (lire les inputs édités)
+  saveSectionManager() {
+    if (!this._editingSections) return;
+    // Mettre à jour labels/icônes/badges depuis les inputs
+    this._editingSections.forEach((sec, si) => {
+      const icon  = document.getElementById('ecs-sec-icon-' + si);
+      const label = document.getElementById('ecs-sec-label-' + si);
+      const badge = document.getElementById('ecs-sec-badge-' + si);
+      if (icon)  sec.icon  = icon.value.trim()  || sec.icon;
+      if (label) sec.label = label.value.trim()  || sec.label;
+      if (badge) sec.badge = badge.value.trim()  || sec.badge;
+    });
+    this._persistSections(this._editingSections);
+    this.closeSectionManager();
+    // Recharger le formulaire
+    this.renderForm();
+    // Feedback
+    const btn = document.querySelector('[onclick="ECS.openSectionManager()"]');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Sauvegardé';
+      setTimeout(() => { btn.innerHTML = orig; }, 2000);
+    }
+  },
+
+  // Réinitialiser aux sections par défaut
+  resetSections() {
+    if (!confirm('R\u00e9initialiser le carnet sanitaire aux points de mesure par d\u00e9faut ?\nToutes vos personnalisations seront perdues.')) return;
+    try { localStorage.removeItem(this._sectionsKey()); } catch(e) {}
+    // Restaurer ECS_SECTIONS depuis le code source
+    ECS_SECTIONS.length = 0;
+    _ECS_SECTIONS_DEFAULT.forEach(s => ECS_SECTIONS.push(JSON.parse(JSON.stringify(s))));
+    this._editingSections = JSON.parse(JSON.stringify(ECS_SECTIONS));
+    this._renderManagerBody();
+  },
+
+  // ── Éditeur d'un point de mesure ──────────────────
+  _editingSection: null,
+  _editingRowIdx:  null,
+
+  openRowEditor(si, ri) {
+    this._editingSection = si;
+    this._editingRowIdx  = ri;
+    const isNew = ri === null;
+    const row   = isNew ? {} : (this._editingSections[si]?.rows[ri] || {});
+
+    const title = document.getElementById('ecs-row-editor-title');
+    if (title) title.textContent = isNew ? '+ Nouveau point de mesure' : '✏️ Modifier le point de mesure';
+
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val !== undefined && val !== null ? val : ''; };
+    set('ecs-re-label', row.label || '');
+    set('ecs-re-unit',  row.unit  || '');
+    set('ecs-re-ref',   row.ref   || '');
+    set('ecs-re-min',   row.min);
+    set('ecs-re-max',   row.max);
+    set('ecs-re-minv',  row.minV);
+    set('ecs-re-maxv',  row.maxV);
+
+    const typeEl = document.getElementById('ecs-re-type');
+    if (typeEl) typeEl.value = row.type === 'bool' ? 'bool' : row.type === 'text' ? 'text' : 'number';
+    this._rowEditorToggle();
+
+    const overlay = document.getElementById('ecs-row-editor-overlay');
+    if (overlay) overlay.style.display = 'flex';
+  },
+
+  closeRowEditor() {
+    const overlay = document.getElementById('ecs-row-editor-overlay');
+    if (overlay) overlay.style.display = 'none';
+  },
+
+  _rowEditorToggle() {
+    const typeEl = document.getElementById('ecs-re-type');
+    const seuilsEl = document.getElementById('ecs-re-seuils');
+    const unitEl   = document.getElementById('ecs-re-unit')?.parentElement;
+    if (!typeEl || !seuilsEl) return;
+    const isBool = typeEl.value === 'bool';
+    const isText = typeEl.value === 'text';
+    seuilsEl.style.display = (isBool || isText) ? 'none' : 'grid';
+    if (unitEl) unitEl.style.opacity = (isBool || isText) ? '.4' : '1';
+  },
+
+  saveRowEditor() {
+    const label = (document.getElementById('ecs-re-label')?.value || '').trim();
+    if (!label) { alert('Le libellé est obligatoire.'); return; }
+
+    const type  = document.getElementById('ecs-re-type')?.value || 'number';
+    const unit  = (document.getElementById('ecs-re-unit')?.value || '').trim();
+    const ref   = (document.getElementById('ecs-re-ref')?.value  || '').trim();
+    const minV  = document.getElementById('ecs-re-min')?.value;
+    const maxV  = document.getElementById('ecs-re-max')?.value;
+    const minVs = document.getElementById('ecs-re-minv')?.value;
+    const maxVs = document.getElementById('ecs-re-maxv')?.value;
+
+    const row = { label, ref };
+    if (type === 'bool' || type === 'text') {
+      row.type = type;
+    } else {
+      row.unit = unit;
+      if (minV !== '' && minV !== null && !isNaN(parseFloat(minV)) && maxV !== '' && maxV !== null && !isNaN(parseFloat(maxV))) {
+        row.min = parseFloat(minV); row.max = parseFloat(maxV);
+      } else {
+        if (minVs !== '' && !isNaN(parseFloat(minVs))) row.minV = parseFloat(minVs);
+        if (maxVs !== '' && !isNaN(parseFloat(maxVs))) row.maxV = parseFloat(maxVs);
+      }
+    }
+
+    // Générer un id unique basé sur le label
+    const si  = this._editingSection;
+    const ri  = this._editingRowIdx;
+    const isNew = ri === null;
+    if (isNew) {
+      row.id = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+      this._editingSections[si].rows.push(row);
+    } else {
+      // Conserver l'id existant
+      row.id = this._editingSections[si].rows[ri].id;
+      this._editingSections[si].rows[ri] = row;
+    }
+
+    this.closeRowEditor();
+    this._renderManagerBody();
   },
 
   // ── Historique ──
