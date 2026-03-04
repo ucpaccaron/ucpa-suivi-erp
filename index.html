@@ -5881,12 +5881,18 @@ const App = {
             <label>Types ERP <span style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(sélection multiple)</span></label>
             <div class="erp-type-grid" id="erp-type-grid">
               ${[
-                ['O','O','Hôtels'],
+                ['O','O','Hôtels & pensions de famille'],
                 ['L','L','Salles de réunions & spectacles'],
                 ['N','N','Restaurants & débits de boissons'],
                 ['R','R','Enseignement & formation'],
                 ['X','X','Établissements sportifs'],
                 ['PA','PA','Établissements de plein air'],
+                ['M','M','Magasins & centres commerciaux'],
+                ['CTS','CTS','Chapiteaux & tentes'],
+                ['EF','EF','Établissements flottants'],
+                ['U','U','Sanitaires & soins'],
+                ['W','W','Administrations & banques'],
+                ['Y','Y','Musées'],
               ].map(([v,code,label]) => {
                 const sel = Array.isArray(d.erp_types) ? d.erp_types.includes(v) : (d.erp_type === v);
                 return `<div class="erp-type-item${sel?' selected':''}" onclick="App.toggleERPType('${v}',this)">
