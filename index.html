@@ -68,7 +68,7 @@
   // CONFIGURATION FIREBASE — Remplacer par vos vraies valeurs
   // Firebase Console → Paramètres → Vos applications → SDK
   // ════════════════════════════════════════════════════════════
-  const firebaseConfig = {
+   const firebaseConfig = {
     apiKey: "AIzaSyA9x_KggOX9UVYh02TTb0oSUkIXsl2OCOM",
     authDomain: "ucpa-erp-49004.firebaseapp.com",
     projectId: "ucpa-erp-49004",
@@ -14185,7 +14185,7 @@ Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
+          max_tokens: 4000,
           system: systemPrompt,
           messages: [{
             role: 'user',
@@ -14194,7 +14194,7 @@ Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le
               source: { type: 'base64', media_type: 'application/pdf', data: base64 }
             }, {
               type: 'text',
-              text: 'Extrais toutes les données de cette fiche de synthèse UCPA. Réponds uniquement en JSON.'
+              text: 'Extrais toutes les données de cette fiche de synthèse UCPA. Réponds UNIQUEMENT en JSON valide et COMPLET, sans rien tronquer.'
             }]
           }]
         })
@@ -14214,7 +14214,30 @@ Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le
         extracted = JSON.parse(text);
       } catch(e) {
         console.error('[PDFImport] JSON parse error:', e, '\nTexte reçu:', text.slice(0, 500));
-        throw new Error('Réponse IA non parseable. Voir console (F12).');
+        // Tentative de réparation : extraire la partie valide du JSON
+        try {
+          // Trouver la dernière virgule complète et fermer les structures ouvertes
+          let fixed = text;
+          // Supprimer la dernière ligne incomplète
+          const lines = fixed.split('\n');
+          while (lines.length > 1) {
+            try { JSON.parse(lines.join('\n') + '\n]}'); break; } catch(_) {}
+            try { JSON.parse(lines.join('\n') + '\n]\n}'); break; } catch(_) {}
+            try { JSON.parse(lines.join('\n') + '\n}'); break; } catch(_) {}
+            lines.pop();
+          }
+          fixed = lines.join('\n');
+          // Fermer les structures ouvertes
+          const opens = (fixed.match(/\[/g)||[]).length - (fixed.match(/\]/g)||[]).length;
+          const openb = (fixed.match(/\{/g)||[]).length - (fixed.match(/\}/g)||[]).length;
+          // Supprimer trailing comma
+          fixed = fixed.replace(/,\s*$/, '');
+          fixed += ']'.repeat(Math.max(0, opens)) + '}'.repeat(Math.max(0, openb));
+          extracted = JSON.parse(fixed);
+          console.warn('[PDFImport] JSON réparé avec succès');
+        } catch(e2) {
+          throw new Error('Réponse IA non parseable. Voir console (F12).');
+        }
       }
 
       console.log('[PDFImport] Données extraites:', extracted);
