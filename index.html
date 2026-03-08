@@ -2998,54 +2998,17 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     <!-- ADMIN CENTRES -->
     <div id="page-admin" class="page">
 
-      <!-- KPIs -->
+      <!-- KPIs dynamiques (remplis par Admin.render()) -->
       <div class="admin-kpi-bar">
-        <div class="admin-kpi">
-          <div class="admin-kpi-val" id="adm-kpi-sud">—</div>
-          <div class="admin-kpi-label">Centres Alpes Sud</div>
-        </div>
-        <div class="admin-kpi">
-          <div class="admin-kpi-val" id="adm-kpi-nord">—</div>
-          <div class="admin-kpi-label">Centres Alpes Nord</div>
-        </div>
-        <div class="admin-kpi">
+        <div id="adm-kpi-dynamic" style="display:contents"></div>
+        <div class="admin-kpi" style="border-left:1px solid var(--border);padding-left:16px">
           <div class="admin-kpi-val" id="adm-kpi-total">—</div>
           <div class="admin-kpi-label">Total centres</div>
         </div>
       </div>
 
-      <!-- Alpes Sud -->
-      <div class="card">
-        <div class="card-hdr">
-          <span>⚙️</span>
-          <h3>Gestion des Centres</h3>
-          <span class="admin-region-badge sud">▲ Alpes Sud</span>
-          <div class="ml flex" style="gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="Admin.importCentres('SUD')">📥 Import liste</button>
-            <button class="btn btn-primary btn-sm" onclick="Admin.openAddModal('SUD')">+ Ajouter un centre</button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="admin-centres-grid" id="admin-list-sud"></div>
-        </div>
-      </div>
-
-      <!-- Alpes Nord -->
-      <div class="card">
-        <div class="card-hdr">
-          <span>⚙️</span>
-          <h3>Gestion des Centres</h3>
-          <span class="admin-region-badge nord">▲ Alpes Nord</span>
-          <div class="ml flex" style="gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="Admin.importCentres('NORD')">📥 Import liste</button>
-            <button class="btn btn-primary btn-sm" onclick="Admin.openAddModal('NORD')">+ Ajouter un centre</button>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="admin-centres-grid" id="admin-list-nord"></div>
-        </div>
-      </div>
-
+      <!-- Listes régions (injectées par Admin.render()) -->
+      <div id="admin-regions-wrap"></div>
 
       <!-- ── Configuration API Anthropic ── -->
       <div class="card" style="margin-top:16px;border:1px solid var(--accent);border-radius:12px">
@@ -3056,7 +3019,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
         <div class="card-body" style="padding:14px 16px">
           <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
             La clé est stockée dans <strong>Firestore</strong> (document <code>ucpa_erp/config_anthropic</code>).<br>
-            Elle est chargée automatiquement pour tous les utilisateurs. Elle n'apparaît jamais en clair dans le code.
+            Elle est chargée automatiquement pour tous les utilisateurs.
           </div>
           <div style="display:flex;gap:10px;align-items:center">
             <input type="password" id="adm-anthropic-key" placeholder="sk-ant-api03-XXXXXXXX…"
@@ -4404,14 +4367,13 @@ const App = {
   // Crée les contrôles réglementaires par défaut si le centre est vide
   _initCentreRegistre(centre) {
     if (!centre) return;
-    const prefix = this._storagePrefix;
-    const key    = 'registre';
-    const all    = this.load(key) || {};
+    const key = 'registre';
+    const all = this.load(key) || {};
     if (all[centre] && all[centre].length > 0) return; // déjà initialisé
 
-    // Créer les lignes depuis CONTROLES_TEMPLATE
+    // Créer les lignes depuis CONTROLES_TEMPLATE — structure unifiée
     const rows = (typeof CONTROLES_TEMPLATE !== 'undefined' ? CONTROLES_TEMPLATE : []).map(t => ({
-      id:               this.uuid(),
+      id:               `${centre}-${t.catId}`,
       centre:           centre,
       catId:            t.catId,
       groupe:           t.groupe,
@@ -4419,13 +4381,17 @@ const App = {
       periodicite:      t.periodicite || '',
       resultat:         '',
       dateRealisation:  '',
+      prochainControle: '',
       dateLimite:       '',
       observations:     '',
       prestataire:      '',
+      organisme:        '',
       lien:             '',
+      signature:        '',
+      signataireNom:    '',
+      signatureTs:      '',
     }));
 
-    if (!all[centre]) all[centre] = [];
     all[centre] = rows;
     this.save(key, all);
     console.info(`[UCPA ERP] Registre initialisé pour ${centre} — ${rows.length} contrôles`);
@@ -4608,7 +4574,25 @@ const App = {
   buildInitRegistre() {
     const r = {};
     CENTRES.forEach(c => {
-      r[c] = CONTROLES_TEMPLATE.map(t => ({...t, id:`${c}-${t.catId}`, dateRealisation:'', resultat:'', organisme:'', prochainControle:'', observations:''}));
+      r[c] = CONTROLES_TEMPLATE.map(t => ({
+        id:              `${c}-${t.catId}`,
+        centre:          c,
+        catId:           t.catId,
+        groupe:          t.groupe,
+        libelle:         t.libelle,
+        periodicite:     t.periodicite || '',
+        resultat:        '',
+        dateRealisation: '',
+        prochainControle:'',
+        dateLimite:      '',
+        observations:    '',
+        prestataire:     '',
+        organisme:       '',
+        lien:            '',
+        signature:       '',
+        signataireNom:   '',
+        signatureTs:     '',
+      }));
     });
     return r;
   },
@@ -5252,6 +5236,12 @@ const App = {
             <div class="synth-field"><label>Ville</label>
               <input id="s-ville" value="${d.ville||''}">
             </div>
+            <div class="synth-field"><label>SIRET</label>
+              <input id="s-siret" value="${d.siret||''}" placeholder="XXXXXXXXXXXXXXX">
+            </div>
+            <div class="synth-field"><label>Code site</label>
+              <input id="s-code_site" value="${d.code_site||''}" placeholder="Ex: 9313">
+            </div>
             <div class="synth-field"><label>Date de construction</label>
               <input id="s-date_construction" type="number" min="1900" max="2035" placeholder="AAAA" value="${d.date_construction||''}">
             </div>
@@ -5484,7 +5474,8 @@ const App = {
       'rt_nom','rt_tel','rt_email',
       'nature','bail','nb_batiments','surface','capacite','typo',
       'erp_cat','ssi','derniere_commission','prochaine_commission',
-      'puissance_kva','num_pdl','chauffage','puissance_chaud'
+      'puissance_kva','num_pdl','chauffage','puissance_chaud',
+      'siret','code_site'
     ];
     const d = {};
     fields.forEach(f => {
@@ -12149,95 +12140,132 @@ const GED = {
 // ═══════════════════════════════════════════════════════════
 const Admin = {
 
-  // Clés Firestore pour la persistance des listes
-  _key: { SUD: 'ucpa_centres_SUD', NORD: 'ucpa_centres_NORD' },
+  // Clés Firestore pour toutes les régions
+  _key: Object.keys(REGIONS).reduce((acc, r) => { acc[r] = 'ucpa_centres_' + r; return acc; }, {}),
 
-  // Charger les listes de centres depuis Firestore (ou localStorage en fallback)
+  // ── Charger les listes depuis Firestore / localStorage ─────────
   async loadPersistedCentres() {
-    const regions = ['SUD', 'NORD'];
-    await Promise.all(regions.map(async r => {
+    await Promise.all(Object.keys(REGIONS).map(async r => {
       try {
         let raw = null;
         if (window._firestore) raw = await window._firestore.get(this._key[r]);
-        if (!raw) raw = localStorage.getItem(this._key[r]); // fallback
+        if (!raw) raw = localStorage.getItem(this._key[r]);
         if (!raw) return;
-        const arr    = JSON.parse(raw);
-        const target = r === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+        const arr = JSON.parse(raw);
+        const target = REGIONS[r].centres;
         target.length = 0;
         arr.forEach(c => target.push(c));
       } catch(e) {}
     }));
   },
 
-  // Sauvegarder la liste des centres dans Firestore
+  // ── Sauvegarder une région ──────────────────────────────────────
   _persist(region) {
-    const arr = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+    const arr = REGIONS[region] ? REGIONS[region].centres : [];
     const raw = JSON.stringify(arr);
-    if (window._firestore) window._firestore.set(this._key[region], raw).catch(() => {});
-    try { localStorage.setItem(this._key[region], raw); } catch(e) {}
+    const key = this._key[region];
+    if (!key) return;
+    if (window._firestore) window._firestore.set(key, raw).catch(() => {});
+    try { localStorage.setItem(key, raw); } catch(e) {}
   },
 
-  // ── Rendu de la page ──
+  // ── Rendu de la page Admin ─────────────────────────────────────
   render() {
-    // KPIs
-    document.getElementById('adm-kpi-sud').textContent   = CENTRES_SUD.length;
-    document.getElementById('adm-kpi-nord').textContent  = CENTRES_NORD.length;
-    document.getElementById('adm-kpi-total').textContent = CENTRES_SUD.length + CENTRES_NORD.length;
+    // KPIs dynamiques
+    const kpiEl = document.getElementById('adm-kpi-dynamic');
+    const totalEl = document.getElementById('adm-kpi-total');
+    let total = 0;
+    if (kpiEl) {
+      kpiEl.innerHTML = Object.entries(REGIONS).map(([key, reg]) => {
+        total += reg.centres.length;
+        return `<div class="admin-kpi">
+          <div class="admin-kpi-val">${reg.centres.length}</div>
+          <div class="admin-kpi-label">${reg.icon} ${reg.label}</div>
+        </div>`;
+      }).join('');
+    }
+    if (totalEl) totalEl.textContent = total;
 
-    this._renderList('SUD',  'admin-list-sud');
-    this._renderList('NORD', 'admin-list-nord');
+    // Listes de centres par région
+    const listWrap = document.getElementById('admin-regions-wrap');
+    if (listWrap) {
+      listWrap.innerHTML = Object.entries(REGIONS).map(([key, reg]) => `
+        <div class="card" style="margin-top:14px">
+          <div class="card-hdr">
+            <span>${reg.icon}</span>
+            <h3>${reg.label}</h3>
+            <div style="font-size:11px;color:var(--muted);margin-left:6px">${reg.centres.length} centres</div>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto"
+              onclick="Admin.openAddModal('${key}')">+ Ajouter</button>
+          </div>
+          <div class="card-body">
+            <div class="admin-centres-grid" id="admin-list-${key}"></div>
+          </div>
+        </div>`).join('');
+    }
+    // Remplir chaque liste
+    Object.keys(REGIONS).forEach(key => this._renderList(key, 'admin-list-' + key));
   },
 
+  // ── Mot de passe auto ──────────────────────────────────────────
   _pw(name) {
-    return name.toLowerCase()
-      .replace('village sportif ','')
-      .replace('centre aquatique ','')
-      .replace('centre nautique ','')
+    return (name || '').toLowerCase()
+      .replace(/^village sportif /, '')
+      .replace(/^village nautique /, '')
+      .replace(/^station de ski /, '')
+      .replace(/^domaine de /, '')
+      .replace(/^camping wellness sport /, '')
+      .replace(/^centre aquatique /, '')
+      .replace(/^centre nautique /, '')
       .trim();
   },
 
   _short(name) {
-    return name
-      .replace('VILLAGE SPORTIF ','')
-      .replace('CENTRE AQUATIQUE ','CA ')
-      .replace('CENTRE NAUTIQUE ','CN ');
+    return (name || '').replace(/^VILLAGE SPORTIF /i,'').replace(/^VILLAGE NAUTIQUE /i,'')
+      .replace(/^STATION DE SKI /i,'').replace(/^DOMAINE DE /i,'')
+      .replace(/^CENTRE AQUATIQUE /i,'').replace(/^CENTRE NAUTIQUE /i,'')
+      .replace(/^CAMPING WELLNESS SPORT /i,'');
   },
 
+  // ── Afficher une liste de centres ──────────────────────────────
   _renderList(region, elId) {
-    const arr = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+    const reg = REGIONS[region];
     const el  = document.getElementById(elId);
-    if (!el) return;
+    if (!el || !reg) return;
+    const arr = reg.centres;
 
     if (!arr.length) {
       el.innerHTML = '<div class="empty-state"><div class="icon">🏔</div><div>Aucun centre configuré</div></div>';
       return;
     }
-
-    el.innerHTML = arr.map((c, i) => `
+    el.innerHTML = arr.map((name, i) => `
       <div class="admin-centre-card">
         <div class="admin-centre-info">
-          <div class="admin-centre-name" title="${c}">${this._short(c)}</div>
-          <div class="admin-centre-pw">Mot de passe : <code>${this._pw(c)}</code></div>
+          <div class="admin-centre-name" title="${name}">${this._short(name)}</div>
+          <div class="admin-centre-pw">Mot de passe : <code>${this._pw(name)}</code></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-ghost btn-sm" title="Renommer" onclick="Admin.openEditModal('${region}',${i})">✏️</button>
-          <button class="btn btn-ghost btn-sm" title="Supprimer" onclick="Admin.confirmDelete('${region}',${i})"
+          <button class="btn btn-ghost btn-sm" title="Renommer"
+            onclick="Admin.openEditModal('${region}',${i})">✏️</button>
+          <button class="btn btn-ghost btn-sm" title="Supprimer"
+            onclick="Admin.confirmDelete('${region}',${i})"
             style="color:var(--red);border-color:transparent">🗑️</button>
         </div>
       </div>`).join('');
   },
 
-  // ── Ajouter ──
+  // ── Ajouter un centre ──────────────────────────────────────────
   openAddModal(region) {
+    const reg = REGIONS[region];
+    if (!reg) return;
     App.openModal(
-      `➕ Ajouter un centre — Alpes ${region === 'SUD' ? 'Sud' : 'Nord'}`,
+      `➕ Ajouter un centre — ${reg.icon} ${reg.label}`,
       `<div class="form-group">
         <label>Nom complet du centre (majuscules)</label>
         <input type="text" id="adm-centre-input" placeholder="Ex: VILLAGE SPORTIF CHAMONIX"
           style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         <div style="margin-top:8px;font-size:11px;color:var(--muted)">
-          Le mot de passe sera généré automatiquement à partir du nom.<br>
-          Convention : commencer par <strong>VILLAGE SPORTIF</strong>, <strong>CENTRE AQUATIQUE</strong> ou <strong>CENTRE NAUTIQUE</strong>.
+          Convention : commencer par <strong>VILLAGE SPORTIF</strong>, <strong>CENTRE NAUTIQUE</strong>, etc.
         </div>
         <div id="adm-pw-preview" style="margin-top:12px;padding:10px 14px;background:var(--bg3);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted2)">
           Mot de passe généré : <span id="adm-pw-val" style="color:var(--accent)">—</span>
@@ -12246,21 +12274,19 @@ const Admin = {
       'admin_add_centre'
     );
     App._adminModalRegion = region;
-
-    // Prévisualisation du mot de passe en temps réel
     setTimeout(() => {
       const inp = document.getElementById('adm-centre-input');
       if (inp) inp.addEventListener('input', () => {
-        const preview = document.getElementById('adm-pw-val');
-        if (preview) preview.textContent = this._pw(inp.value) || '—';
+        const prev = document.getElementById('adm-pw-val');
+        if (prev) prev.textContent = this._pw(inp.value) || '—';
       });
     }, 50);
   },
 
-  // ── Éditer ──
+  // ── Modifier un centre ─────────────────────────────────────────
   openEditModal(region, idx) {
-    const arr  = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
-    const current = arr[idx];
+    const reg  = REGIONS[region];
+    const current = reg ? reg.centres[idx] : '';
     App.openModal(
       `✏️ Modifier le centre`,
       `<div class="form-group">
@@ -12275,27 +12301,26 @@ const Admin = {
     );
     App._adminModalRegion = region;
     App._adminModalIdx    = idx;
-
     setTimeout(() => {
       const inp = document.getElementById('adm-centre-input');
       if (inp) inp.addEventListener('input', () => {
-        const preview = document.getElementById('adm-pw-val');
-        if (preview) preview.textContent = this._pw(inp.value) || '—';
+        const prev = document.getElementById('adm-pw-val');
+        if (prev) prev.textContent = this._pw(inp.value) || '—';
       });
     }, 50);
   },
 
-  // ── Confirmer suppression ──
+  // ── Confirmer suppression ──────────────────────────────────────
   confirmDelete(region, idx) {
-    const arr  = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
-    const name = arr[idx];
+    const reg  = REGIONS[region];
+    const name = reg ? reg.centres[idx] : '';
     App.openModal(
       '🗑️ Supprimer le centre',
       `<div class="alert-banner danger" style="margin-bottom:16px">
-        ⚠️ Cette action supprime définitivement <strong>${this._short(name)}</strong> de la liste des centres.<br>
-        Les données ERP de ce centre restent en mémoire mais ne seront plus accessibles via ce compte.
+        ⚠️ Cette action supprime <strong>${this._short(name)}</strong> de la liste.<br>
+        Les données ERP restent en mémoire mais ne seront plus accessibles via ce compte.
       </div>
-      <p style="font-size:13px;color:var(--muted2)">Confirmez-vous la suppression de <strong style="color:var(--text)">${name}</strong> ?</p>`,
+      <p style="font-size:13px;color:var(--muted2)">Confirmer la suppression de <strong style="color:var(--text)">${name}</strong> ?</p>`,
       'admin_delete_centre'
     );
     App._adminModalRegion = region;
@@ -12304,19 +12329,21 @@ const Admin = {
     document.getElementById('modal-save').style.background = 'var(--red)';
   },
 
-  // ── Sauvegarder (appelé par App.saveModal) ──
+  // ── Sauvegarder (appelé par App.saveModal) ─────────────────────
   saveFromModal(type) {
     const region = App._adminModalRegion;
-    const arr    = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+    const reg    = REGIONS[region];
+    if (!reg) return false;
+    const arr    = reg.centres;
 
     if (type === 'admin_add_centre') {
       const val = (document.getElementById('adm-centre-input')?.value || '').trim().toUpperCase();
       if (!val) { alert('Veuillez saisir un nom de centre.'); return false; }
-      if (arr.includes(val)) { alert('Ce centre existe déjà dans la liste.'); return false; }
+      if (arr.includes(val)) { alert('Ce centre existe déjà dans cette région.'); return false; }
       arr.push(val);
       this._persist(region);
-      this._refreshCentreSelector(region);
-      // Initialiser automatiquement le registre pour le nouveau centre
+      this._refreshCentreSelector();
+      // ✅ Initialiser le registre de sécurité pour le nouveau centre
       App._initCentreRegistre(val);
       App.closeModal();
       this.render();
@@ -12329,7 +12356,7 @@ const Admin = {
       if (!val) { alert('Veuillez saisir un nom de centre.'); return false; }
       arr[idx] = val;
       this._persist(region);
-      this._refreshCentreSelector(region);
+      this._refreshCentreSelector();
       App.closeModal();
       this.render();
       return true;
@@ -12339,7 +12366,7 @@ const Admin = {
       const idx = App._adminModalIdx;
       arr.splice(idx, 1);
       this._persist(region);
-      this._refreshCentreSelector(region);
+      this._refreshCentreSelector();
       App.closeModal();
       this.render();
       return true;
@@ -12348,62 +12375,26 @@ const Admin = {
     return false;
   },
 
-  // Rafraîchir le sélecteur de centres en sidebar après modification
-  _refreshCentreSelector(region) {
-    // Reconstruire CENTRES global si l'admin est en vue "ALL" ou sur la bonne région
-    const prefix = App._storagePrefix;
-    let actives;
-    if (prefix === 'ucpa_admin_') actives = [...CENTRES_SUD, ...CENTRES_NORD];
-    else if (prefix === 'ucpa_nord_') actives = CENTRES_NORD;
-    else actives = CENTRES_SUD;
-
+  // ── Rafraîchir le sélecteur global de centre ───────────────────
+  _refreshCentreSelector() {
+    // Reconstruire CENTRES[] depuis toutes les régions actives
+    const all = Object.values(REGIONS).reduce((acc, r) => acc.concat(r.centres), []);
     CENTRES.length = 0;
-    actives.forEach(c => CENTRES.push(c));
+    all.forEach(c => CENTRES.push(c));
 
     const sel = document.getElementById('centre-select');
-    const current = App.centre;
+    if (!sel) return;
+    const current = sel.value;
     sel.innerHTML = '<option value="ALL">— Tous les centres —</option>';
-    actives.forEach(c => {
-      const o = document.createElement('option');
-      o.value = c;
-      o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
-      sel.appendChild(o);
+    CENTRES.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      if (c === current) opt.selected = true;
+      sel.appendChild(opt);
     });
-    // Restaurer sélection si toujours valide
-    if (actives.includes(current)) sel.value = current;
-    else { App.centre = 'ALL'; sel.value = 'ALL'; }
-
-    // Mettre à jour le compteur sidebar
-    const label = document.getElementById('sidebar-region-label');
-    if (label && prefix === 'ucpa_sud_') label.textContent = '▲ Alpes Sud · ' + CENTRES_SUD.length + ' Centres';
-    if (label && prefix === 'ucpa_nord_') label.textContent = '▲ Alpes Nord · ' + CENTRES_NORD.length + ' Centres';
-    if (label && prefix === 'ucpa_admin_') label.textContent = '▲ Alpes Sud + Nord · Admin';
-  },
-
-  // Import liste depuis un fichier texte (un centre par ligne)
-  importCentres(region) {
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = '.txt,.csv';
-    input.onchange = (e) => {
-      const file = e.target.files[0]; if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const lines = ev.target.result.split('\n')
-          .map(l => l.trim().toUpperCase())
-          .filter(l => l.length > 0);
-        const arr = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
-        let added = 0;
-        lines.forEach(l => { if (!arr.includes(l)) { arr.push(l); added++; } });
-        this._persist(region);
-        this._refreshCentreSelector(region);
-        this.render();
-        alert(`${added} centre(s) importé(s) dans Alpes ${region === 'SUD' ? 'Sud' : 'Nord'}.`);
-      };
-      reader.readAsText(file);
-    };
-    input.click();
   }
-};
+};;
 
 // ═══════════════════════════════════════════════════════════
 // EXCEL IMPORT FUNCTIONS
@@ -14090,6 +14081,8 @@ document.addEventListener('ucpa-session-started', () => {
 // MODULE IMPORT PDF — Fiche de Synthèse
 // ══════════════════════════════════════════════════════════════
 const PDFImport = {
+
+  // ── Ouvrir le sélecteur de fichier ─────────────────────────
   openFilePicker() {
     let input = document.getElementById('pdf-import-input');
     if (!input) {
@@ -14107,92 +14100,722 @@ const PDFImport = {
     input.click();
   },
 
+  // ── Importer et analyser le PDF ────────────────────────────
   async importFile(file) {
     console.log('[PDFImport] Fichier:', file.name);
     const btn = document.getElementById('btn-import-pdf');
-    const origText = btn ? btn.innerHTML : '';
-    if (btn) { btn.innerHTML = '⏳ Import…'; btn.disabled = true; }
+    const origHTML = btn ? btn.innerHTML : '';
+    const setBtn = (txt, col) => { if (btn) { btn.innerHTML = txt; btn.style.background = col || ''; } };
+
+    setBtn('⏳ Lecture PDF…', '#6366f1');
 
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      // Lire le fichier en base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = () => reject(new Error('Lecture fichier échouée'));
+        reader.readAsDataURL(file);
+      });
+
+      setBtn('🤖 Analyse IA…', '#f59e0b');
+
+      const apiKey = window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+      if (!apiKey || apiKey === 'VOTRE_CLE_API_ICI') {
+        alert('Clé API Anthropic non configurée.\nVa dans Admin → Configuration API Anthropic pour la renseigner.');
+        setBtn(origHTML, '');
+        return;
+      }
+
+      // Prompt précis basé sur le format exact de la fiche UCPA
+      const systemPrompt = `Tu es un extracteur de données pour les fiches de synthèse UCPA.
+Extrait TOUTES les données du PDF et réponds UNIQUEMENT en JSON valide, sans markdown, sans explication.
+Format exact :
+{
+  "nom": "",
+  "siret": "",
+  "code_naf": "",
+  "adresse": "",
+  "cp": "",
+  "ville": "",
+  "code_site": "",
+  "departement": "",
+  "region": "",
+  "nb_batiments": "",
+  "surface": "",
+  "pdl": "",
+  "alim_gaz": "",
+  "alim_fioul": "",
+  "volume_fioul": "",
+  "type_chauffage": "",
+  "annee_mise_service": "",
+  "puissance_kw": "",
+  "erp_types": [],
+  "erp_cat": "",
+  "periodicite_commission": "",
+  "derniere_commission": "",
+  "prochaine_commission": "",
+  "effectif_total": "",
+  "capacite_client": "",
+  "nb_niveaux": "",
+  "controles": [
+    {
+      "catId": "4.1",
+      "prestataire": "DESAUTEL",
+      "contrat": true,
+      "derniere_visite": "23/07/2024",
+      "resultat": "Conforme"
+    }
+  ]
+}
+Pour erp_types : extraire les codes exacts (ex: ["RH","N","L"]).
+Pour les contrôles : utiliser exactement les catIds du registre (3.1, 3.2, 4.1, 4.2, 4.3=SSI triennale, 4.4=DAS, 4.5=RIA, 4.6=colonne sèche/PEI, 4.7=sprinkler, 4.8=désenfumage, 5.1=Q18, 5.2=BAES, 6.1=ascenseurs, 6.2=quinquennal, 7.1=réseaux gaz, 7.2=chaudières, 7.3=cuisine, 7.4=ramonage, 8.1=perf énergie, 8.2=étanchéité, 9=EPC/EPI, 10.1=hottes, 10.2=ventilation, 11.1=sportifs, 12=DAE, 13=radon, 15.1=légionellose, 15.2=disconnecteur, 16=bac graisse, 17=citerne gaz).
+Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le contrôle.`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json',
-            'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-access': 'true' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
-          system: 'Extrait les données de cette fiche de synthèse ERP UCPA. Réponds UNIQUEMENT en JSON valide, sans markdown, sans commentaires. Format: {"nom":"","adresse":"","cp":"","ville":"","siret":"","erp_types":[],"erp_cat":"","ssi":"","nb_chaudieres":"","capacite":"","surface":"","notes":""}',
+          system: systemPrompt,
           messages: [{
             role: 'user',
             content: [{
               type: 'document',
               source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-            },
-            { type: 'text', text: 'Extrais toutes les données de cette fiche de synthèse ERP. Réponds uniquement en JSON.' }]
+            }, {
+              type: 'text',
+              text: 'Extrais toutes les données de cette fiche de synthèse UCPA. Réponds uniquement en JSON.'
+            }]
           }]
         })
       });
 
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error('API error ' + response.status + ': ' + err.slice(0, 200));
+      }
+
       const data = await response.json();
       let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-      text = text.replace(/```json|```/g, '').trim();
+      text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
       let extracted = {};
-      try { extracted = JSON.parse(text); } catch(e) { console.warn('[PDFImport] JSON parse error:', e); }
+      try {
+        extracted = JSON.parse(text);
+      } catch(e) {
+        console.error('[PDFImport] JSON parse error:', e, '\nTexte reçu:', text.slice(0, 500));
+        throw new Error('Réponse IA non parseable. Voir console (F12).');
+      }
 
       console.log('[PDFImport] Données extraites:', extracted);
-      this._fillForm(extracted);
+      setBtn('📝 Remplissage…', '#10b981');
+      await this._fillAll(extracted);
 
-      if (btn) { btn.innerHTML = '✅ Importé !'; setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2500); }
+      setBtn('✅ Import réussi !', '#10b981');
+      setTimeout(() => setBtn(origHTML, ''), 3000);
+
     } catch(err) {
       console.error('[PDFImport] Erreur:', err);
-      if (btn) { btn.innerHTML = '❌ Erreur'; setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2500); }
+      alert('Erreur import PDF :\n' + err.message + '\n\nOuvre la console (F12) pour plus de détails.');
+      setBtn('❌ Erreur', '#dc2626');
+      setTimeout(() => setBtn(origHTML, ''), 3000);
     }
   },
 
-  _fillForm(d) {
+  // ── Remplir tous les onglets ────────────────────────────────
+  async _fillAll(d) {
+    // 1. Naviguer vers la fiche synthèse
+    App.nav('synthese');
+    await new Promise(r => setTimeout(r, 600));
+
+    // 2. Remplir la fiche synthèse
+    this._fillSynthese(d);
+    await new Promise(r => setTimeout(r, 300));
+
+    // 3. Remplir le registre de sécurité
+    if (d.controles && d.controles.length > 0) {
+      this._fillRegistre(d.controles, d.nom || App.centre);
+    }
+
+    // 4. Sauvegarder la synthèse
+    if (typeof App.saveSynthese === 'function') App.saveSynthese();
+
+    console.log('[PDFImport] Import complet.');
+  },
+
+  // ── Fiche Synthèse ──────────────────────────────────────────
+  _fillSynthese(d) {
     const set = (id, val) => {
+      if (!val && val !== 0) return;
       const el = document.getElementById(id);
-      if (el && val !== undefined && val !== null && val !== '') el.value = val;
+      if (el) el.value = String(val);
     };
 
-    // Naviguer vers la fiche synthèse
-    App.nav('synthese');
+    set('s-nom',            d.nom);
+    set('s-adresse',        d.adresse);
+    set('s-cp',             d.cp);
+    set('s-ville',          d.ville);
+    set('s-siret',          d.siret);
+    set('s-code_site',      d.code_site);
+    set('s-nb_batiments',   d.nb_batiments);
+    set('s-surface',        d.surface);
+    set('s-capacite',       d.effectif_total || d.capacite_client);
+    set('s-num_pdl',        d.pdl);
+    set('s-puissance_chaud',d.puissance_kw || d.nb_chaudieres);
+    set('s-chauffage',      d.type_chauffage);
+    set('s-erp_cat',        d.erp_cat);
 
-    setTimeout(() => {
-      set('s-nom', d.nom || d.centre || d.name);
-      set('s-adresse', d.adresse || d.address);
-      set('s-cp', d.cp || d.code_postal);
-      set('s-ville', d.ville || d.city);
-      set('s-siret', d.siret);
-      set('s-erp_cat', d.erp_cat || d.categorie);
-      set('s-ssi', d.ssi);
-      set('s-puissance_chaud', d.nb_chaudieres || d.chaudieres);
-      set('s-capacite', d.capacite);
-      set('s-surface', d.surface);
-      set('s-observations', d.notes || d.observations);
+    // Commission de sécurité
+    if (d.derniere_commission) {
+      const dateStr = this._normalizeDate(d.derniere_commission);
+      set('s-derniere_commission', dateStr);
+    }
+    if (d.prochaine_commission) {
+      const dateStr = this._normalizeDate(d.prochaine_commission);
+      set('s-prochaine_commission', dateStr);
+    }
 
-      // Types ERP multi-sélection
-      if (Array.isArray(d.erp_types) && d.erp_types.length > 0) {
-        document.querySelectorAll('#erp-type-grid .erp-type-item').forEach(el => {
-          el.classList.remove('selected');
-          const code = el.querySelector('.erp-type-code')?.textContent?.trim();
-          if (d.erp_types.includes(code)) {
-            el.classList.add('selected');
-          }
-        });
+    // Types ERP multi-sélection
+    if (Array.isArray(d.erp_types) && d.erp_types.length > 0) {
+      const types = d.erp_types.map(t => t.toUpperCase().trim());
+      document.querySelectorAll('#erp-type-grid .erp-type-item').forEach(el => {
+        const code = (el.querySelector('.erp-type-code')?.textContent || '').trim().toUpperCase();
+        if (types.includes(code)) {
+          el.classList.add('selected');
+        }
+      });
+      console.log('[PDFImport] Types ERP sélectionnés:', types);
+    }
+  },
+
+  // ── Registre de Sécurité ────────────────────────────────────
+  _fillRegistre(controles, centreName) {
+    const centre = centreName || (App.centre !== 'ALL' ? App.centre : null);
+    if (!centre) { console.warn('[PDFImport] Pas de centre sélectionné pour le registre'); return; }
+
+    const all = App.load('registre') || {};
+    let rows = all[centre] || [];
+
+    // Si le registre est vide → l'initialiser d'abord
+    if (rows.length === 0) {
+      App._initCentreRegistre(centre);
+      rows = (App.load('registre') || {})[centre] || [];
+    }
+
+    let updated = 0;
+    controles.forEach(ctrl => {
+      if (!ctrl.catId) return;
+
+      // Trouver la ligne correspondante dans le registre par catId
+      const row = rows.find(r => r.catId === ctrl.catId);
+      if (row) {
+        if (ctrl.prestataire) row.prestataire = ctrl.prestataire;
+        if (ctrl.contrat !== undefined) {
+          // Stocker info contrat dans observations si pertinent
+          if (ctrl.contrat && !row.observations) row.observations = 'Contrat actif';
+        }
+        if (ctrl.derniere_visite) {
+          row.dateRealisation = this._normalizeDate(ctrl.derniere_visite);
+          row.resultat = ctrl.resultat || 'Conforme';
+        }
+        updated++;
+      } else {
+        console.log('[PDFImport] catId non trouvé dans registre:', ctrl.catId);
       }
+    });
 
-      // Sauvegarder
-      if (typeof App.saveSynthese === 'function') App.saveSynthese();
-      console.log('[PDFImport] Formulaire rempli');
-    }, 500);
+    all[centre] = rows;
+    App.save('registre', all);
+    console.log(`[PDFImport] Registre : ${updated}/${controles.length} contrôles mis à jour pour ${centre}`);
+  },
+
+  // ── Normaliser une date vers YYYY-MM-DD ─────────────────────
+  _normalizeDate(str) {
+    if (!str) return '';
+    str = String(str).trim();
+    // Format DD/MM/YYYY → YYYY-MM-DD
+    const m1 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m1) return `${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
+    // Format YYYY-MM-DD → déjà bon
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    // Format D/M/YYYY
+    const m2 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (m2) {
+      const yr = m2[3].length === 2 ? '20' + m2[3] : m2[3];
+      return `${yr}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+    }
+    return str;
   }
 };
+
+// Charger la clé Anthropic depuis localStorage si Firebase absent
+window.addEventListener('firebase-ready', function() {
+  if (!window._anthropicKey) {
+    try {
+      const lsKey = localStorage.getItem('ucpa_anthropic_key');
+      if (lsKey) {
+        window._anthropicKey = lsKey;
+        console.info('[UCPA ERP] Clé API Anthropic chargée depuis localStorage');
+      }
+    } catch(e) {}
+  }
+});
+
+// Démarrage
+window.addEventListener('DOMContentLoaded', () => {
+  if (window._firebaseReady) {
+    Auth.init();
+  } else {
+    const timeout = setTimeout(() => Auth.init(), 3000);
+    window.addEventListener('firebase-ready', () => { clearTimeout(timeout); Auth.init(); }, { once: true });
+  }
+});
+</script>
+<!-- MODE HORS-LIGNE + NOTIFICATIONS -->
+<script>
+// ── Service Worker (mode hors-ligne) ──
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'ucpa-erp-v1';
+    const URLS  = ['./', './index.html'];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)));
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        fetch(e.request).catch(() => caches.match(e.request))
+      );
+    });
+    self.addEventListener('push', e => {
+      const data = e.data ? e.data.json() : {title:'UCPA ERP', body:'Notification'};
+      e.waitUntil(self.registration.showNotification(data.title, {body:data.body, icon:'https://ucpaccaron.github.io/ucpa-suivi-erp/icon.png'}));
+    });
+  `;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).then(() => {
+    console.log('✅ Service Worker actif — mode hors-ligne disponible');
+  }).catch(()=>{});
+}
+
+// ── Notifications push ──
+function requestNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') {
+        scheduleExpiryNotifs();
+      }
+    });
+  } else if (Notification.permission === 'granted') {
+    scheduleExpiryNotifs();
+  }
+}
+
+function scheduleExpiryNotifs() {
+  // Vérifier les contrôles échus ou proches (appelé à chaque démarrage)
+  setTimeout(() => {
+    try {
+      const reg = App.load('registre') || {};
+      let expired = 0, soon = 0;
+      Object.values(reg).forEach(rows => {
+        (rows||[]).forEach(r => {
+          if (App.isExpired(r.prochainControle)) expired++;
+          else if (App.isSoonExpiring(r.prochainControle, 60)) soon++;
+        });
+      });
+      if (expired > 0) {
+        new Notification('⚠️ UCPA ERP — Contrôles échus', {
+          body: `${expired} contrôle(s) réglementaire(s) dépassé(s) — action requise`,
+          tag: 'ucpa-expired'
+        });
+      } else if (soon > 0) {
+        new Notification('⏰ UCPA ERP — Échéances proches', {
+          body: `${soon} contrôle(s) à renouveler dans les 60 prochains jours`,
+          tag: 'ucpa-soon'
+        });
+      }
+    } catch(e) {}
+  }, 3000);
+}
+
+// Demander permission notifications après connexion
+window.addEventListener('firebase-ready', () => {
+  setTimeout(requestNotifPermission, 5000);
+});
+document.addEventListener('ucpa-session-started', requestNotifPermission);
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     REGISTRE — Modale de signature (mobile)
+═══════════════════════════════════════════════════════════ -->
+<div id="reg-sig-modal" onclick="if(event.target===this){App.closeRegSig()}">
+  <div id="reg-sig-panel">
+    <h4 id="reg-sig-title">Signer le contrôle</h4>
+    <div class="sig-subtitle" id="reg-sig-subtitle">—</div>
+
+    <div class="reg-sig-name-row">
+      <label>Nom &amp; Prénom du signataire</label>
+      <input type="text" id="reg-sig-name" placeholder="Ex : Jean Dupont — Responsable sécurité"
+        autocomplete="name">
+    </div>
+
+    <div class="reg-sig-canvas-wrap" id="reg-sig-canvas-wrap">
+      <canvas id="reg-sig-canvas"></canvas>
+      <div class="reg-sig-hint" id="reg-sig-hint">✍️ Signez ici avec le doigt</div>
+    </div>
+
+    <!-- Aperçu signature déjà enregistrée -->
+    <div class="reg-sig-preview" id="reg-sig-preview">
+      <div style="display:flex;align-items:center;gap:8px">
+        <img id="reg-sig-preview-img" src="" alt="Signature">
+        <div>
+          <div style="font-weight:600;font-size:12px" id="reg-sig-preview-name">—</div>
+          <div id="reg-sig-ts" style="margin-top:2px">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reg-sig-btn-row">
+      <button class="btn btn-ghost" onclick="App.clearRegSig()">🗑 Effacer</button>
+      <button class="btn btn-secondary" onclick="App.closeRegSig()">Annuler</button>
+      <button class="btn btn-primary" onclick="App.saveRegSig()">✅ Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PRESTATAIRES — Modale Sortie + Signature
+     Réf. : C. trav. R.4512-1 | L.8222-1
+═══════════════════════════════════════════════════════════ -->
+<div id="prest-sortie-modal" onclick="if(event.target===this){Prest.closeSortie()}">
+  <div id="prest-sortie-panel">
+    <h4>✍️ Enregistrer la sortie</h4>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px" id="prest-sortie-subtitle">—</div>
+
+    <div class="reg-sig-name-row" style="margin-bottom:10px">
+      <label>Heure de sortie</label>
+      <input type="datetime-local" id="prest-sortie-heure" class="reg-card-input">
+    </div>
+
+    <div class="reg-sig-name-row" style="margin-bottom:10px">
+      <label>Observations / Bilan intervention</label>
+      <input type="text" id="prest-sortie-obs" class="reg-card-input"
+        placeholder="RAS / détails de l'intervention…">
+    </div>
+
+    <div class="reg-sig-name-row" style="margin-bottom:10px">
+      <label>Incident signalé ?</label>
+      <select id="prest-sortie-incident" class="reg-card-select">
+        <option value="non">✅ Non — Intervention normale</option>
+        <option value="oui">⚠️ Oui — Incident à signaler</option>
+      </select>
+    </div>
+
+    <div class="reg-sig-name-row" style="margin-bottom:10px">
+      <label>Signature de sortie (prestataire)</label>
+    </div>
+    <div class="prest-sig-canvas-wrap" id="prest-sig-wrap">
+      <canvas id="prest-sig-canvas"></canvas>
+      <div class="reg-sig-hint" id="prest-sig-hint">✍️ Signature de l'intervenant</div>
+    </div>
+
+    <div class="reg-sig-btn-row">
+      <button class="btn btn-ghost" onclick="Prest.clearSortie()">🗑 Effacer</button>
+      <button class="btn btn-secondary" onclick="Prest.closeSortie()">Annuler</button>
+      <button class="btn btn-primary" onclick="Prest.saveSortie()">✅ Confirmer sortie</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+// ══════════════════════════════════════════════════════════════
+// MODULE IMPORT PDF — Fiche de Synthèse UCPA
+// Parser dédié au format PDF UCPA (Pralognan, Val d'Isère, etc.)
+// Extrait : identité, patrimoine, types ERP, contrôles réglementaires
+// ══════════════════════════════════════════════════════════════
+const PDFImport = {
+
+  // ── Ouvrir le sélecteur de fichier ─────────────────────────
+  openFilePicker() {
+    let input = document.getElementById('pdf-import-input');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf,.pdf';
+      input.id = 'pdf-import-input';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', e => {
+        if (e.target.files[0]) this.importFile(e.target.files[0]);
+        input.value = '';
+      });
+    }
+    input.click();
+  },
+
+  // ── Importer et analyser le PDF ────────────────────────────
+  async importFile(file) {
+    console.log('[PDFImport] Fichier:', file.name);
+    const btn = document.getElementById('btn-import-pdf');
+    const origHTML = btn ? btn.innerHTML : '';
+    const setBtn = (txt, col) => { if (btn) { btn.innerHTML = txt; btn.style.background = col || ''; } };
+
+    setBtn('⏳ Lecture PDF…', '#6366f1');
+
+    try {
+      // Lire le fichier en base64
+      const base64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = e => resolve(e.target.result.split(',')[1]);
+        reader.onerror = () => reject(new Error('Lecture fichier échouée'));
+        reader.readAsDataURL(file);
+      });
+
+      setBtn('🤖 Analyse IA…', '#f59e0b');
+
+      const apiKey = window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+      if (!apiKey || apiKey === 'VOTRE_CLE_API_ICI') {
+        alert('Clé API Anthropic non configurée.\nVa dans Admin → Configuration API Anthropic pour la renseigner.');
+        setBtn(origHTML, '');
+        return;
+      }
+
+      // Prompt précis basé sur le format exact de la fiche UCPA
+      const systemPrompt = `Tu es un extracteur de données pour les fiches de synthèse UCPA.
+Extrait TOUTES les données du PDF et réponds UNIQUEMENT en JSON valide, sans markdown, sans explication.
+Format exact :
+{
+  "nom": "",
+  "siret": "",
+  "code_naf": "",
+  "adresse": "",
+  "cp": "",
+  "ville": "",
+  "code_site": "",
+  "departement": "",
+  "region": "",
+  "nb_batiments": "",
+  "surface": "",
+  "pdl": "",
+  "alim_gaz": "",
+  "alim_fioul": "",
+  "volume_fioul": "",
+  "type_chauffage": "",
+  "annee_mise_service": "",
+  "puissance_kw": "",
+  "erp_types": [],
+  "erp_cat": "",
+  "periodicite_commission": "",
+  "derniere_commission": "",
+  "prochaine_commission": "",
+  "effectif_total": "",
+  "capacite_client": "",
+  "nb_niveaux": "",
+  "controles": [
+    {
+      "catId": "4.1",
+      "prestataire": "DESAUTEL",
+      "contrat": true,
+      "derniere_visite": "23/07/2024",
+      "resultat": "Conforme"
+    }
+  ]
+}
+Pour erp_types : extraire les codes exacts (ex: ["RH","N","L"]).
+Pour les contrôles : utiliser exactement les catIds du registre (3.1, 3.2, 4.1, 4.2, 4.3=SSI triennale, 4.4=DAS, 4.5=RIA, 4.6=colonne sèche/PEI, 4.7=sprinkler, 4.8=désenfumage, 5.1=Q18, 5.2=BAES, 6.1=ascenseurs, 6.2=quinquennal, 7.1=réseaux gaz, 7.2=chaudières, 7.3=cuisine, 7.4=ramonage, 8.1=perf énergie, 8.2=étanchéité, 9=EPC/EPI, 10.1=hottes, 10.2=ventilation, 11.1=sportifs, 12=DAE, 13=radon, 15.1=légionellose, 15.2=disconnecteur, 16=bac graisse, 17=citerne gaz).
+Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le contrôle.`;
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: systemPrompt,
+          messages: [{
+            role: 'user',
+            content: [{
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+            }, {
+              type: 'text',
+              text: 'Extrais toutes les données de cette fiche de synthèse UCPA. Réponds uniquement en JSON.'
+            }]
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error('API error ' + response.status + ': ' + err.slice(0, 200));
+      }
+
+      const data = await response.json();
+      let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+      text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+      let extracted = {};
+      try {
+        extracted = JSON.parse(text);
+      } catch(e) {
+        console.error('[PDFImport] JSON parse error:', e, '\nTexte reçu:', text.slice(0, 500));
+        throw new Error('Réponse IA non parseable. Voir console (F12).');
+      }
+
+      console.log('[PDFImport] Données extraites:', extracted);
+      setBtn('📝 Remplissage…', '#10b981');
+      await this._fillAll(extracted);
+
+      setBtn('✅ Import réussi !', '#10b981');
+      setTimeout(() => setBtn(origHTML, ''), 3000);
+
+    } catch(err) {
+      console.error('[PDFImport] Erreur:', err);
+      alert('Erreur import PDF :\n' + err.message + '\n\nOuvre la console (F12) pour plus de détails.');
+      setBtn('❌ Erreur', '#dc2626');
+      setTimeout(() => setBtn(origHTML, ''), 3000);
+    }
+  },
+
+  // ── Remplir tous les onglets ────────────────────────────────
+  async _fillAll(d) {
+    // 1. Naviguer vers la fiche synthèse
+    App.nav('synthese');
+    await new Promise(r => setTimeout(r, 600));
+
+    // 2. Remplir la fiche synthèse
+    this._fillSynthese(d);
+    await new Promise(r => setTimeout(r, 300));
+
+    // 3. Remplir le registre de sécurité
+    if (d.controles && d.controles.length > 0) {
+      this._fillRegistre(d.controles, d.nom || App.centre);
+    }
+
+    // 4. Sauvegarder la synthèse
+    if (typeof App.saveSynthese === 'function') App.saveSynthese();
+
+    console.log('[PDFImport] Import complet.');
+  },
+
+  // ── Fiche Synthèse ──────────────────────────────────────────
+  _fillSynthese(d) {
+    const set = (id, val) => {
+      if (!val && val !== 0) return;
+      const el = document.getElementById(id);
+      if (el) el.value = String(val);
+    };
+
+    set('s-nom',            d.nom);
+    set('s-adresse',        d.adresse);
+    set('s-cp',             d.cp);
+    set('s-ville',          d.ville);
+    set('s-siret',          d.siret);
+    set('s-code_site',      d.code_site);
+    set('s-nb_batiments',   d.nb_batiments);
+    set('s-surface',        d.surface);
+    set('s-capacite',       d.effectif_total || d.capacite_client);
+    set('s-num_pdl',        d.pdl);
+    set('s-puissance_chaud',d.puissance_kw || d.nb_chaudieres);
+    set('s-chauffage',      d.type_chauffage);
+    set('s-erp_cat',        d.erp_cat);
+
+    // Commission de sécurité
+    if (d.derniere_commission) {
+      const dateStr = this._normalizeDate(d.derniere_commission);
+      set('s-derniere_commission', dateStr);
+    }
+    if (d.prochaine_commission) {
+      const dateStr = this._normalizeDate(d.prochaine_commission);
+      set('s-prochaine_commission', dateStr);
+    }
+
+    // Types ERP multi-sélection
+    if (Array.isArray(d.erp_types) && d.erp_types.length > 0) {
+      const types = d.erp_types.map(t => t.toUpperCase().trim());
+      document.querySelectorAll('#erp-type-grid .erp-type-item').forEach(el => {
+        const code = (el.querySelector('.erp-type-code')?.textContent || '').trim().toUpperCase();
+        if (types.includes(code)) {
+          el.classList.add('selected');
+        }
+      });
+      console.log('[PDFImport] Types ERP sélectionnés:', types);
+    }
+  },
+
+  // ── Registre de Sécurité ────────────────────────────────────
+  _fillRegistre(controles, centreName) {
+    const centre = centreName || (App.centre !== 'ALL' ? App.centre : null);
+    if (!centre) { console.warn('[PDFImport] Pas de centre sélectionné pour le registre'); return; }
+
+    const all = App.load('registre') || {};
+    let rows = all[centre] || [];
+
+    // Si le registre est vide → l'initialiser d'abord
+    if (rows.length === 0) {
+      App._initCentreRegistre(centre);
+      rows = (App.load('registre') || {})[centre] || [];
+    }
+
+    let updated = 0;
+    controles.forEach(ctrl => {
+      if (!ctrl.catId) return;
+
+      // Trouver la ligne correspondante dans le registre par catId
+      const row = rows.find(r => r.catId === ctrl.catId);
+      if (row) {
+        if (ctrl.prestataire) row.prestataire = ctrl.prestataire;
+        if (ctrl.contrat !== undefined) {
+          // Stocker info contrat dans observations si pertinent
+          if (ctrl.contrat && !row.observations) row.observations = 'Contrat actif';
+        }
+        if (ctrl.derniere_visite) {
+          row.dateRealisation = this._normalizeDate(ctrl.derniere_visite);
+          row.resultat = ctrl.resultat || 'Conforme';
+        }
+        updated++;
+      } else {
+        console.log('[PDFImport] catId non trouvé dans registre:', ctrl.catId);
+      }
+    });
+
+    all[centre] = rows;
+    App.save('registre', all);
+    console.log(`[PDFImport] Registre : ${updated}/${controles.length} contrôles mis à jour pour ${centre}`);
+  },
+
+  // ── Normaliser une date vers YYYY-MM-DD ─────────────────────
+  _normalizeDate(str) {
+    if (!str) return '';
+    str = String(str).trim();
+    // Format DD/MM/YYYY → YYYY-MM-DD
+    const m1 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m1) return `${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
+    // Format YYYY-MM-DD → déjà bon
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    // Format D/M/YYYY
+    const m2 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if (m2) {
+      const yr = m2[3].length === 2 ? '20' + m2[3] : m2[3];
+      return `${yr}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+    }
+    return str;
+  }
+};
+
 
 // Charger la clé Anthropic depuis localStorage si Firebase absent
 window.addEventListener('firebase-ready', function() {
