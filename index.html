@@ -1,21 +1,3 @@
-<!-- 
-⚠️  AVERTISSEMENTS DE SÉCURITÉ :
-
-1. Identifiants admin en dur (national/national)
-   → À remplacer par authentification sécurisée en production
-
-2. Risque XSS potentiel
-   → Échapper toutes les entrées utilisateur avant innerHTML
-
-3. Service Worker
-   → Vérifier que le cache pointe vers le bon fichier
-
-4. localStorage
-   → Limité à 5-10MB, prévoir nettoyage régulier
-
-Ces points sont documentés pour amélioration future.
--->
-
 <!DOCTYPE html>
 <html lang="fr" data-theme="dark">
 <head>
@@ -153,6 +135,14 @@ Ces points sont documentés pour amélioration future.
 
       window._sessionId = Math.random().toString(36).slice(2, 10);
       window._firebaseReady = true;
+      // Charger la clé API Anthropic depuis Firestore (doc ucpa_erp/config_anthropic)
+      try {
+        const cfgSnap = await getDoc(doc(db, 'ucpa_erp', 'config_anthropic'));
+        if (cfgSnap.exists() && cfgSnap.data().value && cfgSnap.data().value.apiKey) {
+          window._anthropicKey = cfgSnap.data().value.apiKey;
+          console.info('[UCPA ERP] Clé API Anthropic chargée depuis Firestore');
+        }
+      } catch(e) { /* silencieux — fallback sur ANTHROPIC_API_KEY */ }
       window.dispatchEvent(new Event('firebase-ready'));
 
     } catch(e) {
@@ -1092,6 +1082,23 @@ input[type=file]{display:none;}
 .region-tab.active-sud{background:var(--accent);color:#fff;}
 .region-tab.active-nord{background:#3a7bd5;color:#fff;}
 .region-tab.active-admin{background:#7c3aed;color:#fff;}
+/* ── Classes actif pour toutes les régions (REGIONS keys) ── */
+.region-tab.active-ALPES_NORD{background:#3a7bd5;color:#fff;}
+.region-tab.active-ALPES_SUD{background:var(--accent);color:#fff;}
+.region-tab.active-PYRENEES{background:#059669;color:#fff;}
+.region-tab.active-AQUITAINE{background:#0891b2;color:#fff;}
+.region-tab.active-PACA{background:#d97706;color:#fff;}
+.region-tab.active-BRETAGNE{background:#7c3aed;color:#fff;}
+.region-tab.active-RHONE{background:#dc2626;color:#fff;}
+.region-tab.active-national{background:#2563eb;color:#fff;}
+/* Corps de session — variables accent par région */
+body.region-ALPES_NORD{--accent:#3a7bd5;--accent2:#5a9be8;}
+body.region-ALPES_SUD{--accent:#E8541A;--accent2:#FF6B35;}
+body.region-PYRENEES{--accent:#059669;--accent2:#34d399;}
+body.region-AQUITAINE{--accent:#0891b2;--accent2:#22d3ee;}
+body.region-PACA{--accent:#d97706;--accent2:#fbbf24;}
+body.region-BRETAGNE{--accent:#7c3aed;--accent2:#a78bfa;}
+body.region-RHONE{--accent:#dc2626;--accent2:#f87171;}
 
 /* Nord accent override for Nord sessions */
 body.region-nord { --accent:#3a7bd5; --accent2:#5a9be8; }
@@ -1262,64 +1269,6 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 .notice-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--muted2);}
 .notice-table td:first-child{font-weight:600;color:var(--text);}
 .notice-version{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:24px;padding-top:12px;border-top:1px solid var(--border);}
-
-/* ── VEILLE RÉGLEMENTAIRE ── */
-.veille-result-item{
-  background:var(--panel);border:1px solid var(--border);border-radius:8px;
-  padding:14px 16px;margin-bottom:10px;transition:border-color 0.15s;cursor:pointer;
-}
-.veille-result-item:hover{border-color:var(--accent);}
-.veille-result-source{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;
-  margin-bottom:8px;
-}
-.veille-result-source.legifrance{background:rgba(29,78,216,0.1);color:#60a5fa;}
-.veille-result-source.sitesecurite{background:rgba(220,38,38,0.1);color:#f87171;}
-.veille-result-source.web{background:rgba(34,197,94,0.1);color:#4ade80;}
-.veille-result-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
-.veille-result-snippet{font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:8px;}
-.veille-result-meta{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
-
-/* Chatbot */
-.veille-chat-msg{display:flex;gap:10px;align-items:flex-start;}
-.veille-chat-avatar{
-  width:32px;height:32px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
-}
-.veille-chat-bubble{
-  background:var(--panel);border:1px solid var(--border);
-  border-radius:12px;padding:10px 14px;font-size:13px;
-  line-height:1.6;max-width:100%;
-}
-.veille-chat-assistant .veille-chat-avatar{background:rgba(29,78,216,0.15);}
-.veille-chat-assistant .veille-chat-bubble{background:var(--bg3);}
-.veille-chat-user{flex-direction:row-reverse;}
-.veille-chat-user .veille-chat-avatar{background:rgba(232,84,26,0.15);}
-.veille-chat-user .veille-chat-bubble{background:var(--accent);color:#fff;border-color:var(--accent);}
-.veille-chat-thinking{
-  display:flex;gap:4px;padding:8px 0;
-}
-.veille-chat-thinking span{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--muted);animation:thinking 1.4s infinite;
-}
-.veille-chat-thinking span:nth-child(2){animation-delay:0.2s;}
-.veille-chat-thinking span:nth-child(3){animation-delay:0.4s;}
-@keyframes thinking{
-  0%,60%,100%{opacity:0.3;}
-  30%{opacity:1;}
-}
-
-.active-ALPES_NORD { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-ALPES_SUD { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-PYRENEES { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-AQUITAINE { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-PACA { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-BRETAGNE { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-RHONE { background: rgba(30, 185, 129, 0.2) !important; border-color: var(--green) !important; }
-.active-national { background: rgba(59, 130, 246, 0.2) !important; border-color: var(--info) !important; }
 </style>
 <!-- PWA -->
 <link rel="manifest" href="data:application/json,{%22name%22:%22UCPA ERP%22,%22short_name%22:%22UCPA ERP%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23161618%22,%22theme_color%22:%22%23e8541a%22}">
@@ -1730,444 +1679,28 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
   #prest-cards-wrap{ display:none !important; }
   #prest-toolbar-mobile{ display:none !important; }
 }
+
+/* ══ VEILLE RÉGLEMENTAIRE + CHATBOT ══ */
+.veille-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+@media(max-width:900px){.veille-layout{grid-template-columns:1fr;}}
+.chat-wrap{display:flex;flex-direction:column;height:480px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg2);}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.chat-msg{max-width:85%;padding:10px 14px;border-radius:10px;font-size:12.5px;line-height:1.5;}
+.chat-msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
+.chat-msg.assistant{background:var(--panel);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:3px;}
+.chat-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border);background:var(--bg3);}
+.chat-input-row input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px;}
+.chat-thinking{display:flex;gap:4px;align-items:center;padding:10px 14px;}
+.chat-thinking span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:chat-bounce 1s infinite;}
+.chat-thinking span:nth-child(2){animation-delay:.2s;}
+.chat-thinking span:nth-child(3){animation-delay:.4s;}
+@keyframes chat-bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-8px);}}
+.veille-result{padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
+.veille-result:hover{border-color:var(--accent);}
+.veille-result-src{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:4px;}
+.veille-result-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.veille-result-snippet{font-size:11px;color:var(--muted);line-height:1.5;}
 </style>
-
-<!-- ═══════════════════════════════════════════════════════════
-     MODULE IMPORT PDF - FICHE DE SYNTHÈSE
-     Permet d'importer un PDF et de remplir automatiquement :
-     - Fiche de synthèse (identité, patrimoine, ERP)
-     - Registre de sécurité (tous les contrôles)
-     - Gain de temps : 30 min → 30 sec !
-═══════════════════════════════════════════════════════════ -->
-<script>
-/* ═══════════════════════════════════════════════════════════
-   UCPA ERP - MODULE D'IMPORT PDF FICHE DE SYNTHÈSE
-   
-   Importe automatiquement un PDF et remplit tous les onglets :
-   - Fiche de synthèse
-   - Registre de sécurité
-   - Contrats
-   - Etc.
-═══════════════════════════════════════════════════════════ */
-
-const ImportPDF = {
-  
-  // ──────────────────────────────────────────────────────────
-  // PARSER LE PDF (extraction données)
-  // ──────────────────────────────────────────────────────────
-  
-  async parsePDF(file) {
-    if (!file || file.type !== 'application/pdf') {
-      alert('⚠️ Veuillez sélectionner un fichier PDF');
-      return null;
-    }
-    
-    try {
-      // Lire le PDF
-      const arrayBuffer = await file.arrayBuffer();
-      const text = await this.extractTextFromPDF(arrayBuffer);
-      
-      // Parser les données
-      const data = this.parseData(text);
-      
-      return data;
-      
-    } catch (error) {
-      console.error('Erreur parsing PDF:', error);
-      alert('❌ Erreur lors de la lecture du PDF');
-      return null;
-    }
-  },
-  
-  extractTextFromPDF(arrayBuffer) {
-    return new Promise((resolve) => {
-      const uint8Array = new Uint8Array(arrayBuffer);
-      const text = new TextDecoder('utf-8').decode(uint8Array);
-      
-      // Nettoyer
-      const cleaned = text
-        .replace(/[\x00-\x1F\x7F-\x9F]/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      resolve(cleaned);
-    });
-  },
-  
-  parseData(text) {
-    const data = {
-      identite: {},
-      patrimoine: {},
-      erp: {},
-      controles: [],
-      contrats: []
-    };
-    
-    // ─── IDENTITÉ ───
-    data.identite.nom = this.extract(text, /Nom du site:\s*([A-Z\s]+)/i);
-    data.identite.siret = this.extract(text, /siret\s*(\d+)/i);
-    data.identite.naf = this.extract(text, /Naf\s*([A-Z0-9]+)/i);
-    data.identite.adresse = this.extract(text, /Adresse:\s*([^C]+?)(?=Directeur|CP)/i);
-    data.identite.cp = this.extract(text, /CP\s*(\d{5})/i);
-    data.identite.ville = this.extract(text, /Ville:\s*([^C]+?)(?=Code site)/i);
-    data.identite.code_site = this.extract(text, /Code site:\s*(\d+)/i);
-    data.identite.departement = this.extract(text, /Département:\s*([^R]+?)(?=Région)/i);
-    data.identite.region = this.extract(text, /Région:\s*([^P]+?)(?=Patrimoine|$)/i);
-    
-    // Contacts
-    data.identite.directeur = this.extract(text, /Directeur de Centre\s*:\s*([^\r\n]+)/i);
-    data.identite.email_directeur = this.extract(text, /([a-z]+@ucpa\.asso\.fr)/i);
-    data.identite.tel_directeur = this.extract(text, /(06\s*\d{2}\s*\d{2}\s*\d{2}\s*\d{2})/i);
-    
-    // ─── PATRIMOINE ───
-    data.patrimoine.nb_batiments = this.extractNumber(text, /Nombre de bâtiment:\s*(\d+)/i);
-    data.patrimoine.surface_totale = this.extractNumber(text, /Surface total.*?:\s*(\d+)/i);
-    data.patrimoine.pdl = this.extract(text, /PDL\s*(\d+)/i);
-    data.patrimoine.type_chauffage = this.extract(text, /Type chauffage\s*([A-Za-z]+)/i);
-    data.patrimoine.annee_chauffage = this.extractNumber(text, /Annee de mise en service\s*(\d{4})/i);
-    data.patrimoine.puissance_kw = this.extractNumber(text, /Puissance Total en kW\s*(\d+)/i);
-    
-    // Commission sécurité
-    data.patrimoine.date_commission = this.extractDate(text, /Date de commission.*?(\d{2}\/\d{2}\/\d{4})/i);
-    data.patrimoine.periodicite = this.extractNumber(text, /Périodicité.*?(\d+)/i) || 3;
-    data.patrimoine.prochaine_cs = this.extractDate(text, /Prochaine commission\s*:\s*(\d{2}\/\d{2}\/\d{4})/i);
-    
-    // ─── ERP ───
-    const typesMatch = text.match(/ERP.*?(Rh|O|N|L|M|P|R|S|T|U|V|W|X|Y|PA|CTS)[\/\s,]+(Rh|O|N|L|M|P|R|S|T|U|V|W|X|Y|PA|CTS)?[\/\s,]*(Rh|O|N|L|M|P|R|S|T|U|V|W|X|Y|PA|CTS)?/i);
-    if (typesMatch) {
-      data.erp.types = [typesMatch[1], typesMatch[2], typesMatch[3]].filter(Boolean);
-    }
-    
-    const categorieMatch = text.match(/Catégorie\s*(\d)/i);
-    if (categorieMatch) {
-      data.erp.categorie = categorieMatch[1];
-    }
-    
-    data.erp.effectif_total = this.extractNumber(text, /TOTAL.*?(\d{3})\s*\d{2,3}\s*\d{1,2}/i);
-    
-    // ─── CONTRÔLES ───
-    // SSI
-    if (text.includes('S.S.I')) {
-      const ssiMatch = text.match(/S\.S\.I\s+([A-Z\s]+?)\s+X?\s+(\d{2}\/\d{2}\/\d{4})/i);
-      if (ssiMatch) {
-        data.controles.push({
-          type: 'SSI',
-          prestataire: ssiMatch[1].trim(),
-          date: ssiMatch[2]
-        });
-      }
-    }
-    
-    // Extincteurs
-    if (text.includes('EXTINCTEURS')) {
-      const extMatch = text.match(/EXTINCTEURS\s+([A-Z\s]+?)\s+X?\s+(\d{2}\/\d{2}\/\d{4})/i);
-      if (extMatch) {
-        data.controles.push({
-          type: 'Extincteurs',
-          prestataire: extMatch[1].trim(),
-          date: extMatch[2]
-        });
-      }
-    }
-    
-    // Désenfumage
-    if (text.includes('DÉSENFUMAGE')) {
-      const desMatch = text.match(/DÉSENFUMAGE\s+([A-Z\s]+?)\s+X?\s+(\d{2}\/\d{2}\/\d{4})/i);
-      if (desMatch) {
-        data.controles.push({
-          type: 'Désenfumage',
-          prestataire: desMatch[1].trim(),
-          date: desMatch[2]
-        });
-      }
-    }
-    
-    // Ascenseurs
-    if (text.includes('ASCENSEURS')) {
-      const ascMatch = text.match(/ASCENSEURS.*?([A-Z\s]+?)\s+X?\s+(\d{2}\/\d{2}\/\d{4})/i);
-      if (ascMatch) {
-        data.controles.push({
-          type: 'Ascenseurs',
-          prestataire: ascMatch[1].trim(),
-          date: ascMatch[2]
-        });
-      }
-    }
-    
-    // Électricité
-    if (text.includes('ÉLECTRIQUES')) {
-      const elecMatch = text.match(/ÉLECTRIQUES.*?([A-Z\s]+?)\s+X?\s+(\d{2}\/\d{2}\/\d{4})/i);
-      if (elecMatch) {
-        data.controles.push({
-          type: 'Installation électrique',
-          prestataire: elecMatch[1].trim(),
-          date: elecMatch[2]
-        });
-      }
-    }
-    
-    // Légionelles
-    if (text.includes('LEGIONELOSE') || text.includes('LÉGIONELLOSE')) {
-      const legMatch = text.match(/LEGIONELOSE\s+([A-Z\s]+?)\s+X?\s+(\d{2}\/\d{2}\/\d{4})?/i);
-      if (legMatch) {
-        data.controles.push({
-          type: 'Légionelles',
-          prestataire: legMatch[1].trim(),
-          date: legMatch[2] || ''
-        });
-      }
-    }
-    
-    return data;
-  },
-  
-  // Helpers d'extraction
-  extract(text, regex) {
-    const match = text.match(regex);
-    return match ? match[1].trim() : '';
-  },
-  
-  extractNumber(text, regex) {
-    const match = text.match(regex);
-    return match ? parseInt(match[1], 10) : null;
-  },
-  
-  extractDate(text, regex) {
-    const match = text.match(regex);
-    if (!match) return '';
-    
-    // Convertir DD/MM/YYYY en YYYY-MM-DD
-    const [jour, mois, annee] = match[1].split('/');
-    return `${annee}-${mois.padStart(2, '0')}-${jour.padStart(2, '0')}`;
-  },
-  
-  // ──────────────────────────────────────────────────────────
-  // REMPLIR LES ONGLETS
-  // ──────────────────────────────────────────────────────────
-  
-  async importerDonnees(data) {
-    if (!data) return;
-    
-    console.log('📥 Import des données...', data);
-    
-    // 1. Fiche de synthèse
-    this.remplirFicheSynthese(data);
-    
-    // 2. Registre de sécurité
-    this.remplirRegistre(data);
-    
-    // 3. Contrats (si données disponibles)
-    this.remplirContrats(data);
-    
-    // Sauvegarder
-    if (typeof App !== 'undefined' && App.save) {
-      App.save('synthese_' + App.centre, data.identite);
-      App.save('patrimoine_' + App.centre, data.patrimoine);
-    }
-    
-    alert('✅ Import réussi ! Toutes les données ont été importées.');
-  },
-  
-  remplirFicheSynthese(data) {
-    // Identité
-    this.setValue('synth-nom', data.identite.nom);
-    this.setValue('synth-siret', data.identite.siret);
-    this.setValue('synth-naf', data.identite.naf);
-    this.setValue('synth-adresse', data.identite.adresse);
-    this.setValue('synth-cp', data.identite.cp);
-    this.setValue('synth-ville', data.identite.ville);
-    this.setValue('synth-code-site', data.identite.code_site);
-    this.setValue('synth-departement', data.identite.departement);
-    this.setValue('synth-region', data.identite.region);
-    
-    // Contacts
-    this.setValue('synth-directeur', data.identite.directeur);
-    this.setValue('synth-email-directeur', data.identite.email_directeur);
-    this.setValue('synth-tel-directeur', data.identite.tel_directeur);
-    
-    // Patrimoine
-    this.setValue('synth-nb-batiments', data.patrimoine.nb_batiments);
-    this.setValue('synth-surface-totale', data.patrimoine.surface_totale);
-    this.setValue('synth-pdl', data.patrimoine.pdl);
-    this.setValue('synth-type-chauffage', data.patrimoine.type_chauffage);
-    this.setValue('synth-annee-chauffage', data.patrimoine.annee_chauffage);
-    this.setValue('synth-puissance-kw', data.patrimoine.puissance_kw);
-    
-    // ERP
-    if (data.erp.types && data.erp.types.length > 0) {
-      // Cocher les types
-      data.erp.types.forEach(type => {
-        const checkbox = document.querySelector(`input[value="${type}"]`);
-        if (checkbox) checkbox.checked = true;
-      });
-    }
-    
-    this.setValue('synth-categorie', data.erp.categorie);
-    this.setValue('synth-effectif', data.erp.effectif_total);
-    
-    // Commission sécurité
-    this.setValue('synth-derniere-cs', data.patrimoine.date_commission);
-    this.setValue('synth-prochaine-cs', data.patrimoine.prochaine_cs);
-    
-    console.log('✓ Fiche de synthèse remplie');
-  },
-  
-  remplirRegistre(data) {
-    if (!data.controles || data.controles.length === 0) return;
-    
-    const registre = (typeof App !== 'undefined' && App.load) 
-      ? App.load('registre') || {}
-      : {};
-    
-    const centre = (typeof App !== 'undefined') ? App.centre : 'PRALOGNAN';
-    
-    if (!registre[centre]) {
-      registre[centre] = [];
-    }
-    
-    // Mapper les contrôles importés
-    data.controles.forEach(controle => {
-      // Trouver le contrôle correspondant dans le registre
-      const mapping = {
-        'SSI': '1.1',
-        'Extincteurs': '1.2',
-        'Désenfumage': '1.4',
-        'Installation électrique': '2.1',
-        'Ascenseurs': '3.1',
-        'Légionelles': '6.1'
-      };
-      
-      const catId = mapping[controle.type];
-      if (!catId) return;
-      
-      // Chercher ou créer l'entrée
-      let entry = registre[centre].find(r => r.catId === catId);
-      
-      if (!entry) {
-        entry = {
-          catId: catId,
-          libelle: controle.type,
-          dateRealisation: controle.date,
-          organisme: controle.prestataire,
-          resultat: 'Conforme'
-        };
-        registre[centre].push(entry);
-      } else {
-        entry.dateRealisation = controle.date;
-        entry.organisme = controle.prestataire;
-      }
-    });
-    
-    // Sauvegarder
-    if (typeof App !== 'undefined' && App.save) {
-      App.save('registre', registre);
-    }
-    
-    console.log('✓ Registre de sécurité rempli');
-  },
-  
-  remplirContrats(data) {
-    // TODO : extraire les contrats du PDF si présents
-    console.log('✓ Contrats (à implémenter si données disponibles)');
-  },
-  
-  setValue(id, value) {
-    const el = document.getElementById(id);
-    if (el && value) {
-      el.value = value;
-    }
-  },
-  
-  // ──────────────────────────────────────────────────────────
-  // INTERFACE UTILISATEUR
-  // ──────────────────────────────────────────────────────────
-  
-  showImportButton() {
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-primary';
-    btn.style.cssText = 'margin:10px;background:linear-gradient(135deg,#10B981,#059669)';
-    btn.innerHTML = '📄 Importer PDF Fiche de Synthèse';
-    btn.onclick = () => this.triggerImport();
-    
-    // Ajouter dans la sidebar
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar) {
-      sidebar.insertBefore(btn, sidebar.firstChild);
-    }
-  },
-  
-  triggerImport() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf';
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      // Afficher loader
-      const loader = this.showLoader();
-      
-      try {
-        // Parser le PDF
-        const data = await this.parsePDF(file);
-        
-        if (data) {
-          // Importer les données
-          await this.importerDonnees(data);
-          
-          // Rafraîchir l'affichage
-          if (typeof App !== 'undefined' && App.nav) {
-            App.nav('synthese');
-          }
-        }
-      } catch (error) {
-        console.error('Erreur import:', error);
-        alert('❌ Erreur lors de l\'import');
-      } finally {
-        loader.remove();
-      }
-    };
-    
-    input.click();
-  },
-  
-  showLoader() {
-    const loader = document.createElement('div');
-    loader.style.cssText = `
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
-    loader.innerHTML = `
-      <div style="background:var(--surface-1);padding:30px;border-radius:12px;text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">📄</div>
-        <div style="font-size:18px;font-weight:600;margin-bottom:8px">Import en cours...</div>
-        <div style="font-size:14px;color:var(--muted)">Lecture et analyse du PDF</div>
-      </div>
-    `;
-    document.body.appendChild(loader);
-    return loader;
-  }
-};
-
-// Auto-initialisation
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => ImportPDF.showImportButton(), 1000);
-  });
-} else {
-  setTimeout(() => ImportPDF.showImportButton(), 1000);
-}
-
-console.log('✅ Module Import PDF chargé');
-
-</script>
-
 </head>
 <body>
 
@@ -2197,7 +1730,7 @@ console.log('✅ Module Import PDF chargé');
     <div class="login-title">Connexion</div>
 
     <div class="region-switcher" id="login-region-tabs" style="margin-top:0;margin-bottom:20px">
-      <button class="region-tab active-admin" id="tab-national" onclick="Auth.switchTab('national')">🇫🇷 National</button>
+      <button class="region-tab active-admin" id="tab-admin" onclick="Auth.switchTab('admin')">👑 Admin</button>
       <button class="region-tab" id="tab-ALPES_NORD" onclick="Auth.switchTab('ALPES_NORD')">⛰️ Alpes Nord</button>
       <button class="region-tab" id="tab-ALPES_SUD" onclick="Auth.switchTab('ALPES_SUD')">🏔 Alpes Sud</button>
       <button class="region-tab" id="tab-PYRENEES" onclick="Auth.switchTab('PYRENEES')">🗻 Pyrénées</button>
@@ -2207,16 +1740,16 @@ console.log('✅ Module Import PDF chargé');
       <button class="region-tab" id="tab-RHONE" onclick="Auth.switchTab('RHONE')">🏙 Rhône</button>
     </div>
 
-    <!-- NATIONAL -->
-    <div id="login-tab-national">
-      <div style="background:rgba(29,78,216,0.1);border:1px solid rgba(29,78,216,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#60a5fa">
-        🇫🇷 Accès national — toutes régions et tous centres
+    <!-- ADMIN -->
+    <div id="login-tab-admin">
+      <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#a78bfa">
+        👑 Accès administrateur — toutes régions et tous centres
       </div>
       <div class="login-field"><label>Identifiant</label>
-        <input type="text" id="login-user-national" placeholder="national" autocomplete="off">
+        <input type="text" id="login-user-admin" placeholder="admin" autocomplete="off">
       </div>
       <div class="login-field"><label>Mot de passe</label>
-        <input type="password" id="login-pass-national" placeholder="••••••••"
+        <input type="password" id="login-pass-admin" placeholder="••••••••"
           onkeydown="if(event.key==='Enter')Auth.login()">
       </div>
     </div>
@@ -2324,7 +1857,6 @@ console.log('✅ Module Import PDF chargé');
     <div class="nav-item" onclick="App.nav('ged')" data-page="ged"><span class="icon">📁</span> GED Documents</div>
     <div class="nav-item" onclick="App.nav('rh')" data-page="rh"><span class="icon">👤</span> RH Habilitations <span class="nav-badge" id="badge-rh" style="display:none">0</span></div>
     <div class="nav-item" onclick="App.nav('contrats')" data-page="contrats"><span class="icon">📋</span> Contrats</div>
-    <div class="nav-item" onclick="App.nav('veille')" data-page="veille"><span class="icon">📰</span> Veille Réglementaire</div>
 
     <div class="nav-section">Liens Externes</div>
     <a class="nav-item nav-item-ext" href="https://bvlink.bureauveritas.com/#{%22content%22:%22home%22,%22bvi%22:1}" target="_blank" rel="noopener">
@@ -2337,59 +1869,15 @@ console.log('✅ Module Import PDF chargé');
       <span class="icon">🌿</span> Ubigreen <span style="font-size:9px;opacity:.5;margin-left:auto">↗</span>
     </a>
 
+    <div class="nav-section">Ressources</div>
+    <div class="nav-item" onclick="App.nav('veille')" data-page="veille"><span class="icon">📰</span> Veille Réglementaire</div>
     <div class="nav-section">Outils</div>
     <div class="nav-item" onclick="App.nav('notice')" data-page="notice"><span class="icon">📖</span> Notice du site</div>
     <div class="nav-item" onclick="App.nav('backup')" data-page="backup"><span class="icon">💾</span> Sauvegardes</div>
-    <div class="nav-item" id="nav-gestion-centres" onclick="App.nav('gestion-centres')" data-page="gestion-centres" style="display:none"><span class="icon">🏢</span> Gestion Centres</div>
-    <div class="nav-item" id="nav-national" onclick="App.nav('national')" data-page="national" style="display:none"><span class="icon">🇫🇷</span> National — Toutes régions</div>
-    <div style="padding:8px 14px;margin-top:4px">
-      <button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="App.
-  uploadContractFile(contratId) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.pdf,.doc,.docx,.xls,.xlsx';
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      if (file.size > 10 * 1024 * 1024) {
-        alert('⚠️ Fichier trop volumineux (max 10 MB)');
-        return;
-      }
-      
-      try {
-        const base64 = await this.fileToBase64(file);
-        const contrats = this.load('contrats') || [];
-        const contrat = contrats.find(c => c.id === contratId);
-        
-        if (contrat) {
-          contrat.fichier = base64;
-          contrat.fichierNom = file.name;
-          contrat.fichierType = file.type;
-          
-          this.save('contrats', contrats);
-          this.renderList('contrats', 'contrats-list', this.renderContratItem.bind(this));
-          alert('✅ Fichier joint avec succès');
-        }
-      } catch (error) {
-        alert('❌ Erreur : ' + error.message);
-      }
-    };
-    
-    input.click();
-  },
-  
-  fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  },
-
-  exportMonthlyPDF()">📄 Rapport mensuel PDF</button>
+    <div class="nav-item" id="nav-admin" onclick="App.nav('admin')" data-page="admin" style="display:none"><span class="icon">⚙️</span> Admin — Centres</div>
+    <div style="padding:8px 14px;margin-top:4px;display:flex;flex-direction:column;gap:6px">
+      <button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="App.exportMonthlyPDF()">📄 Rapport mensuel PDF</button>
+      <button id="btn-import-pdf" class="btn btn-sm" style="width:100%;font-size:11px;background:var(--green);color:#fff;border:none;cursor:pointer" onclick="PDFImport.openFilePicker()">📥 Importer une fiche PDF</button>
     </div>
   </nav>
 </div>
@@ -3015,6 +2503,87 @@ console.log('✅ Module Import PDF chargé');
       </div>
     </div>
 
+
+    <!-- PAGE VEILLE RÉGLEMENTAIRE -->
+    <div id="page-veille" class="page">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-hdr">
+          <span>📰</span><h3>Veille Réglementaire ERP</h3>
+          <div style="font-size:11px;color:var(--muted);margin-left:6px">Légifrance · Registre Sécurité · Journal Officiel</div>
+          <div class="ml flex" style="gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="Veille.clearHistory()">🗑 Vider historique</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="veille-layout">
+
+        <!-- Colonne gauche : recherche réglementaire -->
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-hdr" style="padding:10px 16px"><span>🔍</span><h3 style="font-size:13px">Recherche réglementaire</h3></div>
+            <div class="card-body" style="padding:14px 16px">
+              <div style="display:flex;gap:8px;margin-bottom:12px">
+                <input type="text" id="veille-query" placeholder="Ex: commission sécurité ERP, légionelles, ascenseurs..." 
+                  style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px"
+                  onkeydown="if(event.key==='Enter')Veille.search()">
+                <button class="btn btn-primary btn-sm" onclick="Veille.search()">Rechercher</button>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
+                  <input type="checkbox" id="src-legifrance" checked> Légifrance
+                </label>
+                <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
+                  <input type="checkbox" id="src-registre" checked> RegistreSécurité
+                </label>
+                <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
+                  <input type="checkbox" id="src-web"> Web général
+                </label>
+              </div>
+              <div id="veille-results" style="max-height:360px;overflow-y:auto">
+                <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Saisissez une requête réglementaire…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Raccourcis thématiques -->
+          <div class="card">
+            <div class="card-hdr" style="padding:10px 16px"><span>⚡</span><h3 style="font-size:13px">Accès rapides</h3></div>
+            <div class="card-body" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
+              ${['Commission de sécurité ERP','Légionellose ECS','Ascenseurs quinquennal','SSI vérification annuelle','Désenfumage ERP','Amiante DTA','Électricité Q18','Radon ERP','Défibrillateur DEA','Plan de prévention co-activité'].map(t => 
+                `<button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="Veille.quickSearch('${t.replace(/'/g,'\x27')}')">${t}</button>`
+              ).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- Colonne droite : chatbot IA -->
+        <div>
+          <div class="card">
+            <div class="card-hdr" style="padding:10px 16px">
+              <span>🤖</span><h3 style="font-size:13px">Assistant Réglementaire IA</h3>
+              <div style="font-size:10px;color:var(--muted);margin-left:6px">Spécialisé ERP · Hôtellerie · Sport</div>
+            </div>
+            <div class="chat-wrap">
+              <div class="chat-messages" id="chat-messages">
+                <div class="chat-msg assistant">Bonjour ! Je suis ton assistant réglementaire spécialisé ERP pour les centres UCPA.<br><br>Tu peux me poser des questions sur :<br>• Les obligations de sécurité incendie<br>• Les contrôles périodiques réglementaires<br>• La réglementation sanitaire et légionellose<br>• Les commissions de sécurité<br>• Les normes PMR et accessibilité<br>• Et tout autre sujet réglementaire ERP 🏢</div>
+              </div>
+              <div id="chat-thinking" class="chat-thinking" style="display:none">
+                <span></span><span></span><span></span>
+                <span style="font-size:11px;color:var(--muted);margin-left:6px">L'assistant réfléchit…</span>
+              </div>
+              <div class="chat-input-row">
+                <input type="text" id="chat-input" placeholder="Pose ta question réglementaire…"
+                  onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();Veille.sendMessage();}">
+                <button class="btn btn-primary btn-sm" onclick="Veille.sendMessage()">Envoyer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
     <!-- MODALE PERSONNALISATION CARNET SANITAIRE -->
     <div id="ecs-manager-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
       <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;width:min(780px,96vw);box-shadow:0 12px 48px rgba(0,0,0,.5)">
@@ -3426,141 +2995,86 @@ console.log('✅ Module Import PDF chargé');
       <div id="restore-log" style="margin-top:12px"></div>
     </div>
 
-    <!-- GESTION CENTRES (pour comptes régionaux) -->
-    <div id="page-gestion-centres" class="page">
+    <!-- ADMIN CENTRES -->
+    <div id="page-admin" class="page">
+
+      <!-- KPIs -->
+      <div class="admin-kpi-bar">
+        <div class="admin-kpi">
+          <div class="admin-kpi-val" id="adm-kpi-sud">—</div>
+          <div class="admin-kpi-label">Centres Alpes Sud</div>
+        </div>
+        <div class="admin-kpi">
+          <div class="admin-kpi-val" id="adm-kpi-nord">—</div>
+          <div class="admin-kpi-label">Centres Alpes Nord</div>
+        </div>
+        <div class="admin-kpi">
+          <div class="admin-kpi-val" id="adm-kpi-total">—</div>
+          <div class="admin-kpi-label">Total centres</div>
+        </div>
+      </div>
+
+      <!-- Alpes Sud -->
       <div class="card">
         <div class="card-hdr">
-          <span>🏢</span>
-          <h3>Gestion des Centres de ma région</h3>
+          <span>⚙️</span>
+          <h3>Gestion des Centres</h3>
+          <span class="admin-region-badge sud">▲ Alpes Sud</span>
           <div class="ml flex" style="gap:8px">
-            <button class="btn btn-primary btn-sm" onclick="RegionAdmin.openAddModal()">+ Ajouter un centre</button>
+            <button class="btn btn-ghost btn-sm" onclick="Admin.importCentres('SUD')">📥 Import liste</button>
+            <button class="btn btn-primary btn-sm" onclick="Admin.openAddModal('SUD')">+ Ajouter un centre</button>
           </div>
         </div>
         <div class="card-body">
-          <div class="admin-centres-grid" id="region-centres-list"></div>
+          <div class="admin-centres-grid" id="admin-list-sud"></div>
         </div>
       </div>
-    </div><!-- /page-gestion-centres -->
 
-    <!-- VEILLE RÉGLEMENTAIRE -->
-    <div id="page-veille" class="page">
-      
+      <!-- Alpes Nord -->
       <div class="card">
         <div class="card-hdr">
-          <span>📰</span>
-          <h3>Veille Réglementaire — Sécurité & ERP</h3>
-        </div>
-        <div class="card-body" style="padding:0">
-          
-          <!-- Layout 2 colonnes -->
-          <div style="display:grid;grid-template-columns:1fr 400px;gap:0;height:calc(100vh - 200px)">
-            
-            <!-- Colonne gauche : Recherche et résultats -->
-            <div style="display:flex;flex-direction:column;border-right:1px solid var(--border)">
-              
-              <!-- Barre de recherche -->
-              <div style="padding:16px;border-bottom:1px solid var(--border)">
-                <div style="display:flex;gap:10px;margin-bottom:12px">
-                  <input type="text" id="veille-search-input" placeholder="🔍 Rechercher dans la réglementation (ex: SSI, ascenseur, accessibilité...)" 
-                    style="flex:1;padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px"
-                    onkeydown="if(event.key==='Enter')Veille.search()">
-                  <button class="btn btn-primary" onclick="Veille.search()">🔍 Rechercher</button>
-                </div>
-                
-                <!-- Filtres sources -->
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-                    <input type="checkbox" id="veille-source-legifrance" checked style="cursor:pointer">
-                    <span>📚 Légifrance</span>
-                  </label>
-                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-                    <input type="checkbox" id="veille-source-sitesecurite" checked style="cursor:pointer">
-                    <span>🔐 Site Sécurité</span>
-                  </label>
-                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-                    <input type="checkbox" id="veille-source-web" checked style="cursor:pointer">
-                    <span>🌐 Web général</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Résultats -->
-              <div id="veille-results" style="flex:1;overflow-y:auto;padding:16px">
-                <div style="text-align:center;padding:40px 20px;color:var(--muted)">
-                  <div style="font-size:48px;margin-bottom:16px">📰</div>
-                  <div style="font-size:14px;font-weight:600;margin-bottom:8px">Veille Réglementaire</div>
-                  <div style="font-size:12px">Lance une recherche pour trouver des textes réglementaires, arrêtés, décrets et articles techniques</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Colonne droite : Chatbot IA -->
-            <div style="display:flex;flex-direction:column;background:var(--bg2)">
-              
-              <!-- Header chatbot -->
-              <div style="padding:16px;border-bottom:1px solid var(--border);background:var(--panel)">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                  <div style="font-size:24px">🤖</div>
-                  <div>
-                    <div style="font-weight:700;font-size:14px">Assistant Réglementaire IA</div>
-                    <div style="font-size:11px;color:var(--muted)">Propulsé par Claude</div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Messages chatbot -->
-              <div id="veille-chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
-                <!-- Message de bienvenue -->
-                <div class="veille-chat-msg veille-chat-assistant">
-                  <div class="veille-chat-avatar">🤖</div>
-                  <div class="veille-chat-bubble">
-                    Salut ! Je suis ton assistant réglementaire. Je peux t'aider à :
-                    <br><br>
-                    • Comprendre les textes réglementaires<br>
-                    • Trouver les obligations pour ton ERP<br>
-                    • Expliquer les normes et décrets<br>
-                    • Répondre à tes questions techniques
-                    <br><br>
-                    Pose-moi une question ! 💡
-                  </div>
-                </div>
-              </div>
-
-              <!-- Input chatbot -->
-              <div style="padding:12px;border-top:1px solid var(--border);background:var(--panel)">
-                <div style="display:flex;gap:8px">
-                  <input type="text" id="veille-chat-input" placeholder="Pose ta question..." 
-                    style="flex:1;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px"
-                    onkeydown="if(event.key==='Enter')Veille.sendMessage()">
-                  <button class="btn btn-primary btn-sm" onclick="Veille.sendMessage()">
-                    <span style="font-size:16px">➤</span>
-                  </button>
-                </div>
-                <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center">
-                  Réponses générées par IA • Vérifier les sources officielles
-                </div>
-              </div>
-
-            </div>
+          <span>⚙️</span>
+          <h3>Gestion des Centres</h3>
+          <span class="admin-region-badge nord">▲ Alpes Nord</span>
+          <div class="ml flex" style="gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="Admin.importCentres('NORD')">📥 Import liste</button>
+            <button class="btn btn-primary btn-sm" onclick="Admin.openAddModal('NORD')">+ Ajouter un centre</button>
           </div>
-
+        </div>
+        <div class="card-body">
+          <div class="admin-centres-grid" id="admin-list-nord"></div>
         </div>
       </div>
 
-    </div><!-- /page-veille -->
 
-    <!-- COMPTE NATIONAL - Toutes régions -->
-    <div id="page-national" class="page">
-
-      <!-- KPIs -->
-      <div class="admin-kpi-bar" id="admin-kpi-bar-dynamic">
-        <!-- Les KPIs seront générés dynamiquement -->
+      <!-- ── Configuration API Anthropic ── -->
+      <div class="card" style="margin-top:16px;border:1px solid var(--accent);border-radius:12px">
+        <div class="card-hdr" style="padding:12px 16px">
+          <span>🤖</span><h3 style="font-size:13px">Configuration API Anthropic</h3>
+          <div style="font-size:10px;color:var(--muted);margin-left:6px">Chatbot Veille Réglementaire · Import PDF</div>
+        </div>
+        <div class="card-body" style="padding:14px 16px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+            La clé est stockée dans <strong>Firestore</strong> (document <code>ucpa_erp/config_anthropic</code>).<br>
+            Elle est chargée automatiquement pour tous les utilisateurs. Elle n'apparaît jamais en clair dans le code.
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input type="password" id="adm-anthropic-key" placeholder="sk-ant-api03-XXXXXXXX…"
+              style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px">
+            <button class="btn btn-ghost btn-sm" id="adm-anthropic-show"
+              onclick="const i=document.getElementById('adm-anthropic-key');i.type=i.type==='password'?'text':'password'">👁</button>
+            <button class="btn btn-primary btn-sm" onclick="App.saveAnthropicKey()">💾 Enregistrer</button>
+          </div>
+          <div id="adm-anthropic-status" style="font-size:11px;margin-top:8px;color:var(--muted)">
+            Statut : <span id="adm-anthropic-state">chargement…</span>
+          </div>
+          <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+            🔗 Obtenir une clé : <a href="https://console.anthropic.com/" target="_blank" style="color:var(--accent)">console.anthropic.com</a>
+          </div>
+        </div>
       </div>
 
-      <!-- Les cartes de gestion par région seront générées dynamiquement -->
-      <div id="admin-regions-container"></div>
-
-    </div><!-- /page-national -->
+    </div><!-- /page-admin -->
 
     <!-- ═══════════════════════════════════════════════════════
          REGISTRE ENTRÉES / SORTIES PRESTATAIRES
@@ -3696,226 +3210,55 @@ console.log('✅ Module Import PDF chargé');
 // CENTRES est rempli dynamiquement par Auth.startSession() selon la région connectée
 const CENTRES = [];
 
+// ═══════════════════════════════════════════════════════════
+// CONFIGURATION API ANTHROPIC
+// Remplace la valeur ci-dessous par ta clé API Anthropic
+// Obtenir une clé sur : https://console.anthropic.com/
+// ═══════════════════════════════════════════════════════════
+const ANTHROPIC_API_KEY = 'VOTRE_CLE_API_ICI';
+
 const CONTROLES_TEMPLATE = [
-  // === SÉCURITÉ INCENDIE ===
-  {
-    catId: '1.1',
-    categorie: 'Sécurité Incendie',
-    libelle: 'SSI - Système de Sécurité Incendie',
-    reference: 'Art. MS 73',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'ERP avec SSI',
-    organisme: 'Organisme agréé'
-  },
-  {
-    catId: '1.2',
-    categorie: 'Sécurité Incendie',
-    libelle: 'Extincteurs',
-    reference: 'Art. MS 38',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Tous ERP',
-    organisme: 'Technicien compétent'
-  },
-  {
-    catId: '1.3',
-    categorie: 'Sécurité Incendie',
-    libelle: 'Colonnes sèches/humides',
-    reference: 'Art. MS 25',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Si installées',
-    organisme: 'Sapeurs-pompiers ou organisme agréé'
-  },
-  {
-    catId: '1.4',
-    categorie: 'Sécurité Incendie',
-    libelle: 'Désenfumage',
-    reference: 'Art. DF 6',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Si installation désenfumage',
-    organisme: 'Technicien compétent'
-  },
-  {
-    catId: '1.5',
-    categorie: 'Sécurité Incendie',
-    libelle: 'Éclairage de sécurité',
-    reference: 'Art. EC 13',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Tous ERP',
-    organisme: 'Technicien compétent'
-  },
-  {
-    catId: '1.6',
-    categorie: 'Sécurité Incendie',
-    libelle: 'Portes automatiques',
-    reference: 'NF EN 16005',
-    periodicite: '6',
-    unite: 'mois',
-    obligatoire: 'Si portes automatiques',
-    organisme: 'Technicien compétent'
-  },
-  
-  // === ÉLECTRICITÉ ===
-  {
-    catId: '2.1',
-    categorie: 'Électricité',
-    libelle: 'Installation électrique',
-    reference: 'Art. EL 18 - Décret 88-1056',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Tous ERP',
-    organisme: 'Organisme agréé COFRAC'
-  },
-  {
-    catId: '2.2',
-    categorie: 'Électricité',
-    libelle: 'Groupe électrogène',
-    reference: 'Art. EL 12',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Si groupe installé',
-    organisme: 'Technicien compétent'
-  },
-  
-  // === ASCENSEURS ===
-  {
-    catId: '3.1',
-    categorie: 'Ascenseurs',
-    libelle: 'Vérification annuelle ascenseur',
-    reference: 'Art. R.125-1',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Tous ascenseurs',
-    organisme: 'Technicien compétent'
-  },
-  {
-    catId: '3.2',
-    categorie: 'Ascenseurs',
-    libelle: 'Contrôle technique quinquennal',
-    reference: 'Art. R.125-2-1',
-    periodicite: '60',
-    unite: 'mois',
-    obligatoire: 'Tous ascenseurs',
-    organisme: 'Organisme notifié'
-  },
-  
-  // === ACCESSIBILITÉ ===
-  {
-    catId: '4.1',
-    categorie: 'Accessibilité',
-    libelle: 'Accessibilité PMR',
-    reference: 'Art. R.111-19-8',
-    periodicite: 'Ponctuel',
-    unite: '',
-    obligatoire: 'ERP neufs/rénovés',
-    organisme: 'Contrôleur technique agréé'
-  },
-  
-  // === QUALITÉ AIR / ENVIRONNEMENT ===
-  {
-    catId: '5.1',
-    categorie: 'Qualité de l\'air',
-    libelle: 'Q18 - Surveillance qualité air intérieur',
-    reference: 'Art. R.221-30 (Code environnement)',
-    periodicite: 'Variable',
-    unite: '',
-    obligatoire: 'Crèches, écoles, accueils loisirs',
-    organisme: 'Organisme accrédité COFRAC'
-  },
-  
-  // === EAU / LÉGIONELLES ===
-  {
-    catId: '6.1',
-    categorie: 'Eau chaude sanitaire',
-    libelle: 'Légionelles - Analyse ECS',
-    reference: 'Art. R.1321-1 + Circ. DGS 2002',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'ERP avec ECS centralisée',
-    organisme: 'Laboratoire agréé'
-  },
-  {
-    catId: '6.2',
-    categorie: 'Eau chaude sanitaire',
-    libelle: 'Température ECS (relevé)',
-    reference: 'Circ. DGS 2002',
-    periodicite: '1',
-    unite: 'mois',
-    obligatoire: 'ERP avec ECS',
-    organisme: 'Interne'
-  },
-  
-  // === PISCINE ===
-  {
-    catId: '7.1',
-    categorie: 'Piscine',
-    libelle: 'Eau de baignade - Analyses',
-    reference: 'Art. D.1332-1 (CSP)',
-    periodicite: '1',
-    unite: 'mois',
-    obligatoire: 'Piscines collectives',
-    organisme: 'Laboratoire agréé ARS'
-  },
-  {
-    catId: '7.2',
-    categorie: 'Piscine',
-    libelle: 'Autosurveillance piscine (pH, chlore)',
-    reference: 'Art. D.1332-14',
-    periodicite: 'Quotidien',
-    unite: '',
-    obligatoire: 'Piscines collectives',
-    organisme: 'Interne'
-  },
-  
-  // === CHAUFFERIE ===
-  {
-    catId: '8.1',
-    categorie: 'Chaufferie',
-    libelle: 'Entretien chaudière',
-    reference: 'Art. CH 57',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'Tous ERP avec chauffage',
-    organisme: 'Chauffagiste qualifié'
-  },
-  {
-    catId: '8.2',
-    categorie: 'Chaufferie',
-    libelle: 'Contrôle périodique chaufferie',
-    reference: 'RSDT - Arrêté 2 août 1977',
-    periodicite: '60',
-    unite: 'mois',
-    obligatoire: 'Chaufferies >70kW',
-    organisme: 'Organisme agréé'
-  },
-  
-  // === GRANDE CUISINE ===
-  {
-    catId: '9.1',
-    categorie: 'Grande cuisine',
-    libelle: 'Appareils de cuisson et hottes',
-    reference: 'Art. GC 18',
-    periodicite: '12',
-    unite: 'mois',
-    obligatoire: 'ERP type N, O, R avec grande cuisine',
-    organisme: 'Organisme agréé'
-  },
-  
-  // === COMMISSION SÉCURITÉ ===
-  {
-    catId: '10.1',
-    categorie: 'Commission de sécurité',
-    libelle: 'Visite périodique commission sécurité',
-    reference: 'Art. R.123-51',
-    periodicite: 'Variable selon catégorie',
-    unite: '',
-    obligatoire: 'Cat 1-2: 3 ans / Cat 3: 5 ans',
-    organisme: 'Commission de sécurité'
-  }
+  {catId:"1",groupe:"Renseignements",libelle:"Renseignements sur l'établissement",periodicite:null},
+  {catId:"2",groupe:"Commissions sécurité",libelle:"PV commissions de sécurité",periodicite:null},
+  {catId:"3.1",groupe:"Formations",libelle:"Formations – Extincteurs & évacuation",periodicite:"Annuel"},
+  {catId:"3.2",groupe:"Formations",libelle:"Formations – Centrale incendie",periodicite:"Annuel"},
+  {catId:"4.1",groupe:"Lutte incendie",libelle:"Extincteurs",periodicite:"Annuel"},
+  {catId:"4.2",groupe:"Lutte incendie",libelle:"SSI",periodicite:"Annuel"},
+  {catId:"4.3",groupe:"Lutte incendie",libelle:"SSI Triennale",periodicite:"Triennal"},
+  {catId:"4.4",groupe:"Lutte incendie",libelle:"DAS",periodicite:"Annuel"},
+  {catId:"4.5",groupe:"Lutte incendie",libelle:"RIA",periodicite:"Annuel"},
+  {catId:"4.6",groupe:"Lutte incendie",libelle:"Colonne sèche — vérif. hydraulique (NF S 61-760)",periodicite:"Annuel"},
+  {catId:"4.6b",groupe:"Lutte incendie",libelle:"PEI / Poteaux incendie (Décret 2015-235 art. R.2225-59)",periodicite:"Semestriel"},
+  {catId:"4.7",groupe:"Lutte incendie",libelle:"Sprinkler",periodicite:null},
+  {catId:"4.8",groupe:"Lutte incendie",libelle:"Désenfumage",periodicite:"Annuel"},
+  {catId:"5.1",groupe:"Électrique",libelle:"Vérif. électrique Q18",periodicite:"Annuel"},
+  {catId:"5.2",groupe:"Électrique",libelle:"Vérif. électrique Q19",periodicite:"Annuel"},
+  {catId:"5.3",groupe:"Électrique",libelle:"BAES/BAEH/Ambiance",periodicite:"Annuel"},
+  {catId:"6.1",groupe:"Mécanique",libelle:"Ascenseurs / Monte-charge",periodicite:"Annuel"},
+  {catId:"6.2",groupe:"Mécanique",libelle:"Quinquennal VRE+CTQ",periodicite:"Quinquennal"},
+  {catId:"6.3",groupe:"Mécanique",libelle:"Portes auto et barrières",periodicite:null},
+  {catId:"6.4",groupe:"Mécanique",libelle:"Compacteurs",periodicite:null},
+  {catId:"7.1",groupe:"Gaz",libelle:"Contrôle réseaux gaz",periodicite:"Annuel"},
+  {catId:"7.2",groupe:"Gaz",libelle:"Maintenance gaz/fioul – chaudières",periodicite:"Annuel"},
+  {catId:"7.3",groupe:"Gaz",libelle:"Appareils cuisson feux vifs",periodicite:"Annuel"},
+  {catId:"7.4",groupe:"Gaz",libelle:"Ramonage conduits chaufferies",periodicite:"Annuel"},
+  {catId:"8.1",groupe:"Gaz frigorigène",libelle:"Performance énergétique > 12 kW",periodicite:null},
+  {catId:"8.2",groupe:"Gaz frigorigène",libelle:"Étanchéité gaz frigorigène",periodicite:"Annuel"},
+  {catId:"9",groupe:"EPC/EPI",libelle:"Vérifications EPC / EPI",periodicite:null},
+  {catId:"10.1",groupe:"QAI/Ventilation",libelle:"QAI – Dégraissage hottes cuisine",periodicite:"Annuel"},
+  {catId:"10.2",groupe:"QAI/Ventilation",libelle:"QAI – Nettoyage réseaux ventilation",periodicite:null},
+  {catId:"11.1",groupe:"Installations sportives",libelle:"Équipements sportifs (EN 913 / EN 1176)",periodicite:"Annuel"},
+  {catId:"11.2",groupe:"Installations sportives",libelle:"Piscine/bassin — contrôle qualité eau (Décret 2011-629)",periodicite:"Hebdomadaire"},
+  {catId:"11.3",groupe:"Installations sportives",libelle:"Piscine — réseau eau & traitement (Arr. 15/12/2011)",periodicite:"Annuel"},
+  {catId:"11.4",groupe:"Amiante",libelle:"DTA — Dossier Technique Amiante (Décret 96-97 + art. R.1334-19 CSP)",periodicite:null},
+  {catId:"11.5",groupe:"Amiante",libelle:"Repérage amiante avant travaux (RAT) — si travaux",periodicite:null},
+  {catId:"12",groupe:"Défibrillateurs",libelle:"Défibrillateurs (DEA) — vérification mensuelle (Arr. 24/07/2020)",periodicite:"Mensuel"},
+  {catId:"13",groupe:"Radon",libelle:"Radon — mesure obligatoire ERP (Décret 2018-434 art. R.1333-34)",periodicite:"Decennal"},
+  {catId:"14",groupe:"Divers",libelle:"Divers",periodicite:null},
+  {catId:"15.1",groupe:"Carnet sanitaire",libelle:"ECS — Analyse légionellose (Circ. DGS 2002/243 + Arr. 1er fév. 2010)",periodicite:"Annuel"},
+  {catId:"15.2",groupe:"Carnet sanitaire",libelle:"Carnet sanitaire – Disconnecteur",periodicite:"Annuel"},
+  {catId:"16",groupe:"Bac à graisse",libelle:"Entretien bac à graisse",periodicite:"Annuel"},
+  {catId:"17",groupe:"Citerne gaz",libelle:"Sécurité citerne gaz",periodicite:"40 mois"},
 ];
 
 // ── Correspondance périodicité → durée en mois (pour calcul date auto) ──
@@ -5045,7 +4388,7 @@ const App = {
     try {
       const s = JSON.parse(sessionStorage.getItem('ucpa_session') || '{}');
       const storedPw = localStorage.getItem('ucpa_custom_pw_' + (s.role||'') + '_' + (s.region||'') + '_' + (s.centre||''));
-      const defaultPw = s.role === 'national' ? 'UCPA2025!' : (ALL_CENTRE_PASSWORDS[s.centre] || s.centre?.toLowerCase()?.replace(/\s+/g,'') || '');
+      const defaultPw = s.role === 'admin' ? 'UCPA2025!' : (ALL_CENTRE_PASSWORDS[s.centre] || s.centre?.toLowerCase()?.replace(/\s+/g,'') || '');
       const currentPw = storedPw || defaultPw;
       if (curr !== currentPw) { setMsg('Mot de passe actuel incorrect.', false); return; }
       // Sauvegarder nouveau mot de passe
@@ -5057,6 +4400,107 @@ const App = {
   },
 
   // ── Journal des modifications ─────────────────────────────────
+  // ── Init automatique du registre pour un nouveau centre ────
+  // Crée les contrôles réglementaires par défaut si le centre est vide
+  _initCentreRegistre(centre) {
+    if (!centre) return;
+    const prefix = this._storagePrefix;
+    const key    = 'registre';
+    const all    = this.load(key) || {};
+    if (all[centre] && all[centre].length > 0) return; // déjà initialisé
+
+    // Créer les lignes depuis CONTROLES_TEMPLATE
+    const rows = (typeof CONTROLES_TEMPLATE !== 'undefined' ? CONTROLES_TEMPLATE : []).map(t => ({
+      id:               this.uuid(),
+      centre:           centre,
+      catId:            t.catId,
+      groupe:           t.groupe,
+      libelle:          t.libelle,
+      periodicite:      t.periodicite || '',
+      resultat:         '',
+      dateRealisation:  '',
+      dateLimite:       '',
+      observations:     '',
+      prestataire:      '',
+      lien:             '',
+    }));
+
+    if (!all[centre]) all[centre] = [];
+    all[centre] = rows;
+    this.save(key, all);
+    console.info(`[UCPA ERP] Registre initialisé pour ${centre} — ${rows.length} contrôles`);
+  },
+
+  // ── Config clé API Anthropic (stockée dans Firestore) ──────
+  async saveAnthropicKey() {
+    const input = document.getElementById('adm-anthropic-key');
+    const key   = (input?.value || '').trim();
+    if (!key || !key.startsWith('sk-ant-')) {
+      alert('Clé invalide — elle doit commencer par sk-ant-');
+      return;
+    }
+    // Sauvegarder dans Firestore via _firestore
+    if (window._firestore) {
+      await window._firestore.set('config_anthropic', { apiKey: key });
+      window._anthropicKey = key;
+      input.value = '';
+      this._renderAnthropicStatus();
+      const btn = document.querySelector('[onclick="App.saveAnthropicKey()"]');
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Enregistrée !';
+        btn.style.background = 'var(--green)';
+        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2500);
+      }
+    } else {
+      // Mode local sans Firebase : stocker dans localStorage (temporaire)
+      try { localStorage.setItem('ucpa_anthropic_key', key); } catch(e) {}
+      window._anthropicKey = key;
+      alert('Clé sauvegardée localement (Firebase non configuré — valable sur cet appareil uniquement).');
+    }
+  },
+
+  _renderAnthropicStatus() {
+    const el = document.getElementById('adm-anthropic-state');
+    if (!el) return;
+    const hasKey = !!(window._anthropicKey);
+    // Essayer aussi le localStorage (mode local)
+    if (!hasKey) {
+      try {
+        const lsKey = localStorage.getItem('ucpa_anthropic_key');
+        if (lsKey) window._anthropicKey = lsKey;
+      } catch(e) {}
+    }
+    const ok = !!(window._anthropicKey);
+    el.textContent = ok
+      ? '✅ Clé active — chatbot et import PDF opérationnels'
+      : '❌ Aucune clé configurée — chatbot et import PDF désactivés';
+    el.style.color = ok ? 'var(--green)' : 'var(--red)';
+  },
+
+  // ── Calcul auto prochaine commission de sécurité ──────────
+  // Réglementation : R.123-22 à R.123-25 du Code de la construction
+  // Cat 1/2 : visite tous les 3 ans — Cat 3/4/5 : visite tous les 5 ans
+  calcProchainCommission() {
+    const catEl    = document.getElementById('s-erp_cat');
+    const dernEl   = document.getElementById('s-derniere_commission');
+    const prochEl  = document.getElementById('s-prochaine_commission');
+    if (!dernEl || !prochEl) return;
+    const dern = dernEl.value;
+    if (!dern) return;
+    const cat = catEl ? catEl.value : '';
+    // Périodicités réglementaires (R.123-22 CCH)
+    let annees = 5; // défaut cat 3/4/5
+    if (cat === '1' || cat === '2') annees = 3;
+    const d = new Date(dern);
+    d.setFullYear(d.getFullYear() + annees);
+    prochEl.value = d.toISOString().split('T')[0];
+    this.saveSynthese(); // sauvegarder immédiatement
+    // Feedback visuel
+    prochEl.style.borderColor = 'var(--green)';
+    setTimeout(() => { prochEl.style.borderColor = ''; }, 1500);
+  },
+
   _logAction(action, role) {
     try {
       const log = JSON.parse(localStorage.getItem('ucpa_action_log') || '[]');
@@ -5266,9 +4710,8 @@ const App = {
       investissements:'Suivi des Investissements', ged:'GED — Documents',
       prestataires:'Registre Entrées/Sorties Prestataires',
       notice:'Notice d\'utilisation', backup:'Sauvegardes & Restauration',
-      'gestion-centres':'Gestion des Centres',
-      veille:'Veille Réglementaire',
-      national:'Compte National — Toutes régions'
+      admin:'Administration — Gestion des Centres',
+      veille:'Veille Réglementaire'
     };
     document.getElementById('page-title').textContent = titles[page] || page;
     const centre = this.centre === 'ALL' ? 'Tous les centres' : this.centre.replace('VILLAGE SPORTIF ','');
@@ -5279,6 +4722,11 @@ const App = {
     this.centre = val;
     document.getElementById('centre-select').value = val;
     this.renderConformanceBadge();
+    // Init auto registre si centre vide
+    if (val && val !== 'ALL') {
+      const reg = this.load('registre') || {};
+      if (!reg[val] || reg[val].length === 0) this._initCentreRegistre(val);
+    }
     this.renderAll();
     // Si on sélectionne un centre précis → afficher son dashboard dédié
     if (val !== 'ALL') {
@@ -5317,9 +4765,8 @@ const App = {
       case 'ged':    GED.render(); break;
       case 'notice': Notice.render(); break;
       case 'backup': Backup.render(); break;
-      case 'veille': Veille.render(); break;
-      case 'gestion-centres': RegionAdmin.render(); break;
-      case 'national':  Admin.render(); break;
+      case 'admin':  Admin.render(); App._renderAnthropicStatus(); break;
+      case 'veille': Veille._loadHistory(); break;
     }
   },
 
@@ -5881,18 +5328,26 @@ const App = {
             <label>Types ERP <span style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(sélection multiple)</span></label>
             <div class="erp-type-grid" id="erp-type-grid">
               ${[
-                ['O','O','Hôtels & pensions de famille'],
-                ['L','L','Salles de réunions & spectacles'],
-                ['N','N','Restaurants & débits de boissons'],
-                ['R','R','Enseignement & formation'],
-                ['X','X','Établissements sportifs'],
+                ['O','O','Hôtels et pensions de famille'],
+                ['RH','RH','Résidences hôtelières à vocation sociale'],
+                ['N','N','Restaurants et débits de boissons'],
+                ['L','L','Salles de réunions, spectacles, polyvalentes'],
+                ['R','R','Enseignement et formation'],
+                ['X','X','Établissements sportifs couverts'],
                 ['PA','PA','Établissements de plein air'],
-                ['M','M','Magasins & centres commerciaux'],
-                ['CTS','CTS','Chapiteaux & tentes'],
-                ['EF','EF','Établissements flottants'],
-                ['U','U','Sanitaires & soins'],
-                ['W','W','Administrations & banques'],
+                ['M','M','Magasins et centres commerciaux'],
+                ['J','J','Structures accueil personnes \u00e2g\u00e9es'],
+                ['P','P','Salles de danse et jeux'],
+                ['S','S','Bibliothèques et CDI'],
+                ['T','T','Expositions et foires'],
+                ['U','U','Établissements de soins'],
+               ['V','V','Établissements de culte'],
+                ['W','W','Administrations, banques, bureaux'],
                 ['Y','Y','Musées'],
+                ['CTS','CTS','Chapiteaux, tentes et structures'],
+                ['EF','EF','Établissements flottants'],
+                ['GA','GA','Gares accessibles au public'],
+                ['SG','SG','Structures gonflables'],
               ].map(([v,code,label]) => {
                 const sel = Array.isArray(d.erp_types) ? d.erp_types.includes(v) : (d.erp_type === v);
                 return `<div class="erp-type-item${sel?' selected':''}" onclick="App.toggleERPType('${v}',this)">
@@ -5921,7 +5376,16 @@ const App = {
               ${['Type A','Type B','Type C','Type D','Type E','Aucun'].map(v=>`<option ${d.ssi===v?'selected':''}>${v}</option>`).join('')}
             </select>
           </div>
-          <div class="synth-field"><label>Prochaine commission de sécurité</label>
+          <div class="synth-field">
+            <label>Dernière commission de sécurité
+              <span style="font-size:10px;color:var(--muted);margin-left:6px">(→ calcul auto prochaine date)</span>
+            </label>
+            <input id="s-derniere_commission" type="date" value="${d.derniere_commission||''}"
+              onchange="App.calcProchainCommission()">
+          </div>
+          <div class="synth-field"><label>Prochaine commission de sécurité
+            <span style="font-size:10px;color:var(--muted);margin-left:4px">(calculée auto ou manuelle)</span>
+          </label>
             <input id="s-prochaine_commission" type="date" value="${d.prochaine_commission||''}">
           </div>
           <div class="synth-field" style="margin-top:12px">
@@ -5956,7 +5420,7 @@ const App = {
               ${['Gaz naturel','Fioul','Électrique','Bois / Granulés','Pompe à chaleur','Géothermie','Réseau de chaleur','Mixte'].map(v=>`<option ${d.chauffage===v?'selected':''}>${v}</option>`).join('')}
             </select>
           </div>
-          <div class="synth-field"><label>Nombre de chaudièress (kW)</label>
+          <div class="synth-field"><label>Chaufferie — nombre de chaudières</label>
             <input id="s-puissance_chaud" type="number" value="${d.puissance_chaud||''}">
           </div>
         </div>
@@ -6019,7 +5483,7 @@ const App = {
       'rm2s_nom','rm2s_tel','rm2s_email',
       'rt_nom','rt_tel','rt_email',
       'nature','bail','nb_batiments','surface','capacite','typo',
-      'erp_cat','ssi','prochaine_commission',
+      'erp_cat','ssi','derniere_commission','prochaine_commission',
       'puissance_kva','num_pdl','chauffage','puissance_chaud'
     ];
     const d = {};
@@ -6115,7 +5579,7 @@ const App = {
 
     section('Technique'); y += 2;
     row('SSI', d.ssi); row('Chauffage', d.chauffage);
-    row('Nombre de chaudièress', d.puissance_chaud ? d.puissance_chaud+' kW' : '');
+    row('Chaufferie / nb chaudières', d.puissance_chaud || '');
     row('Puissance souscrite', d.puissance_kva ? d.puissance_kva+' kVA' : '');
     row('N° PDL', d.num_pdl);
 
@@ -9522,7 +8986,7 @@ Enregistrer quand même ?`)) return;
       `;
       document.body.appendChild(toast);
     }
-    const labels = {registre:'Registre',pmr:'PMR',observations:'Observations',rh:'O',
+    const labels = {registre:'Registre',pmr:'PMR',observations:'Observations',rh:'RH',
       sanitaire:'Sanitaire',investissements:'Investissements',syntheses:'Synthèse',ged:'GED',matrix:'Matrice'};
     const label = labels[key] || key;
     const time = updatedAt ? new Date(updatedAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
@@ -9596,7 +9060,7 @@ Enregistrer quand même ?`)) return;
     const rhExp   = rh.filter(r => this.isExpired(r.expiration)||this.isSoonExpiring(r.expiration));
     const obs     = (this.load('observations')||[]).filter(o => o.centre === centre && o.statut !== 'Clôturée');
     const contrats= (this.load('contrats')||[]).filter(c => c.centre === centre);
-    const contExp = contrats.filter(c => this.isExpired(c.fin || c.echeance)||this.isSoonExpiring(c.fin || c.echeance,60));
+    const contExp = contrats.filter(c => this.isExpired(c.echeance)||this.isSoonExpiring(c.echeance,60));
 
     // Groupes
     const groups = {};
@@ -10272,7 +9736,7 @@ const CENTRE_PASSWORDS_NORD = buildCentrePasswords(REGIONS.ALPES_NORD.centres);
 
 
 const Auth = {
-  currentTab: 'national',
+  currentTab: 'admin',
   currentSubTab: {},  // Initialisé dans init() avec les vraies clés REGIONS
 
   async init() {
@@ -10355,7 +9819,7 @@ const Auth = {
 
   switchTab(tab) {
     this.currentTab = tab;
-    const allTabs = ['national', ...Object.keys(REGIONS)];
+    const allTabs = ['admin', ...Object.keys(REGIONS)];
     allTabs.forEach(function(t) {
       const el  = document.getElementById('login-tab-' + t);
       const btn = document.getElementById('tab-' + t);
@@ -10385,14 +9849,14 @@ const Auth = {
     const err = document.getElementById('login-error');
     if (err) err.style.display = 'none';
 
-    // ── National ──────────────────────────────────────────────────────────────
-    if (this.currentTab === 'national') {
-      const user = ((document.getElementById('login-user-national') || {}).value || '').trim().toLowerCase();
-      const pass = ((document.getElementById('login-pass-national') || {}).value || '').trim().toLowerCase();
-      if (user === 'national' && pass === 'national') {
-        this.startSession('national', 'ALL', 'ALL', '🇫🇷 National — Toutes régions');
+    // ── Admin ──────────────────────────────────────────────────────────────
+    if (this.currentTab === 'admin') {
+      const user = ((document.getElementById('login-user-admin') || {}).value || '').trim().toLowerCase();
+      const pass = ((document.getElementById('login-pass-admin') || {}).value || '').trim().toLowerCase();
+      if (user === 'admin' && pass === 'admin') {
+        this.startSession('admin', 'ALL', 'ALL', '👑 Admin — Toutes régions');
       } else {
-        if (err) { err.style.display = 'block'; err.textContent = 'Identifiant ou mot de passe National incorrect.'; }
+        if (err) { err.style.display = 'block'; err.textContent = 'Identifiant ou mot de passe Admin incorrect.'; }
       }
       return;
     }
@@ -10440,11 +9904,11 @@ const Auth = {
 
     let activeCentres, regionLabel, storagePrefix;
 
-    if (role === 'national') {
+    if (role === 'admin') {
       activeCentres = Object.values(REGIONS).reduce(function(acc, r) { return acc.concat(r.centres); }, []);
-      regionLabel   = '🇫🇷 National — ' + activeCentres.length + ' centres · Toutes régions';
-      storagePrefix = 'ucpa_national_';
-      document.body.classList.add('region-national');
+      regionLabel   = '👑 Admin — ' + activeCentres.length + ' centres · Toutes régions';
+      storagePrefix = 'ucpa_admin_';
+      document.body.classList.add('region-admin');
     } else {
       const reg = REGIONS[region];
       if (reg) {
@@ -10475,8 +9939,8 @@ const Auth = {
     const infoEl = document.getElementById('user-info-text');
     if (infoEl) {
       let badge = '';
-      if (role === 'national') {
-        badge = '<span class="badge-admin" style="background:rgba(29,78,216,.15);color:#60a5fa">🇫🇷 NATIONAL</span>';
+      if (role === 'admin') {
+        badge = '<span class="badge-admin">ADMIN</span>';
       } else if (role === 'region') {
         const r = REGIONS[region];
         if (r) badge = '<span class="badge-admin" style="background:rgba(30,185,129,.15);color:var(--green)">' + r.icon + ' ' + r.label + '</span>';
@@ -10497,20 +9961,16 @@ const Auth = {
       if (role === 'centre') {
         sel.value = centre;
         Array.from(sel.options).forEach(function(o) {
-          o.disabled = (o.value !== centre && o.value !== centre && o.value !== 'ALL');
+          o.disabled = (o.value !== centre && o.value !== '');
         });
         if (sel.options[0]) sel.options[0].disabled = true;
       }
     }
 
-    if (role === 'national') {
-      this._addNationalSwitcher();
-      const navNational = document.getElementById('nav-national');
-      if (navNational) navNational.style.display = 'flex';
-    } else if (role === 'region') {
-      // Afficher l'onglet gestion centres pour les comptes régionaux
-      const navGestionCentres = document.getElementById('nav-gestion-centres');
-      if (navGestionCentres) navGestionCentres.style.display = 'flex';
+    if (role === 'admin') {
+      this._addAdminSwitcher();
+      const navAdmin = document.getElementById('nav-admin');
+      if (navAdmin) navAdmin.style.display = 'flex';
     }
 
     App.init().then(function() {
@@ -10523,42 +9983,42 @@ const Auth = {
     });
   },
 
-  _addNationalSwitcher() {
+  _addAdminSwitcher() {
     const head = document.getElementById('sidebar-head');
-    if (!head || document.getElementById('national-region-switcher')) return;
+    if (!head || document.getElementById('admin-region-switcher')) return;
     const sw = document.createElement('div');
-    sw.id = 'national-region-switcher';
+    sw.id = 'admin-region-switcher';
     sw.className = 'region-switcher';
     sw.style.cssText = 'margin-top:10px;flex-wrap:wrap;gap:4px';
 
     // Bouton "Tout"
     const btnAll = document.createElement('button');
     btnAll.className = 'region-tab active-admin';
-    btnAll.id = 'national-sw-ALL';
+    btnAll.id = 'admin-sw-ALL';
     btnAll.textContent = '⊕ Toutes';
-    btnAll.onclick = function() { Auth.nationalSwitchRegion('ALL'); };
+    btnAll.onclick = function() { Auth.adminSwitchRegion('ALL'); };
     sw.appendChild(btnAll);
 
     // Un bouton par région
     Object.entries(REGIONS).forEach(function([key, r]) {
       const btn = document.createElement('button');
       btn.className = 'region-tab';
-      btn.id = 'national-sw-' + key;
+      btn.id = 'admin-sw-' + key;
       btn.textContent = r.icon + ' ' + r.label;
-      btn.onclick = function() { Auth.nationalSwitchRegion(key); };
+      btn.onclick = function() { Auth.adminSwitchRegion(key); };
       sw.appendChild(btn);
     });
 
     head.appendChild(sw);
   },
 
-  nationalSwitchRegion(regionKey) {
+  adminSwitchRegion(regionKey) {
     let activeCentres, label, storagePrefix;
 
     if (regionKey === 'ALL') {
       activeCentres  = Object.values(REGIONS).reduce(function(acc, r) { return acc.concat(r.centres); }, []);
-      label          = '🇫🇷 National — Toutes régions (' + activeCentres.length + ' centres)';
-      storagePrefix  = 'ucpa_national_';
+      label          = '👑 Admin — Toutes régions (' + activeCentres.length + ' centres)';
+      storagePrefix  = 'ucpa_admin_';
     } else {
       const reg = REGIONS[regionKey];
       if (!reg) return;
@@ -10568,9 +10028,9 @@ const Auth = {
     }
 
     // Mettre à jour les boutons
-    const allBtns = document.querySelectorAll('[id^="national-sw-"]');
+    const allBtns = document.querySelectorAll('[id^="admin-sw-"]');
     allBtns.forEach(function(b) { b.className = 'region-tab'; });
-    const activeBtn = document.getElementById('national-sw-' + regionKey);
+    const activeBtn = document.getElementById('admin-sw-' + regionKey);
     if (activeBtn) activeBtn.classList.add('active-admin');
 
     // Mettre à jour les centres
@@ -12690,124 +12150,61 @@ const GED = {
 const Admin = {
 
   // Clés Firestore pour la persistance des listes
-  _generateKey(regionKey) {
-    return 'ucpa_centres_' + regionKey;
-  },
+  _key: { SUD: 'ucpa_centres_SUD', NORD: 'ucpa_centres_NORD' },
 
   // Charger les listes de centres depuis Firestore (ou localStorage en fallback)
   async loadPersistedCentres() {
-    const promises = Object.keys(REGIONS).map(async regionKey => {
+    const regions = ['SUD', 'NORD'];
+    await Promise.all(regions.map(async r => {
       try {
-        const key = this._generateKey(regionKey);
         let raw = null;
-        if (window._firestore) raw = await window._firestore.get(key);
-        if (!raw) raw = localStorage.getItem(key); // fallback
+        if (window._firestore) raw = await window._firestore.get(this._key[r]);
+        if (!raw) raw = localStorage.getItem(this._key[r]); // fallback
         if (!raw) return;
-        const arr = JSON.parse(raw);
-        const region = REGIONS[regionKey];
-        if (!region) return;
-        region.centres.length = 0;
-        arr.forEach(c => region.centres.push(c));
+        const arr    = JSON.parse(raw);
+        const target = r === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+        target.length = 0;
+        arr.forEach(c => target.push(c));
       } catch(e) {}
-    });
-    await Promise.all(promises);
+    }));
   },
 
   // Sauvegarder la liste des centres dans Firestore
-  _persist(regionKey) {
-    const region = REGIONS[regionKey];
-    if (!region) return;
-    const arr = region.centres;
+  _persist(region) {
+    const arr = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
     const raw = JSON.stringify(arr);
-    const key = this._generateKey(regionKey);
-    if (window._firestore) window._firestore.set(key, raw).catch(() => {});
-    try { localStorage.setItem(key, raw); } catch(e) {}
+    if (window._firestore) window._firestore.set(this._key[region], raw).catch(() => {});
+    try { localStorage.setItem(this._key[region], raw); } catch(e) {}
   },
 
   // ── Rendu de la page ──
   render() {
-    // KPIs dynamiques
-    const kpiBar = document.getElementById('admin-kpi-bar-dynamic');
-    if (kpiBar) {
-      let totalCentres = 0;
-      const kpis = Object.entries(REGIONS).map(([key, region]) => {
-        totalCentres += region.centres.length;
-        return `
-          <div class="admin-kpi">
-            <div class="admin-kpi-val">${region.centres.length}</div>
-            <div class="admin-kpi-label">${region.icon} ${region.label}</div>
-          </div>
-        `;
-      });
-      kpis.push(`
-        <div class="admin-kpi">
-          <div class="admin-kpi-val">${totalCentres}</div>
-          <div class="admin-kpi-label">Total centres</div>
-        </div>
-      `);
-      kpiBar.innerHTML = kpis.join('');
-    }
+    // KPIs
+    document.getElementById('adm-kpi-sud').textContent   = CENTRES_SUD.length;
+    document.getElementById('adm-kpi-nord').textContent  = CENTRES_NORD.length;
+    document.getElementById('adm-kpi-total').textContent = CENTRES_SUD.length + CENTRES_NORD.length;
 
-    // Cartes de gestion par région
-    const container = document.getElementById('admin-regions-container');
-    if (container) {
-      const cards = Object.entries(REGIONS).map(([key, region]) => `
-        <div class="card" style="margin-bottom:16px;">
-          <div class="card-hdr">
-            <span>⚙️</span>
-            <h3>Gestion des Centres</h3>
-            <span class="admin-region-badge" style="background:rgba(232,84,26,0.1);color:var(--accent);padding:4px 12px;border-radius:12px;font-size:11px;font-weight:700;">
-              ${region.icon} ${region.label}
-            </span>
-            <div class="ml flex" style="gap:8px">
-              <button class="btn btn-primary btn-sm" onclick="Admin.openAddModal('${key}')">+ Ajouter un centre</button>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="admin-centres-grid" id="admin-list-${key}"></div>
-          </div>
-        </div>
-      `).join('');
-      container.innerHTML = cards;
-    }
-
-    // Remplir chaque liste
-    Object.keys(REGIONS).forEach(key => {
-      this._renderList(key, 'admin-list-' + key);
-    });
+    this._renderList('SUD',  'admin-list-sud');
+    this._renderList('NORD', 'admin-list-nord');
   },
 
   _pw(name) {
     return name.toLowerCase()
       .replace('village sportif ','')
-      .replace('village nautique ','')
-      .replace('station de ski ','')
       .replace('centre aquatique ','')
       .replace('centre nautique ','')
-      .replace('domaine de ','')
-      .replace('camping wellness sport ','')
-      .replace("camping de l'",'')
-      .replace('camping de ','')
       .trim();
   },
 
   _short(name) {
     return name
-      .replace('VILLAGE SPORTIF ','VS ')
-      .replace('VILLAGE NAUTIQUE ','VN ')
-      .replace('STATION DE SKI ','SKI ')
+      .replace('VILLAGE SPORTIF ','')
       .replace('CENTRE AQUATIQUE ','CA ')
-      .replace('CENTRE NAUTIQUE ','CN ')
-      .replace('DOMAINE DE ','DOM ')
-      .replace('CAMPING WELLNESS SPORT ','CWS ')
-      .replace("CAMPING DE L'", 'C. ')
-      .replace('CAMPING DE ', 'C. ');
+      .replace('CENTRE NAUTIQUE ','CN ');
   },
 
-  _renderList(regionKey, elId) {
-    const region = REGIONS[regionKey];
-    if (!region) return;
-    const arr = region.centres;
+  _renderList(region, elId) {
+    const arr = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
     const el  = document.getElementById(elId);
     if (!el) return;
 
@@ -12823,446 +12220,188 @@ const Admin = {
           <div class="admin-centre-pw">Mot de passe : <code>${this._pw(c)}</code></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-ghost btn-sm" title="Modifier" onclick="Admin.openEditModal('${regionKey}',${i})">✏️</button>
-          <button class="btn btn-ghost btn-sm" title="Supprimer" onclick="Admin.confirmDelete('${regionKey}',${i})"
+          <button class="btn btn-ghost btn-sm" title="Renommer" onclick="Admin.openEditModal('${region}',${i})">✏️</button>
+          <button class="btn btn-ghost btn-sm" title="Supprimer" onclick="Admin.confirmDelete('${region}',${i})"
             style="color:var(--red);border-color:transparent">🗑️</button>
         </div>
       </div>`).join('');
-  },
-
-  // ── Nouvelle modale ──
-  openCentreModal(title, regionKey, centreIdx, centreName) {
-    const modal = document.getElementById('centre-modal');
-    const titleEl = document.getElementById('centre-modal-title');
-    const nameInput = document.getElementById('centre-modal-name');
-    const regionSelect = document.getElementById('centre-modal-region');
-    
-    if (!modal) return;
-    
-    titleEl.textContent = title;
-    nameInput.value = centreName || '';
-    
-    // Remplir le select des régions
-    regionSelect.innerHTML = Object.entries(REGIONS).map(([key, region]) => 
-      `<option value="${key}" ${key === regionKey ? 'selected' : ''}>${region.icon} ${region.label}</option>`
-    ).join('');
-    
-    modal.style.display = 'flex';
-    
-    // Sauvegarder le contexte
-    this._modalRegionKey = regionKey;
-    this._modalCentreIdx = centreIdx;
-    this._modalMode = centreIdx !== undefined ? 'edit' : 'add';
-    
-    nameInput.focus();
-  },
-
-  closeCentreModal() {
-    const modal = document.getElementById('centre-modal');
-    if (modal) modal.style.display = 'none';
-  },
-
-  saveCentre() {
-    const nameInput = document.getElementById('centre-modal-name');
-    const regionSelect = document.getElementById('centre-modal-region');
-    
-    const name = (nameInput.value || '').trim().toUpperCase();
-    const regionKey = regionSelect.value;
-    
-    if (!name) {
-      alert('Tu dois entrer un nom de centre.');
-      return;
-    }
-    
-    const region = REGIONS[regionKey];
-    if (!region) return;
-    
-    if (this._modalMode === 'add') {
-      // Vérifier que le centre n'existe pas déjà
-      if (region.centres.includes(name)) {
-        alert('Ce centre existe déjà dans cette région.');
-        return;
-      }
-      region.centres.push(name);
-    } else if (this._modalMode === 'edit') {
-      // Modifier le centre existant
-      const oldRegion = REGIONS[this._modalRegionKey];
-      if (oldRegion && this._modalCentreIdx !== undefined) {
-        // Si changement de région
-        if (regionKey !== this._modalRegionKey) {
-          // Retirer de l'ancienne région
-          oldRegion.centres.splice(this._modalCentreIdx, 1);
-          this._persist(this._modalRegionKey);
-          // Ajouter à la nouvelle région
-          region.centres.push(name);
-        } else {
-          // Même région, juste renommer
-          oldRegion.centres[this._modalCentreIdx] = name;
-        }
-      }
-    }
-    
-    this._persist(regionKey);
-    this._refreshCentreSelector();
-    this.closeCentreModal();
-    this.render();
-    // Rafraîchir aussi la page RegionAdmin si on est dessus
-    if (App.page === 'gestion-centres') {
-      RegionAdmin.render();
-    }
   },
 
   // ── Ajouter ──
-  openAddModal(regionKey) {
-    this.openCentreModal('Ajouter un centre', regionKey, undefined, '');
+  openAddModal(region) {
+    App.openModal(
+      `➕ Ajouter un centre — Alpes ${region === 'SUD' ? 'Sud' : 'Nord'}`,
+      `<div class="form-group">
+        <label>Nom complet du centre (majuscules)</label>
+        <input type="text" id="adm-centre-input" placeholder="Ex: VILLAGE SPORTIF CHAMONIX"
+          style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+          Le mot de passe sera généré automatiquement à partir du nom.<br>
+          Convention : commencer par <strong>VILLAGE SPORTIF</strong>, <strong>CENTRE AQUATIQUE</strong> ou <strong>CENTRE NAUTIQUE</strong>.
+        </div>
+        <div id="adm-pw-preview" style="margin-top:12px;padding:10px 14px;background:var(--bg3);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted2)">
+          Mot de passe généré : <span id="adm-pw-val" style="color:var(--accent)">—</span>
+        </div>
+      </div>`,
+      'admin_add_centre'
+    );
+    App._adminModalRegion = region;
+
+    // Prévisualisation du mot de passe en temps réel
+    setTimeout(() => {
+      const inp = document.getElementById('adm-centre-input');
+      if (inp) inp.addEventListener('input', () => {
+        const preview = document.getElementById('adm-pw-val');
+        if (preview) preview.textContent = this._pw(inp.value) || '—';
+      });
+    }, 50);
   },
 
   // ── Éditer ──
-  openEditModal(regionKey, idx) {
-    const region = REGIONS[regionKey];
-    if (!region) return;
-    const current = region.centres[idx];
-    this.openCentreModal('Modifier le centre', regionKey, idx, current);
+  openEditModal(region, idx) {
+    const arr  = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+    const current = arr[idx];
+    App.openModal(
+      `✏️ Modifier le centre`,
+      `<div class="form-group">
+        <label>Nom complet du centre</label>
+        <input type="text" id="adm-centre-input" value="${current}"
+          style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        <div id="adm-pw-preview" style="margin-top:12px;padding:10px 14px;background:var(--bg3);border-radius:6px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted2)">
+          Nouveau mot de passe : <span id="adm-pw-val" style="color:var(--accent)">${this._pw(current)}</span>
+        </div>
+      </div>`,
+      'admin_edit_centre'
+    );
+    App._adminModalRegion = region;
+    App._adminModalIdx    = idx;
+
+    setTimeout(() => {
+      const inp = document.getElementById('adm-centre-input');
+      if (inp) inp.addEventListener('input', () => {
+        const preview = document.getElementById('adm-pw-val');
+        if (preview) preview.textContent = this._pw(inp.value) || '—';
+      });
+    }, 50);
   },
 
   // ── Confirmer suppression ──
-  confirmDelete(regionKey, idx) {
-    const region = REGIONS[regionKey];
-    if (!region) return;
-    const name = region.centres[idx];
-    
-    if (confirm(`Tu es sûr de vouloir supprimer "${this._short(name)}" ?\n\nCe centre sera retiré de la liste mais ses données ERP restent en mémoire.`)) {
-      region.centres.splice(idx, 1);
-      this._persist(regionKey);
-      this._refreshCentreSelector();
+  confirmDelete(region, idx) {
+    const arr  = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+    const name = arr[idx];
+    App.openModal(
+      '🗑️ Supprimer le centre',
+      `<div class="alert-banner danger" style="margin-bottom:16px">
+        ⚠️ Cette action supprime définitivement <strong>${this._short(name)}</strong> de la liste des centres.<br>
+        Les données ERP de ce centre restent en mémoire mais ne seront plus accessibles via ce compte.
+      </div>
+      <p style="font-size:13px;color:var(--muted2)">Confirmez-vous la suppression de <strong style="color:var(--text)">${name}</strong> ?</p>`,
+      'admin_delete_centre'
+    );
+    App._adminModalRegion = region;
+    App._adminModalIdx    = idx;
+    document.getElementById('modal-save').textContent = '🗑️ Supprimer';
+    document.getElementById('modal-save').style.background = 'var(--red)';
+  },
+
+  // ── Sauvegarder (appelé par App.saveModal) ──
+  saveFromModal(type) {
+    const region = App._adminModalRegion;
+    const arr    = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+
+    if (type === 'admin_add_centre') {
+      const val = (document.getElementById('adm-centre-input')?.value || '').trim().toUpperCase();
+      if (!val) { alert('Veuillez saisir un nom de centre.'); return false; }
+      if (arr.includes(val)) { alert('Ce centre existe déjà dans la liste.'); return false; }
+      arr.push(val);
+      this._persist(region);
+      this._refreshCentreSelector(region);
+      // Initialiser automatiquement le registre pour le nouveau centre
+      App._initCentreRegistre(val);
+      App.closeModal();
       this.render();
+      return true;
     }
+
+    if (type === 'admin_edit_centre') {
+      const idx = App._adminModalIdx;
+      const val = (document.getElementById('adm-centre-input')?.value || '').trim().toUpperCase();
+      if (!val) { alert('Veuillez saisir un nom de centre.'); return false; }
+      arr[idx] = val;
+      this._persist(region);
+      this._refreshCentreSelector(region);
+      App.closeModal();
+      this.render();
+      return true;
+    }
+
+    if (type === 'admin_delete_centre') {
+      const idx = App._adminModalIdx;
+      arr.splice(idx, 1);
+      this._persist(region);
+      this._refreshCentreSelector(region);
+      App.closeModal();
+      this.render();
+      return true;
+    }
+
+    return false;
   },
 
   // Rafraîchir le sélecteur de centres en sidebar après modification
-  _refreshCentreSelector() {
-    // Reconstruire CENTRES global selon la session active
-    const session = JSON.parse(sessionStorage.getItem('ucpa_session') || '{}');
-    let activeCentres = [];
-    
-    if (session.role === 'national') {
-      activeCentres = Object.values(REGIONS).reduce((acc, r) => acc.concat(r.centres), []);
-    } else if (session.region && REGIONS[session.region]) {
-      activeCentres = REGIONS[session.region].centres;
-    }
+  _refreshCentreSelector(region) {
+    // Reconstruire CENTRES global si l'admin est en vue "ALL" ou sur la bonne région
+    const prefix = App._storagePrefix;
+    let actives;
+    if (prefix === 'ucpa_admin_') actives = [...CENTRES_SUD, ...CENTRES_NORD];
+    else if (prefix === 'ucpa_nord_') actives = CENTRES_NORD;
+    else actives = CENTRES_SUD;
 
     CENTRES.length = 0;
-    activeCentres.forEach(c => CENTRES.push(c));
+    actives.forEach(c => CENTRES.push(c));
 
     const sel = document.getElementById('centre-select');
-    if (!sel) return;
-    
     const current = App.centre;
     sel.innerHTML = '<option value="ALL">— Tous les centres —</option>';
-    activeCentres.forEach(c => {
+    actives.forEach(c => {
       const o = document.createElement('option');
       o.value = c;
-      o.textContent = this._short(c);
+      o.textContent = c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ').replace('CENTRE NAUTIQUE ','CN ');
       sel.appendChild(o);
     });
-    
     // Restaurer sélection si toujours valide
-    if (activeCentres.includes(current)) sel.value = current;
+    if (actives.includes(current)) sel.value = current;
     else { App.centre = 'ALL'; sel.value = 'ALL'; }
 
-    // Mettre à jour le label de la région
+    // Mettre à jour le compteur sidebar
     const label = document.getElementById('sidebar-region-label');
-    if (label && session.region && REGIONS[session.region]) {
-      const reg = REGIONS[session.region];
-      label.textContent = reg.icon + ' ' + reg.label + ' · ' + reg.centres.length + ' centres';
-    } else if (label && session.role === 'national') {
-      const total = Object.values(REGIONS).reduce((acc, r) => acc + r.centres.length, 0);
-      label.textContent = '🇫🇷 National — ' + total + ' centres · Toutes régions';
-    }
+    if (label && prefix === 'ucpa_sud_') label.textContent = '▲ Alpes Sud · ' + CENTRES_SUD.length + ' Centres';
+    if (label && prefix === 'ucpa_nord_') label.textContent = '▲ Alpes Nord · ' + CENTRES_NORD.length + ' Centres';
+    if (label && prefix === 'ucpa_admin_') label.textContent = '▲ Alpes Sud + Nord · Admin';
   },
 
+  // Import liste depuis un fichier texte (un centre par ligne)
   importCentres(region) {
-    // À implémenter si besoin
-    alert('Fonction d\'import à implémenter');
-  }
-};
-
-// ═══════════════════════════════════════════════════════════
-// REGION ADMIN - Gestion des centres pour comptes régionaux
-// ═══════════════════════════════════════════════════════════
-const RegionAdmin = {
-  
-  getCurrentRegion() {
-    const session = JSON.parse(sessionStorage.getItem('ucpa_session') || '{}');
-    return session.region || null;
-  },
-
-  render() {
-    const regionKey = this.getCurrentRegion();
-    if (!regionKey || !REGIONS[regionKey]) {
-      document.getElementById('region-centres-list').innerHTML = 
-        '<div class="empty-state"><div class="icon">⚠️</div><div>Région non trouvée</div></div>';
-      return;
-    }
-
-    const region = REGIONS[regionKey];
-    const el = document.getElementById('region-centres-list');
-    if (!el) return;
-
-    if (!region.centres || region.centres.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="icon">🏔</div><div>Aucun centre configuré</div></div>';
-      return;
-    }
-
-    el.innerHTML = region.centres.map((c, i) => `
-      <div class="admin-centre-card">
-        <div class="admin-centre-info">
-          <div class="admin-centre-name" title="${c}">${Admin._short(c)}</div>
-          <div class="admin-centre-pw">Mot de passe : <code>${Admin._pw(c)}</code></div>
-        </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-ghost btn-sm" title="Modifier" onclick="RegionAdmin.openEditModal(${i})">✏️</button>
-          <button class="btn btn-ghost btn-sm" title="Supprimer" onclick="RegionAdmin.confirmDelete(${i})"
-            style="color:var(--red);border-color:transparent">🗑️</button>
-        </div>
-      </div>`).join('');
-  },
-
-  openAddModal() {
-    const regionKey = this.getCurrentRegion();
-    if (!regionKey) return;
-    Admin.openCentreModal('Ajouter un centre', regionKey, undefined, '');
-  },
-
-  openEditModal(idx) {
-    const regionKey = this.getCurrentRegion();
-    if (!regionKey || !REGIONS[regionKey]) return;
-    const current = REGIONS[regionKey].centres[idx];
-    Admin.openCentreModal('Modifier le centre', regionKey, idx, current);
-  },
-
-  confirmDelete(idx) {
-    const regionKey = this.getCurrentRegion();
-    if (!regionKey || !REGIONS[regionKey]) return;
-    const name = REGIONS[regionKey].centres[idx];
-    
-    if (confirm(`Tu es sûr de vouloir supprimer "${Admin._short(name)}" ?\n\nCe centre sera retiré de la liste mais ses données ERP restent en mémoire.`)) {
-      REGIONS[regionKey].centres.splice(idx, 1);
-      Admin._persist(regionKey);
-      Admin._refreshCentreSelector();
-      this.render();
-    }
-  }
-};
-
-// ═══════════════════════════════════════════════════════════
-// VEILLE RÉGLEMENTAIRE
-// ═══════════════════════════════════════════════════════════
-const Veille = {
-  
-  chatHistory: [],
-  
-  render() {
-    // Initialiser la page
-    this.loadChatHistory();
-  },
-
-  async search() {
-    const input = document.getElementById('veille-search-input');
-    const query = (input.value || '').trim();
-    
-    if (!query) {
-      alert('Entre un mot-clé pour rechercher');
-      return;
-    }
-
-    const resultsDiv = document.getElementById('veille-results');
-    resultsDiv.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)"><div class="veille-chat-thinking"><span></span><span></span><span></span></div><div style="margin-top:12px">Recherche en cours...</div></div>';
-
-    // Construire la requête de recherche
-    const sources = [];
-    if (document.getElementById('veille-source-legifrance').checked) sources.push('site:legifrance.gouv.fr');
-    if (document.getElementById('veille-source-sitesecurite').checked) sources.push('site:site-securite.com');
-    
-    let searchQuery = query;
-    if (sources.length > 0 && document.getElementById('veille-source-web').checked === false) {
-      searchQuery = query + ' (' + sources.join(' OR ') + ')';
-    }
-
-    try {
-      // Utiliser l'API de recherche web (via les outils disponibles)
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          tools: [{
-            type: 'web_search_20250305',
-            name: 'web_search'
-          }],
-          messages: [{
-            role: 'user',
-            content: `Recherche sur le web des informations réglementaires françaises sur : "${query}". Concentre-toi sur Légifrance et les sites officiels de sécurité. Fournis 5 résultats pertinents avec leur titre, URL et un résumé.`
-          }]
-        })
-      });
-
-      const data = await response.json();
-      this.displayResults(data, query);
-      
-    } catch (error) {
-      console.error('Erreur recherche:', error);
-      resultsDiv.innerHTML = `
-        <div style="text-align:center;padding:40px;color:var(--red)">
-          <div style="font-size:48px;margin-bottom:16px">⚠️</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Erreur de recherche</div>
-          <div style="font-size:12px">Impossible de contacter le service de recherche. Vérifie ta connexion.</div>
-        </div>
-      `;
-    }
-  },
-
-  displayResults(data, query) {
-    const resultsDiv = document.getElementById('veille-results');
-    
-    // Parser les résultats
-    let resultsHTML = `<div style="margin-bottom:20px;padding:12px 16px;background:var(--bg3);border-radius:8px;font-size:13px">
-      <strong>Résultats pour :</strong> "${query}"
-    </div>`;
-
-    // Simuler des résultats (en attendant la vraie implémentation)
-    const mockResults = [
-      {
-        title: 'Arrêté du 25 juin 1980 portant approbation des dispositions générales du règlement de sécurité',
-        source: 'legifrance',
-        url: 'https://www.legifrance.gouv.fr/loda/id/JORFTEXT000000290033/',
-        snippet: 'Dispositions générales applicables à tous les établissements recevant du public (ERP). Définitions, classement, obligations du propriétaire et de l\'exploitant...'
-      },
-      {
-        title: 'Systèmes de sécurité incendie (SSI) - Réglementation',
-        source: 'sitesecurite',
-        url: 'https://www.site-securite.com/reglementation-ssi',
-        snippet: 'Le système de sécurité incendie comprend l\'ensemble des équipements permettant de collecter les informations et de déclencher les fonctions nécessaires...'
-      }
-    ];
-
-    mockResults.forEach(result => {
-      const sourceClass = result.source;
-      const sourceLabel = result.source === 'legifrance' ? '📚 Légifrance' : 
-                         result.source === 'sitesecurite' ? '🔐 Site Sécurité' : '🌐 Web';
-      
-      resultsHTML += `
-        <div class="veille-result-item" onclick="window.open('${result.url}', '_blank')">
-          <div class="veille-result-source ${sourceClass}">${sourceLabel}</div>
-          <div class="veille-result-title">${result.title}</div>
-          <div class="veille-result-snippet">${result.snippet}</div>
-          <div class="veille-result-meta">🔗 ${result.url}</div>
-        </div>
-      `;
-    });
-
-    resultsDiv.innerHTML = resultsHTML;
-  },
-
-  async sendMessage() {
-    const input = document.getElementById('veille-chat-input');
-    const message = (input.value || '').trim();
-    
-    if (!message) return;
-
-    // Ajouter le message utilisateur
-    this.addChatMessage('user', message);
-    input.value = '';
-
-    // Ajouter l'indicateur de réflexion
-    const messagesDiv = document.getElementById('veille-chat-messages');
-    const thinkingId = 'thinking-' + Date.now();
-    messagesDiv.innerHTML += `
-      <div class="veille-chat-msg veille-chat-assistant" id="${thinkingId}">
-        <div class="veille-chat-avatar">🤖</div>
-        <div class="veille-chat-bubble">
-          <div class="veille-chat-thinking"><span></span><span></span><span></span></div>
-        </div>
-      </div>
-    `;
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-    try {
-      // Appel à l'API Claude
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system: `Tu es un assistant spécialisé en réglementation française pour les établissements recevant du public (ERP). Tu aides les responsables techniques à comprendre et appliquer la réglementation en matière de sécurité incendie, accessibilité PMR, installations techniques, etc. 
-          
-Sois précis, cite les textes réglementaires quand c'est pertinent (arrêtés, décrets, articles du code du travail ou de la construction), et donne des conseils pratiques. Utilise un ton simple et direct avec "tu".`,
-          messages: [{
-            role: 'user',
-            content: message
-          }]
-        })
-      });
-
-      const data = await response.json();
-      
-      // Retirer l'indicateur de réflexion
-      document.getElementById(thinkingId)?.remove();
-      
-      // Extraire la réponse
-      const assistantMessage = data.content
-        .filter(block => block.type === 'text')
-        .map(block => block.text)
-        .join('\n');
-      
-      this.addChatMessage('assistant', assistantMessage);
-      
-    } catch (error) {
-      console.error('Erreur chatbot:', error);
-      document.getElementById(thinkingId)?.remove();
-      this.addChatMessage('assistant', '❌ Désolé, je n\'ai pas pu traiter ta demande. Vérifie ta connexion et réessaye.');
-    }
-  },
-
-  addChatMessage(role, content) {
-    const messagesDiv = document.getElementById('veille-chat-messages');
-    const isUser = role === 'user';
-    
-    const msgHTML = `
-      <div class="veille-chat-msg ${isUser ? 'veille-chat-user' : 'veille-chat-assistant'}">
-        <div class="veille-chat-avatar">${isUser ? '👤' : '🤖'}</div>
-        <div class="veille-chat-bubble">${content.replace(/\n/g, '<br>')}</div>
-      </div>
-    `;
-    
-    messagesDiv.innerHTML += msgHTML;
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-    // Sauvegarder dans l'historique
-    this.chatHistory.push({ role, content, timestamp: new Date().toISOString() });
-    this.saveChatHistory();
-  },
-
-  saveChatHistory() {
-    try {
-      localStorage.setItem('veille_chat_history', JSON.stringify(this.chatHistory.slice(-50))); // Garder les 50 derniers messages
-    } catch(e) {}
-  },
-
-  loadChatHistory() {
-    try {
-      const saved = localStorage.getItem('veille_chat_history');
-      if (saved) {
-        this.chatHistory = JSON.parse(saved);
-        // Recharger les messages dans l'interface (optionnel)
-      }
-    } catch(e) {}
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.txt,.csv';
+    input.onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const lines = ev.target.result.split('\n')
+          .map(l => l.trim().toUpperCase())
+          .filter(l => l.length > 0);
+        const arr = region === 'SUD' ? CENTRES_SUD : CENTRES_NORD;
+        let added = 0;
+        lines.forEach(l => { if (!arr.includes(l)) { arr.push(l); added++; } });
+        this._persist(region);
+        this._refreshCentreSelector(region);
+        this.render();
+        alert(`${added} centre(s) importé(s) dans Alpes ${region === 'SUD' ? 'Sud' : 'Nord'}.`);
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 };
 
@@ -14785,6 +13924,289 @@ const Cal = {
 // Initialiser le thème AVANT le rendu (évite le flash)
 Theme.init();
 
+
+// ══════════════════════════════════════════════════════════════
+// MODULE VEILLE RÉGLEMENTAIRE + CHATBOT IA
+// ══════════════════════════════════════════════════════════════
+const Veille = {
+  _history: [],
+  _searching: false,
+
+  // Charger historique
+  _loadHistory() {
+    try { this._history = JSON.parse(localStorage.getItem('ucpa_chat_history') || '[]'); } catch(e) { this._history = []; }
+    this._renderHistory();
+  },
+
+  // Sauvegarder historique
+  _saveHistory() {
+    try { localStorage.setItem('ucpa_chat_history', JSON.stringify(this._history.slice(-50))); } catch(e) {}
+  },
+
+  clearHistory() {
+    if (!confirm('Vider l\u2019historique du chatbot ?')) return;
+    this._history = [];
+    this._saveHistory();
+    const wrap = document.getElementById('chat-messages');
+    if (wrap) wrap.innerHTML = '<div class="chat-msg assistant">Historique effacé. Pose-moi une question.</div>';
+  },
+
+  _renderHistory() {
+    const wrap = document.getElementById('chat-messages');
+    if (!wrap || this._history.length === 0) return;
+    const items = this._history.slice(-20);
+    wrap.innerHTML = items.map(m =>
+      `<div class="chat-msg ${m.role}">${m.content.replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>`
+    ).join('');
+    wrap.scrollTop = wrap.scrollHeight;
+  },
+
+  // Envoi message chatbot
+  async sendMessage() {
+    const input = document.getElementById('chat-input');
+    if (!input) return;
+    const msg = (input.value || '').trim();
+    if (!msg) return;
+    input.value = '';
+
+    // Afficher message utilisateur
+    this._history.push({ role: 'user', content: msg });
+    this._renderHistory();
+
+    // Afficher indicateur
+    const thinking = document.getElementById('chat-thinking');
+    if (thinking) thinking.style.display = 'flex';
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json',
+            'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `Tu es un expert en réglementation des ERP (Établissements Recevant du Public) français, spécialisé dans l'hôtellerie touristique et les centres sportifs de plein air (type UCPA). Tu maîtrises parfaitement : le Code de la construction (CCH), la réglementation incendie ERP (arrêtés du 25 juin 1980 et suivants), la réglementation sanitaire (ECS, légionelles, arrêté 1er fév 2010), les normes PMR, la réglementation ascenseurs, les contrôles périodiques obligatoires. Réponds de façon précise, pratique et cite les références légales (articles, arrêtés, décrets). Tutoie l'utilisateur.`,
+          messages: this._history.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await response.json();
+      const reply = data.content?.[0]?.text || "Désolé, impossible de répondre. Réessaie.";
+      this._history.push({ role: 'assistant', content: reply });
+    } catch(err) {
+      console.error('Chatbot error:', err);
+      this._history.push({ role: 'assistant', content: "⚠️ Erreur de connexion. Vérifie ta connexion et réessaie." });
+    }
+
+    if (thinking) thinking.style.display = 'none';
+    this._saveHistory();
+    this._renderHistory();
+  },
+
+  // Recherche réglementaire
+  async search() {
+    const query = (document.getElementById('veille-query')?.value || '').trim();
+    if (!query) return;
+    const resultsEl = document.getElementById('veille-results');
+    if (!resultsEl) return;
+
+    resultsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">⏳ Recherche en cours…</div>';
+
+    const useLegifrance = document.getElementById('src-legifrance')?.checked;
+    const useRegistre   = document.getElementById('src-registre')?.checked;
+    const useWeb        = document.getElementById('src-web')?.checked;
+
+    let sources = [];
+    if (useLegifrance) sources.push('site:legifrance.gouv.fr');
+    if (useRegistre)   sources.push('site:registresecurite.com OR site:ssiap.com');
+    if (useWeb)        sources.push('');
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json',
+            'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          system: 'Tu es un expert réglementaire ERP. Cherche des informations officielles françaises sur le sujet demandé. Réponds en JSON uniquement avec le format: {"results": [{"source": "Légifrance|RegistreSécurité|Web", "title": "...", "snippet": "...", "url": "..."}]}. Maximum 5 résultats.',
+          messages: [{ role: 'user', content: `Recherche réglementaire ERP France: ${query}${sources.length ? ' (sources: ' + sources.join(', ') + ')' : ''}` }]
+        })
+      });
+      const data = await response.json();
+      // Extraire le texte de la réponse
+      const textBlocks = (data.content || []).filter(b => b.type === 'text');
+      let jsonStr = textBlocks.map(b => b.text).join('');
+      // Nettoyer le JSON
+      jsonStr = jsonStr.replace(/```json|```/g, '').trim();
+      let parsed;
+      try {
+        parsed = JSON.parse(jsonStr);
+      } catch(e) {
+        // Fallback : générer une réponse directe
+        parsed = { results: [{
+          source: 'Assistant',
+          title: 'Réponse réglementaire',
+          snippet: jsonStr.slice(0, 300),
+          url: ''
+        }]};
+      }
+
+      if (parsed.results && parsed.results.length > 0) {
+        resultsEl.innerHTML = parsed.results.map(r => `
+          <div class="veille-result" onclick="${r.url ? `window.open('${r.url}','_blank')` : ''}">
+            <div class="veille-result-src">${r.source || 'Web'}</div>
+            <div class="veille-result-title">${r.title || ''}</div>
+            <div class="veille-result-snippet">${r.snippet || ''}</div>
+            ${r.url ? `<div style="font-size:9px;color:var(--accent);margin-top:4px;word-break:break-all">${r.url}</div>` : ''}
+          </div>`).join('');
+      } else {
+        resultsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Aucun résultat trouvé.</div>';
+      }
+    } catch(err) {
+      console.error('Veille search error:', err);
+      resultsEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red);font-size:12px">Erreur de recherche. Vérifie ta connexion.</div>';
+    }
+  },
+
+  // Recherche rapide depuis les boutons
+  quickSearch(term) {
+    const input = document.getElementById('veille-query');
+    if (input) input.value = term;
+    this.search();
+  },
+};
+
+// Charger l'historique quand on arrive sur la page veille
+document.addEventListener('ucpa-session-started', () => {
+  setTimeout(() => Veille._loadHistory(), 500);
+});
+
+// ══════════════════════════════════════════════════════════════
+// MODULE IMPORT PDF — Fiche de Synthèse
+// ══════════════════════════════════════════════════════════════
+const PDFImport = {
+  openFilePicker() {
+    let input = document.getElementById('pdf-import-input');
+    if (!input) {
+      input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'application/pdf,.pdf';
+      input.id = 'pdf-import-input';
+      input.style.display = 'none';
+      document.body.appendChild(input);
+      input.addEventListener('change', e => {
+        if (e.target.files[0]) this.importFile(e.target.files[0]);
+        input.value = '';
+      });
+    }
+    input.click();
+  },
+
+  async importFile(file) {
+    console.log('[PDFImport] Fichier:', file.name);
+    const btn = document.getElementById('btn-import-pdf');
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '⏳ Import…'; btn.disabled = true; }
+
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json',
+            'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: 'Extrait les données de cette fiche de synthèse ERP UCPA. Réponds UNIQUEMENT en JSON valide, sans markdown, sans commentaires. Format: {"nom":"","adresse":"","cp":"","ville":"","siret":"","erp_types":[],"erp_cat":"","ssi":"","nb_chaudieres":"","capacite":"","surface":"","notes":""}',
+          messages: [{
+            role: 'user',
+            content: [{
+              type: 'document',
+              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
+            },
+            { type: 'text', text: 'Extrais toutes les données de cette fiche de synthèse ERP. Réponds uniquement en JSON.' }]
+          }]
+        })
+      });
+
+      const data = await response.json();
+      let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+      text = text.replace(/```json|```/g, '').trim();
+      let extracted = {};
+      try { extracted = JSON.parse(text); } catch(e) { console.warn('[PDFImport] JSON parse error:', e); }
+
+      console.log('[PDFImport] Données extraites:', extracted);
+      this._fillForm(extracted);
+
+      if (btn) { btn.innerHTML = '✅ Importé !'; setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2500); }
+    } catch(err) {
+      console.error('[PDFImport] Erreur:', err);
+      if (btn) { btn.innerHTML = '❌ Erreur'; setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 2500); }
+    }
+  },
+
+  _fillForm(d) {
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== null && val !== '') el.value = val;
+    };
+
+    // Naviguer vers la fiche synthèse
+    App.nav('synthese');
+
+    setTimeout(() => {
+      set('s-nom', d.nom || d.centre || d.name);
+      set('s-adresse', d.adresse || d.address);
+      set('s-cp', d.cp || d.code_postal);
+      set('s-ville', d.ville || d.city);
+      set('s-siret', d.siret);
+      set('s-erp_cat', d.erp_cat || d.categorie);
+      set('s-ssi', d.ssi);
+      set('s-puissance_chaud', d.nb_chaudieres || d.chaudieres);
+      set('s-capacite', d.capacite);
+      set('s-surface', d.surface);
+      set('s-observations', d.notes || d.observations);
+
+      // Types ERP multi-sélection
+      if (Array.isArray(d.erp_types) && d.erp_types.length > 0) {
+        document.querySelectorAll('#erp-type-grid .erp-type-item').forEach(el => {
+          el.classList.remove('selected');
+          const code = el.querySelector('.erp-type-code')?.textContent?.trim();
+          if (d.erp_types.includes(code)) {
+            el.classList.add('selected');
+          }
+        });
+      }
+
+      // Sauvegarder
+      if (typeof App.saveSynthese === 'function') App.saveSynthese();
+      console.log('[PDFImport] Formulaire rempli');
+    }, 500);
+  }
+};
+
+// Charger la clé Anthropic depuis localStorage si Firebase absent
+window.addEventListener('firebase-ready', function() {
+  if (!window._anthropicKey) {
+    try {
+      const lsKey = localStorage.getItem('ucpa_anthropic_key');
+      if (lsKey) {
+        window._anthropicKey = lsKey;
+        console.info('[UCPA ERP] Clé API Anthropic chargée depuis localStorage');
+      }
+    } catch(e) {}
+  }
+});
+
 // Démarrage
 window.addEventListener('DOMContentLoaded', () => {
   if (window._firebaseReady) {
@@ -14951,35 +14373,5 @@ document.addEventListener('ucpa-session-started', requestNotifPermission);
     </div>
   </div>
 </div>
-
-<!-- ═══════════════════════════════════════════════════════
-     GESTION CENTRES — Modale Ajout/Modification
-═══════════════════════════════════════════════════════════ -->
-<div id="centre-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);align-items:center;justify-content:center;" onclick="if(event.target===this){Admin.closeCentreModal()}">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:500px;width:90%;">
-    <h4 id="centre-modal-title" style="margin:0 0 20px;font-size:16px;color:var(--text);">Ajouter un centre</h4>
-    
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div>
-        <label style="display:block;font-size:12px;color:var(--muted2);margin-bottom:6px;">Nom du centre</label>
-        <input type="text" id="centre-modal-name" class="reg-card-input" 
-          placeholder="Ex: VILLAGE SPORTIF LACANAU" style="width:100%;">
-      </div>
-
-      <div>
-        <label style="display:block;font-size:12px;color:var(--muted2);margin-bottom:6px;">Région</label>
-        <select id="centre-modal-region" class="reg-card-select" style="width:100%;">
-          <!-- Options remplies dynamiquement -->
-        </select>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:10px;margin-top:24px;justify-content:flex-end;">
-      <button class="btn btn-secondary" onclick="Admin.closeCentreModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="Admin.saveCentre()">✅ Enregistrer</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
