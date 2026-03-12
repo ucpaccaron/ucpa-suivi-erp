@@ -1683,41 +1683,241 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
   #prest-toolbar-mobile{ display:none !important; }
 }
 
-/* ══ VEILLE RÉGLEMENTAIRE + CHATBOT ══ */
-.veille-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
-@media(max-width:900px){.veille-layout{grid-template-columns:1fr;}}
-.chat-wrap{display:flex;flex-direction:column;height:480px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg2);}
-.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
-.chat-msg{max-width:85%;padding:10px 14px;border-radius:10px;font-size:12.5px;line-height:1.5;}
-.chat-msg.user{background:var(--accent);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;}
-.chat-msg.assistant{background:var(--panel);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:3px;}
-.chat-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--border);background:var(--bg3);}
-.chat-input-row input{flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px;}
-.chat-thinking{display:flex;gap:4px;align-items:center;padding:10px 14px;}
-.chat-thinking span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:chat-bounce 1s infinite;}
-.chat-thinking span:nth-child(2){animation-delay:.2s;}
-.chat-thinking span:nth-child(3){animation-delay:.4s;}
-@keyframes chat-bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-8px);}}
-.veille-result{padding:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:8px;cursor:pointer;transition:border-color .15s;}
-.veille-result:hover{border-color:var(--accent);}
-.veille-result-src{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);font-family:'DM Mono',monospace;margin-bottom:4px;}
-.veille-result-title{font-size:13px;font-weight:600;margin-bottom:4px;}
-.veille-result-snippet{font-size:11px;color:var(--muted);line-height:1.5;}
+/* ══ VEILLE RÉGLEMENTAIRE v3 — intégrale ══ */
 
-/* ══ RESSOURCES v3 (intégré depuis veille-reglementaire-v3) ══ */
-.res-profile-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:10px;}
-.res-tab{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:5px 12px;border-radius:3px;border:1px solid var(--border);cursor:pointer;color:var(--muted);background:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;}
-.res-tab:hover{color:var(--text);}
-.res-tab.active-commun{color:var(--text);background:var(--bg2);border-color:var(--border);}
-.res-tab.active-region{color:#fb7185;background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.4);}
-.res-tab.active-national{color:#818cf8;background:rgba(129,140,248,.08);border-color:rgba(129,140,248,.4);}
-.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
-.res-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:8px;}
-.res-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px rgba(232,84,26,.15);}
-.res-card-icon{font-size:22px;}
-.res-card-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
-.res-card-desc{font-size:11px;color:var(--muted);line-height:1.5;flex:1;}
-.res-card-type{font-family:'DM Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;width:fit-content;letter-spacing:.04em;}
+/* Variables couleurs domaines (scoped pour ne pas écraser le thème ERP) */
+#assistant-panel-veille {
+  --vl-bg:    var(--bg);
+  --vl-s1:    var(--panel);
+  --vl-s2:    var(--bg2);
+  --vl-s3:    var(--bg3);
+  --vl-bd:    var(--border);
+  --vl-bd2:   var(--muted);
+  --vl-tx:    var(--muted2);
+  --vl-txd:   var(--muted);
+  --vl-txb:   var(--text);
+  --vl-ai:    var(--amber);
+  --vl-green: var(--green);
+  --vl-red:   var(--red);
+  --vl-orange:#f97316;
+  --vl-fire:  #ff6b35;
+  --vl-nrj:   #00d4ff;
+  --vl-acc:   #c084fc;
+  --vl-eau:   #34d399;
+  --vl-nat:   #818cf8;
+  --vl-reg:   #fb7185;
+  --vl-ami:   #a78bfa;
+  --vl-plb:   #f59e0b;
+  --vl-elv:   #38bdf8;
+  --vl-bru:   #6ee7b7;
+  --vl-chf:   #fb923c;
+  --vl-qai:   #a3e635;
+  --vl-elec:  #facc15;
+  --vl-cui:   #f97316;
+  --vl-pis:   #22d3ee;
+  --vl-rad:   #84cc16;
+  --vl-veh:   #94a3b8;
+  --vl-vrd:   #4ade80;
+  --vl-str:   #fb923c;
+  --vl-sec:   #f43f5e;
+  --vl-due:   #c4b5fd;
+  --vl-cvc:   #0ea5e9;
+  --vl-san:   #60a5fa;
+  --vl-lav:   #e879f9;
+  --vl-chi:   #f97316;
+  --vl-log:   #a8a29e;
+  --vl-spo:   #4ade80;
+  --vl-num:   #818cf8;
+  --vl-nrg:   #fbbf24;
+  --vl-hyg:   #34d399;
+  --mono: 'Space Mono', monospace;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Layout interne veille */
+#assistant-panel-veille { background:var(--vl-bg); border-radius:8px; overflow:hidden; }
+#vl-body-grid { display:grid; grid-template-columns:220px 1fr 320px; height:calc(100vh - var(--hdr) - 200px); min-height:500px; overflow:hidden; }
+
+/* Sidebar veille */
+#vl-sidebar { background:var(--vl-s1); border-right:1px solid var(--vl-bd); display:flex; flex-direction:column; overflow:hidden; }
+.vl-sidebar-section { padding:10px 12px 4px; }
+.vl-sidebar-label { font-family:var(--mono); font-size:8px; letter-spacing:.14em; text-transform:uppercase; color:var(--vl-txd); margin-bottom:4px; }
+.vl-nav { display:flex; align-items:center; gap:6px; padding:6px 8px; border-radius:3px; margin-bottom:2px; cursor:pointer; transition:all .15s; border:1px solid transparent; color:var(--vl-tx); }
+.vl-nav:hover { background:var(--vl-s2); color:var(--vl-txb); }
+.vl-nav.active { background:var(--vl-s2); border-color:var(--vl-bd); color:var(--vl-txb); }
+.vl-nav-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.vl-nav-label { font-size:11px; font-weight:500; flex:1; }
+.vl-nav-count { font-family:var(--mono); font-size:8px; padding:1px 5px; border-radius:8px; font-weight:700; }
+.vl-nav.active .vl-nav-count { background:rgba(255,255,255,.1); }
+.vl-nav-status { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-left:auto; }
+.vl-nav-status.ok       { background:var(--vl-green); }
+.vl-nav-status.scanning { background:var(--vl-ai); animation:vlpulse 1s infinite; }
+.vl-nav-status.idle     { background:var(--vl-txd); }
+@keyframes vlpulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.vl-divider { height:1px; background:var(--vl-bd); margin:6px 12px; }
+.vl-chat-btn { display:flex; align-items:center; gap:6px; padding:7px 8px; border-radius:3px; margin:0 12px 3px; cursor:pointer; transition:all .15s; border:1px solid var(--vl-bd); color:var(--vl-tx); background:none; font-size:11px; width:calc(100% - 24px); font-weight:500; }
+.vl-chat-btn:hover { background:var(--vl-s2); color:var(--vl-txb); }
+.vl-chat-btn.active { background:rgba(251,191,36,.08); border-color:rgba(251,191,36,.3); color:var(--vl-ai); }
+
+/* Main feed veille */
+#vl-main-feed { display:flex; flex-direction:column; overflow:hidden; background:var(--vl-bg); }
+.vl-feed-header { padding:12px 16px; border-bottom:1px solid var(--vl-bd); display:flex; align-items:center; justify-content:space-between; background:var(--vl-s1); flex-shrink:0; }
+.vl-feed-title { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--vl-txb); display:flex; align-items:center; gap:6px; }
+.vl-feed-title::before { content:''; display:block; width:3px; height:12px; background:var(--vl-current-color, var(--vl-fire)); border-radius:1px; }
+.vl-filters { display:flex; gap:3px; }
+.vl-chip { font-family:var(--mono); font-size:8px; padding:3px 7px; border:1px solid var(--vl-bd); border-radius:2px; color:var(--vl-txd); background:none; cursor:pointer; letter-spacing:.06em; text-transform:uppercase; transition:all .15s; }
+.vl-chip:hover { color:var(--vl-tx); }
+.vl-chip.active { color:var(--vl-txb); border-color:var(--vl-bd2); background:var(--vl-s2); }
+.vl-feed-content { flex:1; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--vl-bd) transparent; }
+.vl-empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:14px; padding:30px; }
+.vl-empty-icon { font-size:40px; opacity:.25; }
+.vl-empty-title { font-family:var(--mono); font-size:11px; color:var(--vl-txd); text-align:center; line-height:1.7; }
+.vl-scan-btn { padding:9px 20px; background:linear-gradient(135deg,#ff6b35,#f97316); color:#000; border:none; border-radius:3px; font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
+
+/* Scan progress */
+.vl-scanning-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:16px; padding:30px; }
+.vl-scan-bar { width:240px; height:2px; background:var(--vl-bd2); border-radius:1px; overflow:hidden; margin-bottom:6px; }
+.vl-scan-fill { height:100%; background:linear-gradient(90deg,var(--vl-fire),var(--vl-nrj)); border-radius:1px; transition:width .5s; animation:vlshimmer 1.5s infinite; }
+@keyframes vlshimmer { 0%,100%{opacity:.7} 50%{opacity:1} }
+.vl-scan-steps { display:flex; flex-direction:column; gap:5px; width:240px; }
+.vl-scan-step { display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9px; color:var(--vl-txd); }
+.vl-scan-step.done    { color:var(--vl-green); }
+.vl-scan-step.current { color:var(--vl-ai); }
+
+/* Update cards */
+.vl-card { padding:14px 16px; border-bottom:1px solid var(--vl-bd); cursor:pointer; transition:all .15s; animation:vlfadeup .25s ease; }
+.vl-card:hover { background:var(--vl-s2); }
+.vl-card.selected { background:var(--vl-s2); border-left:3px solid var(--vl-current-color,var(--vl-fire)); padding-left:13px; }
+@keyframes vlfadeup { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.vl-card-top { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+.vl-domain-tag { font-family:var(--mono); font-size:8px; font-weight:700; padding:2px 6px; border-radius:2px; letter-spacing:.06em; text-transform:uppercase; flex-shrink:0; }
+.vl-urgency { font-family:var(--mono); font-size:8px; padding:2px 5px; border-radius:2px; font-weight:700; }
+.vl-urg-high { background:rgba(239,68,68,.15); color:var(--vl-red); border:1px solid rgba(239,68,68,.3); }
+.vl-urg-med  { background:rgba(249,115,22,.15); color:var(--vl-orange); border:1px solid rgba(249,115,22,.3); }
+.vl-urg-low  { background:rgba(52,211,153,.15); color:var(--vl-eau); border:1px solid rgba(52,211,153,.3); }
+.vl-urg-info { background:rgba(0,212,255,.1); color:var(--vl-nrj); border:1px solid rgba(0,212,255,.2); }
+.vl-card-date { font-family:var(--mono); font-size:8px; color:var(--vl-txd); margin-left:auto; }
+.vl-card-new { font-family:var(--mono); font-size:7px; font-weight:700; padding:1px 4px; border-radius:2px; background:rgba(251,191,36,.15); color:var(--vl-ai); border:1px solid rgba(251,191,36,.3); animation:vlpulse 2s infinite; }
+.vl-card-title { font-size:12px; font-weight:600; color:var(--vl-txb); line-height:1.4; margin-bottom:5px; }
+.vl-card-summary { font-size:11px; color:var(--vl-tx); line-height:1.5; }
+.vl-card-footer { display:flex; align-items:center; gap:6px; margin-top:8px; }
+.vl-card-src { font-family:var(--mono); font-size:8px; color:var(--vl-txd); }
+
+/* Domain color classes */
+.vld-fire { background:rgba(255,107,53,.12); color:var(--vl-fire); border:1px solid rgba(255,107,53,.3); }
+.vld-nrj  { background:rgba(0,212,255,.08);  color:var(--vl-nrj);  border:1px solid rgba(0,212,255,.2); }
+.vld-acc  { background:rgba(192,132,252,.1); color:var(--vl-acc);  border:1px solid rgba(192,132,252,.3); }
+.vld-eau  { background:rgba(52,211,153,.1);  color:var(--vl-eau);  border:1px solid rgba(52,211,153,.3); }
+.vld-ami  { background:rgba(167,139,250,.12);color:var(--vl-ami);  border:1px solid rgba(167,139,250,.35); }
+.vld-plb  { background:rgba(245,158,11,.12); color:var(--vl-plb);  border:1px solid rgba(245,158,11,.35); }
+.vld-elv  { background:rgba(56,189,248,.1);  color:var(--vl-elv);  border:1px solid rgba(56,189,248,.25); }
+.vld-bru  { background:rgba(110,231,183,.1); color:var(--vl-bru);  border:1px solid rgba(110,231,183,.25); }
+.vld-chf  { background:rgba(251,146,60,.12); color:var(--vl-chf);  border:1px solid rgba(251,146,60,.35); }
+.vld-qai  { background:rgba(163,230,53,.12); color:var(--vl-qai);  border:1px solid rgba(163,230,53,.35); }
+.vld-elec { background:rgba(250,204,21,.12); color:var(--vl-elec); border:1px solid rgba(250,204,21,.35); }
+.vld-cui  { background:rgba(249,115,22,.1);  color:var(--vl-cui);  border:1px solid rgba(249,115,22,.3); }
+.vld-pis  { background:rgba(34,211,238,.1);  color:var(--vl-pis);  border:1px solid rgba(34,211,238,.3); }
+.vld-rad  { background:rgba(132,204,22,.1);  color:var(--vl-rad);  border:1px solid rgba(132,204,22,.3); }
+.vld-veh  { background:rgba(148,163,184,.12);color:var(--vl-veh);  border:1px solid rgba(148,163,184,.35); }
+.vld-vrd  { background:rgba(74,222,128,.1);  color:var(--vl-vrd);  border:1px solid rgba(74,222,128,.3); }
+.vld-str  { background:rgba(251,146,60,.08); color:var(--vl-str);  border:1px solid rgba(251,146,60,.25); }
+.vld-sec  { background:rgba(244,63,94,.1);   color:var(--vl-sec);  border:1px solid rgba(244,63,94,.3); }
+.vld-due  { background:rgba(196,181,253,.1); color:var(--vl-due);  border:1px solid rgba(196,181,253,.3); }
+.vld-cvc  { background:rgba(14,165,233,.1);  color:var(--vl-cvc);  border:1px solid rgba(14,165,233,.3); }
+.vld-san  { background:rgba(96,165,250,.1);  color:var(--vl-san);  border:1px solid rgba(96,165,250,.3); }
+.vld-lav  { background:rgba(232,121,249,.1); color:var(--vl-lav);  border:1px solid rgba(232,121,249,.3); }
+.vld-chi  { background:rgba(249,115,22,.1);  color:var(--vl-chi);  border:1px solid rgba(249,115,22,.3); }
+.vld-log  { background:rgba(168,162,158,.1); color:var(--vl-log);  border:1px solid rgba(168,162,158,.3); }
+.vld-spo  { background:rgba(74,222,128,.1);  color:var(--vl-spo);  border:1px solid rgba(74,222,128,.3); }
+.vld-num  { background:rgba(129,140,248,.1); color:var(--vl-num);  border:1px solid rgba(129,140,248,.3); }
+.vld-nrg  { background:rgba(251,191,36,.1);  color:var(--vl-nrg);  border:1px solid rgba(251,191,36,.3); }
+.vld-hyg  { background:rgba(52,211,153,.1);  color:var(--vl-hyg);  border:1px solid rgba(52,211,153,.3); }
+
+/* Detail panel */
+#vl-detail-panel { border-left:1px solid var(--vl-bd); display:flex; flex-direction:column; background:var(--vl-s1); overflow:hidden; }
+.vl-empty-detail { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:8px; padding:20px; }
+.vl-empty-detail-icon { font-size:28px; opacity:.2; }
+.vl-empty-detail-text { font-family:var(--mono); font-size:9px; color:var(--vl-txd); text-align:center; line-height:1.8; }
+.vl-detail-header { padding:12px 14px; border-bottom:1px solid var(--vl-bd); flex-shrink:0; }
+.vl-detail-header-top { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.vl-detail-title { font-size:12px; font-weight:600; color:var(--vl-txb); line-height:1.4; }
+.vl-detail-meta { font-family:var(--mono); font-size:8px; color:var(--vl-txd); margin-top:4px; }
+.vl-detail-tabs { display:flex; border-bottom:1px solid var(--vl-bd); background:var(--vl-s2); flex-shrink:0; }
+.vl-detail-tab { font-family:var(--mono); font-size:9px; font-weight:700; padding:9px 12px; cursor:pointer; letter-spacing:.06em; text-transform:uppercase; color:var(--vl-txd); border:none; background:none; border-bottom:2px solid transparent; transition:all .15s; }
+.vl-detail-tab:hover { color:var(--vl-tx); }
+.vl-detail-tab.active { color:var(--vl-txb); border-bottom-color:var(--vl-ai); }
+.vl-detail-body { flex:1; overflow-y:auto; padding:14px; scrollbar-width:thin; scrollbar-color:var(--vl-bd) transparent; }
+.vl-detail-section { margin-bottom:14px; }
+.vl-detail-section-title { font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--vl-txd); margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+.vl-detail-section-title::before { content:''; display:block; width:10px; height:1px; background:var(--vl-txd); }
+.vl-detail-text { font-size:11px; line-height:1.7; color:var(--vl-tx); }
+.vl-detail-text strong { color:var(--vl-txb); }
+.vl-detail-text ul { padding-left:14px; margin:5px 0; }
+.vl-detail-text li { margin-bottom:3px; }
+.vl-detail-text h4 { font-family:var(--mono); font-size:10px; color:var(--vl-ai); margin:8px 0 5px; }
+.vl-action-item { display:flex; align-items:flex-start; gap:7px; padding:7px 9px; border-radius:3px; margin-bottom:3px; background:var(--vl-s2); border:1px solid var(--vl-bd); }
+.vl-action-check { width:13px; height:13px; border:1px solid var(--vl-bd2); border-radius:2px; flex-shrink:0; margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.vl-action-check:hover { border-color:var(--vl-ai); }
+.vl-action-check.checked { background:var(--vl-green); border-color:var(--vl-green); }
+.vl-action-text { font-size:11px; color:var(--vl-tx); line-height:1.5; }
+.vl-action-text.done { text-decoration:line-through; color:var(--vl-txd); }
+.vl-source-ref { display:flex; align-items:center; gap:5px; padding:5px 9px; border-radius:3px; background:var(--vl-s2); border:1px solid var(--vl-bd); text-decoration:none; color:var(--vl-tx); margin-bottom:3px; transition:all .15s; }
+.vl-source-ref:hover { border-color:var(--vl-bd2); color:var(--vl-txb); }
+.vl-source-ref-name { font-size:11px; font-weight:500; flex:1; }
+.vl-source-ref-url { font-family:var(--mono); font-size:8px; color:var(--vl-txd); }
+
+/* Chat veille */
+.vl-chat-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.vl-chat-messages { flex:1; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:7px; scrollbar-width:thin; }
+.vl-chat-input-area { padding:9px 10px; border-top:1px solid var(--vl-bd); display:flex; gap:5px; align-items:flex-end; background:var(--vl-s2); flex-shrink:0; }
+.vl-chat-input { flex:1; background:var(--vl-bg); border:1px solid var(--vl-bd); border-radius:2px; padding:7px 9px; color:var(--vl-txb); font-size:12px; resize:none; outline:none; min-height:34px; max-height:90px; transition:border-color .15s; line-height:1.4; }
+.vl-chat-input:focus { border-color:var(--vl-ai); }
+.vl-chat-input::placeholder { color:var(--vl-txd); }
+.vl-chat-send { padding:7px 11px; background:var(--vl-ai); color:#000; border:none; border-radius:2px; font-family:var(--mono); font-size:10px; font-weight:700; cursor:pointer; transition:all .15s; flex-shrink:0; }
+.vl-chat-send:hover { background:#f59e0b; }
+.vl-chat-send:disabled { opacity:.4; cursor:not-allowed; }
+.vl-chat-msg { display:flex; gap:5px; animation:vlfadeup .2s ease; }
+.vl-chat-msg.user { flex-direction:row-reverse; }
+.vl-chat-av { width:22px; height:22px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:8px; font-weight:700; flex-shrink:0; }
+.vl-chat-av.ai   { background:rgba(251,191,36,.15); color:var(--vl-ai);   border:1px solid rgba(251,191,36,.2); }
+.vl-chat-av.user { background:rgba(255,107,53,.15); color:var(--vl-fire); border:1px solid rgba(255,107,53,.2); }
+.vl-chat-bubble { max-width:88%; padding:7px 11px; border-radius:3px; font-size:11px; line-height:1.6; }
+.vl-chat-msg.user .vl-chat-bubble { background:rgba(255,107,53,.06); border:1px solid rgba(255,107,53,.15); color:var(--vl-tx); }
+.vl-chat-msg.ai   .vl-chat-bubble { background:var(--vl-s2); border:1px solid var(--vl-bd); color:var(--vl-tx); }
+.vl-chat-bubble strong { color:var(--vl-txb); }
+.vl-chat-bubble h4 { font-family:var(--mono); font-size:9px; color:var(--vl-ai); margin:5px 0 3px; }
+.vl-chat-bubble ul { padding-left:12px; margin:3px 0; }
+.vl-typing { display:flex; gap:3px; padding:7px 11px; background:var(--vl-s2); border:1px solid var(--vl-bd); border-radius:3px; width:fit-content; }
+.vl-typing span { width:5px; height:5px; background:var(--vl-ai); border-radius:50%; animation:vldot 1.2s infinite; }
+.vl-typing span:nth-child(2){animation-delay:.2s} .vl-typing span:nth-child(3){animation-delay:.4s}
+@keyframes vldot { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+
+/* Topbar veille interne */
+.vl-topbar { display:flex; align-items:center; justify-content:space-between; padding:0 16px; height:44px; background:var(--vl-s1); border-bottom:1px solid var(--vl-bd); flex-shrink:0; }
+.vl-brand { display:flex; align-items:center; gap:8px; }
+.vl-brand-icon { width:26px; height:26px; background:linear-gradient(135deg,#ff6b35,#00d4ff); display:flex; align-items:center; justify-content:center; font-size:11px; clip-path:polygon(0 0,100% 0,100% 70%,70% 100%,0 100%); }
+.vl-brand-name { font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--vl-txb); }
+.vl-scan-all-btn { display:flex; align-items:center; gap:6px; padding:6px 14px; background:linear-gradient(135deg,#ff6b35,#f97316); color:#000; border:none; border-radius:3px; font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; transition:all .2s; }
+.vl-scan-all-btn:hover { opacity:.85; }
+.vl-scan-all-btn:disabled { opacity:.4; cursor:not-allowed; }
+.vl-last-scan { font-family:var(--mono); font-size:9px; color:var(--vl-txd); padding:3px 8px; border:1px solid var(--vl-bd); border-radius:2px; }
+.vl-scan-icon.spinning { display:inline-block; animation:vlspin 1s linear infinite; }
+@keyframes vlspin { to{transform:rotate(360deg)} }
+
+/* Ressources */
+.res-profile-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--vl-bd);padding-bottom:10px;}
+.res-tab{font-family:var(--mono);font-size:9px;font-weight:700;padding:5px 12px;border-radius:3px;border:1px solid var(--vl-bd);cursor:pointer;color:var(--vl-txd);background:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;}
+.res-tab:hover{color:var(--vl-tx);}
+.res-tab.active-commun{color:var(--vl-txb);background:var(--vl-s2);border-color:var(--vl-bd2);}
+.res-tab.active-region{color:var(--vl-reg);background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.4);}
+.res-tab.active-national{color:var(--vl-nat);background:rgba(129,140,248,.08);border-color:rgba(129,140,248,.4);}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.res-card{background:var(--vl-s2);border:1px solid var(--vl-bd);border-radius:4px;padding:14px;cursor:pointer;transition:all .2s;text-decoration:none;display:flex;flex-direction:column;gap:8px;}
+.res-card:hover{border-color:var(--vl-bd2);}
+.res-card-icon{font-size:20px;}
+.res-card-name{font-size:12px;font-weight:600;color:var(--vl-txb);line-height:1.3;}
+.res-card-desc{font-size:11px;color:var(--vl-txd);line-height:1.5;}
+.res-card-type{font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:2px;width:fit-content;letter-spacing:.04em;}
 .type-official{background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.3);}
 .type-guide{background:rgba(0,212,255,.1);color:#00d4ff;border:1px solid rgba(0,212,255,.2);}
 .type-tool{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
@@ -3328,63 +3528,93 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
       </div>
 
-      <!-- PANNEAU : Veille réglementaire -->
+      <!-- PANNEAU : Veille réglementaire — layout identique à veille-reglementaire-v3 -->
       <div id="assistant-panel-veille" style="display:none">
-        <div class="veille-layout">
-          <!-- Colonne gauche : recherche -->
-          <div>
-            <div class="card" style="margin-bottom:14px">
-              <div class="card-hdr" style="padding:10px 16px"><span>🔍</span><h3 style="font-size:13px">Recherche réglementaire</h3></div>
-              <div class="card-body" style="padding:14px 16px">
-                <div style="display:flex;gap:8px;margin-bottom:12px">
-                  <input type="text" id="veille-query" placeholder="Ex: commission sécurité ERP, légionelles, ascenseurs..."
-                    style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px"
-                    onkeydown="if(event.key==='Enter')Veille.search()">
-                  <button class="btn btn-primary btn-sm" onclick="Veille.search()">Rechercher</button>
-                </div>
-                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-                  <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="src-legifrance" checked> Légifrance</label>
-                  <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="src-registre" checked> RegistreSécurité</label>
-                  <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="src-web"> Web général</label>
-                </div>
-                <div id="veille-results" style="max-height:360px;overflow-y:auto">
-                  <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Saisissez une requête réglementaire…</div>
-                </div>
+
+        <!-- Topbar interne -->
+        <div class="vl-topbar">
+          <div class="vl-brand">
+            <div class="vl-brand-icon">🏔</div>
+            <div>
+              <div class="vl-brand-name">Veille Réglementaire</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="vl-last-scan" id="vl-last-scan-info">Aucun scan effectué</div>
+            <button class="vl-scan-all-btn" id="vl-scan-all-btn" onclick="VL.scanAll()">
+              <span class="vl-scan-icon" id="vl-scan-icon">⟳</span> Scanner
+            </button>
+          </div>
+        </div>
+
+        <!-- Body grid 3 colonnes -->
+        <div id="vl-body-grid">
+
+          <!-- SIDEBAR domaines -->
+          <div id="vl-sidebar">
+            <div style="overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--vl-bd) transparent;">
+              <div class="vl-sidebar-section"><div class="vl-sidebar-label">Domaines réglementaires</div></div>
+              <div class="vl-nav active" id="vl-nav-all" onclick="VL.filterFeed('all',this)"><div class="vl-nav-dot" style="background:var(--vl-txd)"></div><span class="vl-nav-label">Tout</span><span class="vl-nav-count" id="vl-count-all">0</span><div class="vl-nav-status idle" id="vl-status-all"></div></div>
+              <div class="vl-nav" id="vl-nav-fire" onclick="VL.filterFeed('fire',this)"><div class="vl-nav-dot" style="background:var(--vl-fire)"></div><span class="vl-nav-label">🔥 Sécurité ERP</span><span class="vl-nav-count" id="vl-count-fire">0</span><div class="vl-nav-status idle" id="vl-status-fire"></div></div>
+              <div class="vl-nav" id="vl-nav-nrj"  onclick="VL.filterFeed('nrj',this)"><div class="vl-nav-dot" style="background:var(--vl-nrj)"></div><span class="vl-nav-label">⚡ Énergie / CEE</span><span class="vl-nav-count" id="vl-count-nrj">0</span><div class="vl-nav-status idle" id="vl-status-nrj"></div></div>
+              <div class="vl-nav" id="vl-nav-acc"  onclick="VL.filterFeed('acc',this)"><div class="vl-nav-dot" style="background:var(--vl-acc)"></div><span class="vl-nav-label">♿ Accessibilité</span><span class="vl-nav-count" id="vl-count-acc">0</span><div class="vl-nav-status idle" id="vl-status-acc"></div></div>
+              <div class="vl-nav" id="vl-nav-eau"  onclick="VL.filterFeed('eau',this)"><div class="vl-nav-dot" style="background:var(--vl-eau)"></div><span class="vl-nav-label">💧 Légionelle / Eau</span><span class="vl-nav-count" id="vl-count-eau">0</span><div class="vl-nav-status idle" id="vl-status-eau"></div></div>
+              <div class="vl-divider" style="margin:4px 10px"></div>
+              <div class="vl-sidebar-label" style="padding:0 10px 3px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--vl-txd);">Bâtiment / Risques</div>
+              <div class="vl-nav" id="vl-nav-ami"  onclick="VL.filterFeed('ami',this)"><div class="vl-nav-dot" style="background:var(--vl-ami)"></div><span class="vl-nav-label">☣ Amiante</span><span class="vl-nav-count" id="vl-count-ami">0</span><div class="vl-nav-status idle" id="vl-status-ami"></div></div>
+              <div class="vl-nav" id="vl-nav-plb"  onclick="VL.filterFeed('plb',this)"><div class="vl-nav-dot" style="background:var(--vl-plb)"></div><span class="vl-nav-label">🪣 Plomb / CREP</span><span class="vl-nav-count" id="vl-count-plb">0</span><div class="vl-nav-status idle" id="vl-status-plb"></div></div>
+              <div class="vl-nav" id="vl-nav-elv"  onclick="VL.filterFeed('elv',this)"><div class="vl-nav-dot" style="background:var(--vl-elv)"></div><span class="vl-nav-label">🔼 Ascenseurs / Équip.</span><span class="vl-nav-count" id="vl-count-elv">0</span><div class="vl-nav-status idle" id="vl-status-elv"></div></div>
+              <div class="vl-nav" id="vl-nav-bru"  onclick="VL.filterFeed('bru',this)"><div class="vl-nav-dot" style="background:var(--vl-bru)"></div><span class="vl-nav-label">🔊 Bruit / Acoustique</span><span class="vl-nav-count" id="vl-count-bru">0</span><div class="vl-nav-status idle" id="vl-status-bru"></div></div>
+              <div class="vl-nav" id="vl-nav-chf"  onclick="VL.filterFeed('chf',this)"><div class="vl-nav-dot" style="background:var(--vl-chf)"></div><span class="vl-nav-label">🔥 Chaufferie / GAZ</span><span class="vl-nav-count" id="vl-count-chf">0</span><div class="vl-nav-status idle" id="vl-status-chf"></div></div>
+              <div class="vl-nav" id="vl-nav-qai"  onclick="VL.filterFeed('qai',this)"><div class="vl-nav-dot" style="background:var(--vl-qai)"></div><span class="vl-nav-label">🌬 Ventilation / QAI</span><span class="vl-nav-count" id="vl-count-qai">0</span><div class="vl-nav-status idle" id="vl-status-qai"></div></div>
+              <div class="vl-nav" id="vl-nav-elec" onclick="VL.filterFeed('elec',this)"><div class="vl-nav-dot" style="background:var(--vl-elec)"></div><span class="vl-nav-label">⚡ Électricité / NFC</span><span class="vl-nav-count" id="vl-count-elec">0</span><div class="vl-nav-status idle" id="vl-status-elec"></div></div>
+              <div class="vl-nav" id="vl-nav-cui"  onclick="VL.filterFeed('cui',this)"><div class="vl-nav-dot" style="background:var(--vl-cui)"></div><span class="vl-nav-label">🍳 Cuisine Professionnelle</span><span class="vl-nav-count" id="vl-count-cui">0</span><div class="vl-nav-status idle" id="vl-status-cui"></div></div>
+              <div class="vl-nav" id="vl-nav-pis"  onclick="VL.filterFeed('pis',this)"><div class="vl-nav-dot" style="background:var(--vl-pis)"></div><span class="vl-nav-label">🏊 Piscine / Baignade</span><span class="vl-nav-count" id="vl-count-pis">0</span><div class="vl-nav-status idle" id="vl-status-pis"></div></div>
+              <div class="vl-nav" id="vl-nav-rad"  onclick="VL.filterFeed('rad',this)"><div class="vl-nav-dot" style="background:var(--vl-rad)"></div><span class="vl-nav-label">☢ Radon</span><span class="vl-nav-count" id="vl-count-rad">0</span><div class="vl-nav-status idle" id="vl-status-rad"></div></div>
+              <div class="vl-nav" id="vl-nav-sec"  onclick="VL.filterFeed('sec',this)"><div class="vl-nav-dot" style="background:var(--vl-sec)"></div><span class="vl-nav-label">🧯 Moyens de secours</span><span class="vl-nav-count" id="vl-count-sec">0</span><div class="vl-nav-status idle" id="vl-status-sec"></div></div>
+              <div class="vl-nav" id="vl-nav-due"  onclick="VL.filterFeed('due',this)"><div class="vl-nav-dot" style="background:var(--vl-due)"></div><span class="vl-nav-label">📋 DUERP / Prévention</span><span class="vl-nav-count" id="vl-count-due">0</span><div class="vl-nav-status idle" id="vl-status-due"></div></div>
+              <div class="vl-nav" id="vl-nav-cvc"  onclick="VL.filterFeed('cvc',this)"><div class="vl-nav-dot" style="background:var(--vl-cvc)"></div><span class="vl-nav-label">🌡 CVC / Chauffage-Ventilation</span><span class="vl-nav-count" id="vl-count-cvc">0</span><div class="vl-nav-status idle" id="vl-status-cvc"></div></div>
+              <div class="vl-nav" id="vl-nav-san"  onclick="VL.filterFeed('san',this)"><div class="vl-nav-dot" style="background:var(--vl-san)"></div><span class="vl-nav-label">🚿 Sanitaires / ECS</span><span class="vl-nav-count" id="vl-count-san">0</span><div class="vl-nav-status idle" id="vl-status-san"></div></div>
+              <div class="vl-nav" id="vl-nav-cui2" onclick="VL.filterFeed('hyg',this)"><div class="vl-nav-dot" style="background:var(--vl-hyg)"></div><span class="vl-nav-label">🦠 Hygiène / HACCP</span><span class="vl-nav-count" id="vl-count-hyg">0</span><div class="vl-nav-status idle" id="vl-status-hyg"></div></div>
+              <div class="vl-nav" id="vl-nav-spo"  onclick="VL.filterFeed('spo',this)"><div class="vl-nav-dot" style="background:var(--vl-spo)"></div><span class="vl-nav-label">🏋 Équipements Sportifs</span><span class="vl-nav-count" id="vl-count-spo">0</span><div class="vl-nav-status idle" id="vl-status-spo"></div></div>
+            </div>
+            <div class="vl-divider"></div>
+            <div class="vl-sidebar-section"><div class="vl-sidebar-label">Assistant IA</div></div>
+            <button class="vl-chat-btn active" onclick="VL.openGlobalChat()">🤖 Chat réglementaire</button>
+            <div style="padding:8px 12px;border-top:1px solid var(--vl-bd);margin-top:auto">
+              <div style="font-family:var(--mono);font-size:8px;color:var(--vl-txd);line-height:1.7">Sources : Legifrance · JO · DHUP<br>ADEME · INRS · ANSES</div>
+            </div>
+          </div>
+
+          <!-- MAIN FEED -->
+          <div id="vl-main-feed" style="display:flex;flex-direction:column;overflow:hidden;background:var(--vl-bg)">
+            <div class="vl-feed-header">
+              <div class="vl-feed-title" id="vl-feed-title" style="--vl-current-color:var(--vl-fire)">Toutes les mises à jour</div>
+              <div class="vl-filters">
+                <button class="vl-chip active" onclick="VL.setUrgencyFilter('all',this)">Tout</button>
+                <button class="vl-chip" onclick="VL.setUrgencyFilter('high',this)">🔴 Urgent</button>
+                <button class="vl-chip" onclick="VL.setUrgencyFilter('med',this)">🟠 Important</button>
+                <button class="vl-chip" onclick="VL.setUrgencyFilter('info',this)">🔵 Info</button>
               </div>
             </div>
-            <div class="card">
-              <div class="card-hdr" style="padding:10px 16px"><span>⚡</span><h3 style="font-size:13px">Accès rapides</h3></div>
-              <div class="card-body" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
-                ${['Commission de sécurité ERP','Légionellose ECS','Ascenseurs quinquennal','SSI vérification annuelle','Désenfumage ERP','Amiante DTA','Électricité Q18','Radon ERP','Défibrillateur DEA','Plan de prévention co-activité'].map(t =>
-                  `<button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="Veille.quickSearch('${t.replace(/'/g,'\x27')}')">${t}</button>`
-                ).join('')}
+            <div class="vl-feed-content" id="vl-feed-content">
+              <div class="vl-empty-state">
+                <div class="vl-empty-icon">📡</div>
+                <div class="vl-empty-title">Lance un scan pour récupérer<br>les dernières actualités réglementaires.<br><br>L'IA va chercher les nouveautés sur<br>Legifrance · JO · DHUP · ADEME · ANSES…</div>
+                <button class="vl-scan-btn" onclick="VL.scanAll()">⟳ Lancer le premier scan</button>
               </div>
             </div>
           </div>
-          <!-- Colonne droite : chatbot veille -->
-          <div>
-            <div class="card">
-              <div class="card-hdr" style="padding:10px 16px">
-                <span>🤖</span><h3 style="font-size:13px">Assistant Réglementaire IA</h3>
-                <div style="font-size:10px;color:var(--muted);margin-left:6px">Spécialisé ERP · Hôtellerie · Sport</div>
-                <div class="ml"><button class="btn btn-ghost btn-sm" onclick="Veille.clearHistory()">🗑</button></div>
-              </div>
-              <div class="chat-wrap">
-                <div class="chat-messages" id="chat-messages">
-                  <div class="chat-msg assistant">Bonjour ! Je suis ton assistant réglementaire spécialisé ERP pour les centres UCPA.<br><br>Tu peux me poser des questions sur :<br>• Les obligations de sécurité incendie<br>• Les contrôles périodiques réglementaires<br>• La réglementation sanitaire et légionellose<br>• Les commissions de sécurité<br>• Les normes PMR et accessibilité<br>• Et tout autre sujet réglementaire ERP 🏢</div>
-                </div>
-                <div id="chat-thinking" class="chat-thinking" style="display:none">
-                  <span></span><span></span><span></span>
-                  <span style="font-size:11px;color:var(--muted);margin-left:6px">L'assistant réfléchit…</span>
-                </div>
-                <div class="chat-input-row">
-                  <input type="text" id="chat-input" placeholder="Pose ta question réglementaire…"
-                    onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();Veille.sendMessage();}">
-                  <button class="btn btn-primary btn-sm" onclick="Veille.sendMessage()">Envoyer</button>
-                </div>
-              </div>
+
+          <!-- DETAIL PANEL -->
+          <div id="vl-detail-panel">
+            <div class="vl-empty-detail" id="vl-empty-detail">
+              <div class="vl-empty-detail-icon">←</div>
+              <div class="vl-empty-detail-text">Clique sur une mise à jour<br>pour voir le détail et poser<br>des questions à l'IA</div>
             </div>
+            <div id="vl-detail-content" style="display:none;flex-direction:column;height:100%"></div>
           </div>
+
         </div>
       </div>
 
@@ -10069,6 +10299,7 @@ const REGIONS = {
       "VILLAGE SPORTIF EMBRUN CCAS",
       "VILLAGE SPORTIF EMBRUN LA CLAPIERE",
       "STATION DE SKI LES 2 ALPES",
+      "SKI LES 2 ALPES GENEPI",
       "SAINT SORLIN D'ARVES",
       "VALMEINIER"
     ]
@@ -14671,6 +14902,428 @@ const Veille = {
 };
 
 // Charger l'historique quand on arrive sur la page veille
+// ══════════════════════════════════════════════════════════════
+// MODULE VEILLE RÉGLEMENTAIRE v3 — moteur complet
+// ══════════════════════════════════════════════════════════════
+const VL = {
+
+  // ── État ──
+  updates: [],
+  filter: { domain: 'all', urgency: 'all' },
+  selectedId: null,
+  chatHistory: [],
+  itemChats: {},
+  checkedActions: {},
+  scanning: false,
+
+  // ── Domaines ──
+  DOMAINS: {
+    fire:{ label:'🔥 Sécurité ERP',           cls:'vld-fire', color:'var(--vl-fire)', short:'ERP' },
+    nrj: { label:'⚡ Énergie / CEE',           cls:'vld-nrj',  color:'var(--vl-nrj)',  short:'NRJ' },
+    acc: { label:'♿ Accessibilité PMR',        cls:'vld-acc',  color:'var(--vl-acc)',  short:'ACC' },
+    eau: { label:'💧 Légionelle / Eau',         cls:'vld-eau',  color:'var(--vl-eau)',  short:'EAU' },
+    ami: { label:'☣ Amiante',                  cls:'vld-ami',  color:'var(--vl-ami)',  short:'AMI' },
+    plb: { label:'🪣 Plomb / CREP',             cls:'vld-plb',  color:'var(--vl-plb)',  short:'PLB' },
+    elv: { label:'🔼 Ascenseurs / Équip.',      cls:'vld-elv',  color:'var(--vl-elv)',  short:'ELV' },
+    bru: { label:'🔊 Bruit / Acoustique',       cls:'vld-bru',  color:'var(--vl-bru)',  short:'BRU' },
+    chf: { label:'🔥 Chaufferie / GAZ',         cls:'vld-chf',  color:'var(--vl-chf)',  short:'CHF' },
+    qai: { label:'🌬 Ventilation / QAI',        cls:'vld-qai',  color:'var(--vl-qai)',  short:'VNT' },
+    elec:{ label:'⚡ Électricité / NFC',        cls:'vld-elec', color:'var(--vl-elec)', short:'ELC' },
+    cui: { label:'🍳 Cuisine Professionnelle',  cls:'vld-cui',  color:'var(--vl-cui)',  short:'CUI' },
+    pis: { label:'🏊 Piscine / Baignade',       cls:'vld-pis',  color:'var(--vl-pis)',  short:'PIS' },
+    rad: { label:'☢ Radon',                    cls:'vld-rad',  color:'var(--vl-rad)',  short:'RAD' },
+    sec: { label:'🧯 Moyens de secours',        cls:'vld-sec',  color:'var(--vl-sec)',  short:'SEC' },
+    due: { label:'📋 DUERP / Prévention',       cls:'vld-due',  color:'var(--vl-due)',  short:'DUE' },
+    cvc: { label:'🌡 CVC / Chauffage-Ventilation', cls:'vld-cvc',color:'var(--vl-cvc)',short:'CVC' },
+    san: { label:'🚿 Sanitaires / ECS',         cls:'vld-san',  color:'var(--vl-san)',  short:'SAN' },
+    hyg: { label:'🦠 Hygiène / HACCP',          cls:'vld-hyg',  color:'var(--vl-hyg)',  short:'HYG' },
+    spo: { label:'🏋 Équipements Sportifs',      cls:'vld-spo',  color:'var(--vl-spo)',  short:'SPO' },
+  },
+
+  // ── Prompts scan ──
+  SCAN_PROMPTS: {
+    fire:`Tu es un expert en réglementation sécurité incendie ERP en France. Recherche les actualités réglementaires récentes (2024-2026) : modifications arrêtés ERP, nouvelles circulaires DHUP/DGSCGC, évolutions SSI/BAES/désenfumage. Sources : sitesecurite.com, legifrance.gouv.fr. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "...", "resume": "...", "urgence": "high|med|low|info", "source": "...", "url": "...", "date": "...", "tags": [], "actions": [], "detail": "..." } ] }. Trouve 3-4 actualités.`,
+    nrj: `Tu es un expert en réglementation énergétique du bâtiment en France. Recherche les actualités récentes (2024-2026) : décret tertiaire/OPERAT, fiches CEE, décret BACS, DPE. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 3-4 actualités.`,
+    acc: `Tu es un expert accessibilité PMR pour les ERP en France. Recherche les actualités récentes (2024-2026) : modifications réglementation ERP, normes Cerema/DHUP, Ad'AP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    eau: `Tu es un expert prévention légionelle et qualité eau sanitaire ERP. Recherche les actualités récentes (2024-2026) : évolutions réglementation légionelle ECS/TAR, circulaires DGS, avis ANSES. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    ami: `Tu es un expert réglementation amiante bâtiments ERP. Recherche les actualités récentes (2024-2026) : DTA, SS4, désamiantage, DGT/INRS/OPPBTP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    plb: `Tu es un expert réglementation plomb bâtiments ERP. Recherche les actualités récentes (2024-2026) : CREP, seuils réglementaires, ERP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités.`,
+    elv: `Tu es un expert réglementation ascenseurs et équipements sous pression ERP. Recherche les actualités récentes (2024-2026) : contrôles quinquennaux, décret ascenseurs, chaudières. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités.`,
+    bru: `Tu es un expert réglementation acoustique ERP. Recherche les actualités récentes (2024-2026) : ERP sportifs, piscines, bruit voisinage. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités.`,
+    chf: `Tu es un expert chaufferie gaz ERP. Recherche les actualités récentes (2024-2026) : entretien chaudières, gaz intérieur, CO, conduits fumée. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    qai: `Tu es un expert QAI ventilation ERP. Recherche les actualités récentes (2024-2026) : décrets QAI 2023-2025, autodiagnostic, VMC, CTA. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    elec:`Tu es un expert installations électriques ERP. Recherche les actualités récentes (2024-2026) : NF C 15-100, TGBT, IRVE, éclairage sécurité. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    cui: `Tu es un expert cuisines professionnelles ERP. Recherche les actualités récentes (2024-2026) : hottes, HACCP, gaz cuisine, déchets. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    pis: `Tu es un expert piscines et baignade ERP. Recherche les actualités récentes (2024-2026) : qualité eau, légionelle piscine, anti-noyade. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    rad: `Tu es un expert radon ERP. Recherche les actualités récentes (2024-2026) : seuils 300 Bq/m³, zones 3 (Alpes, Massif Central, Bretagne), IRSN. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités — important pour centres de montagne.`,
+    sec: `Tu es un expert moyens de secours ERP. Recherche les actualités récentes (2024-2026) : extincteurs, RIA, DAE, colonnes sèches, APSAD. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    due: `Tu es un expert DUERP et prévention risques ERP. Recherche les actualités récentes (2024-2026) : loi 2021, mise à jour annuelle, C2P, plan prévention. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    cvc: `Tu es un expert CVC ERP. Recherche les actualités récentes (2024-2026) : PAC, climatiseurs, TAR, désenfumage, filtration air. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    san: `Tu es un expert réseaux sanitaires ECS ERP. Recherche les actualités récentes (2024-2026) : arrêté 01/02/2010, carnet sanitaire, PGSSE, NF DTU 60.1. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    hyg: `Tu es un expert HACCP restauration collective. Recherche les actualités récentes (2024-2026) : règlement CE 852/2004, chaîne du froid, contrôles DDPP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    spo: `Tu es un expert équipements sportifs ERP. Recherche les actualités récentes (2024-2026) : fitness EN 957, SAE NF P 90-312, remontées mécaniques STRMTG, piscines PLG. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+  },
+
+  // ── Getters clé API ──
+  _apiKey() {
+    return window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+  },
+
+  // ── Scan ──
+  async scanAll() {
+    if (this.scanning) return;
+    this.scanning = true;
+    const btn = document.getElementById('vl-scan-all-btn');
+    const icon = document.getElementById('vl-scan-icon');
+    if (btn) btn.disabled = true;
+    if (icon) icon.classList.add('spinning');
+
+    const domains = Object.keys(this.SCAN_PROMPTS);
+    const steps = domains.map(d => ({ id:'vl-step-'+d, label: this.DOMAINS[d]?.label || d }));
+
+    // Afficher scanning state
+    const feedContent = document.getElementById('vl-feed-content');
+    if (feedContent) {
+      feedContent.innerHTML = `
+        <div class="vl-scanning-state">
+          <div style="font-family:var(--mono);font-size:11px;color:var(--vl-ai);margin-bottom:12px">⟳ Scan en cours…</div>
+          <div style="width:240px;margin-bottom:12px">
+            <div class="vl-scan-bar"><div class="vl-scan-fill" id="vl-scan-fill" style="width:0%"></div></div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--vl-txd);text-align:center" id="vl-scan-pct">0 / ${domains.length}</div>
+          </div>
+          <div class="vl-scan-steps">
+            ${steps.map(s=>`<div class="vl-scan-step" id="${s.id}"><span>○</span> ${s.label}</div>`).join('')}
+          </div>
+        </div>`;
+    }
+
+    for (let i = 0; i < domains.length; i++) {
+      const domain = domains[i];
+      const stepEl = document.getElementById('vl-step-' + domain);
+      const statusEl = document.getElementById('vl-status-' + domain);
+      if (stepEl) { stepEl.classList.remove('done'); stepEl.classList.add('current'); stepEl.querySelector('span').textContent='●'; }
+      if (statusEl) statusEl.className = 'vl-nav-status scanning';
+
+      const fillEl = document.getElementById('vl-scan-fill');
+      const pctEl  = document.getElementById('vl-scan-pct');
+      if (fillEl) fillEl.style.width = ((i / domains.length) * 100) + '%';
+      if (pctEl)  pctEl.textContent  = `${i} / ${domains.length}`;
+
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'x-api-key':this._apiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:1200,
+            tools:[{ type:'web_search_20250305', name:'web_search' }],
+            messages:[{ role:'user', content: this.SCAN_PROMPTS[domain] }]
+          })
+        });
+        const data = await response.json();
+        const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+        const jsonMatch = text.match(/\{[\s\S]*"updates"[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          (parsed.updates||[]).forEach(u => {
+            this.updates.push({ id:'vl-'+Date.now()+'-'+Math.random().toString(36).slice(2), domain, isNew:true, ...u });
+          });
+        }
+        if (stepEl) { stepEl.classList.remove('current'); stepEl.classList.add('done'); stepEl.querySelector('span').textContent='✓'; }
+        if (statusEl) statusEl.className = 'vl-nav-status ok';
+      } catch(e) {
+        if (stepEl) { stepEl.classList.remove('current'); stepEl.querySelector('span').textContent='✗'; }
+        if (statusEl) statusEl.className = 'vl-nav-status idle';
+      }
+
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    this.scanning = false;
+    if (btn) btn.disabled = false;
+    if (icon) icon.classList.remove('spinning');
+    const now = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+    const lastScan = document.getElementById('vl-last-scan-info');
+    if (lastScan) lastScan.textContent = 'Dernier scan : ' + now;
+
+    this.updateCounts();
+    this.renderFeed();
+  },
+
+  updateCounts() {
+    const allDomains = Object.keys(this.DOMAINS);
+    const total = document.getElementById('vl-count-all');
+    if (total) total.textContent = this.updates.length;
+    allDomains.forEach(d => {
+      const el = document.getElementById('vl-count-' + d);
+      if (el) el.textContent = this.updates.filter(u=>u.domain===d).length;
+    });
+  },
+
+  // ── Filtres ──
+  filterFeed(domain, el) {
+    this.filter.domain = domain;
+    this.selectedId = null;
+    document.querySelectorAll('.vl-nav').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const TITLES = { all:'Toutes les mises à jour', fire:'Sécurité incendie ERP', nrj:'Énergie / CEE', acc:'Accessibilité PMR', eau:'Légionelle / Eau', ami:'Amiante', plb:'Plomb / CREP', elv:'Ascenseurs & Équipements', bru:'Bruit / Acoustique', chf:'Chaufferie / GAZ', qai:'Ventilation / QAI', elec:'Électricité / NFC', cui:'Cuisine Pro', pis:'Piscine / Baignade', rad:'Radon', sec:'Moyens de secours', due:'DUERP / Prévention', cvc:'CVC', san:'Sanitaires / ECS', hyg:'Hygiène / HACCP', spo:'Équipements Sportifs' };
+    const ft = document.getElementById('vl-feed-title');
+    if (ft) { ft.textContent = TITLES[domain]||domain; ft.style.setProperty('--vl-current-color', this.DOMAINS[domain]?.color||'var(--vl-fire)'); }
+    const emptyD = document.getElementById('vl-empty-detail');
+    const detailC = document.getElementById('vl-detail-content');
+    if (emptyD) emptyD.style.display='flex';
+    if (detailC) detailC.style.display='none';
+    this.renderFeed();
+  },
+
+  setUrgencyFilter(urgency, el) {
+    this.filter.urgency = urgency;
+    document.querySelectorAll('.vl-chip').forEach(c=>c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    this.renderFeed();
+  },
+
+  renderFeed() {
+    const fc = document.getElementById('vl-feed-content');
+    if (!fc) return;
+    let filtered = this.updates;
+    if (this.filter.domain !== 'all') filtered = filtered.filter(u=>u.domain===this.filter.domain);
+    if (this.filter.urgency !== 'all') filtered = filtered.filter(u=>u.urgence===this.filter.urgency);
+    if (filtered.length === 0) {
+      fc.innerHTML = `<div class="vl-empty-state"><div class="vl-empty-icon">📡</div><div class="vl-empty-title">${this.updates.length===0?'Lance un scan pour récupérer<br>les dernières actualités réglementaires.':'Aucune actualité pour ce filtre.'}</div>${this.updates.length===0?'<button class="vl-scan-btn" onclick="VL.scanAll()">⟳ Lancer le scan</button>':''}</div>`;
+      return;
+    }
+    fc.innerHTML = filtered.map(u => {
+      const d = this.DOMAINS[u.domain] || { cls:'', color:'', short:u.domain };
+      return `<div class="vl-card ${this.selectedId===u.id?'selected':''}" onclick="VL.selectUpdate('${u.id}')" style="--vl-current-color:${d.color}">
+        <div class="vl-card-top">
+          <span class="vl-domain-tag ${d.cls}">${d.short}</span>
+          <span class="vl-urgency ${this._urgCls(u.urgence)}">${this._urgLabel(u.urgence)}</span>
+          ${u.isNew?'<span class="vl-card-new">NOUVEAU</span>':''}
+          <span class="vl-card-date">${u.date||''}</span>
+        </div>
+        <div class="vl-card-title">${u.titre||''}</div>
+        <div class="vl-card-summary">${(u.resume||'').substring(0,140)}…</div>
+        <div class="vl-card-footer"><span class="vl-card-src">📄 ${u.source||''}</span></div>
+      </div>`;
+    }).join('');
+  },
+
+  // ── Détail ──
+  selectUpdate(id) {
+    this.selectedId = id;
+    const u = this.updates.find(x=>x.id===id);
+    if (!u) return;
+    u.isNew = false;
+    this.renderFeed();
+    const d = this.DOMAINS[u.domain] || { cls:'', short:u.domain };
+    if (!this.itemChats[id]) this.itemChats[id] = [];
+    if (!this.checkedActions[id]) this.checkedActions[id] = {};
+    const emptyD = document.getElementById('vl-empty-detail');
+    const dc = document.getElementById('vl-detail-content');
+    if (emptyD) emptyD.style.display='none';
+    if (!dc) return;
+    dc.style.display='flex';
+    dc.innerHTML = `
+      <div class="vl-detail-header">
+        <div class="vl-detail-header-top">
+          <span class="vl-domain-tag ${d.cls}">${d.short}</span>
+          <span class="vl-urgency ${this._urgCls(u.urgence)}">${this._urgLabel(u.urgence)}</span>
+        </div>
+        <div class="vl-detail-title">${u.titre||''}</div>
+        <div class="vl-detail-meta">${u.source||''} — ${u.date||''}</div>
+      </div>
+      <div class="vl-detail-tabs">
+        <button class="vl-detail-tab active" onclick="VL.showTab('info','${id}',this)">📋 Infos</button>
+        <button class="vl-detail-tab" onclick="VL.showTab('actions','${id}',this)">✅ Actions</button>
+        <button class="vl-detail-tab" onclick="VL.showTab('chat','${id}',this)">🤖 IA</button>
+      </div>
+      <div id="vl-detail-body-${id}" class="vl-detail-body">${this._renderInfo(u)}</div>`;
+  },
+
+  showTab(tab, id, btn) {
+    btn.closest('.vl-detail-tabs').querySelectorAll('.vl-detail-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const u = this.updates.find(x=>x.id===id);
+    if (!u) return;
+    const body = document.getElementById('vl-detail-body-'+id);
+    if (!body) return;
+    if (tab==='info')    body.innerHTML = this._renderInfo(u);
+    if (tab==='actions') body.innerHTML = this._renderActions(u);
+    if (tab==='chat')    body.innerHTML = this._renderChat(u);
+  },
+
+  _renderInfo(u) {
+    const urlHtml = u.url && u.url !== '#' && u.url !== 'null'
+      ? `<a class="vl-source-ref" href="${u.url}" target="_blank"><span class="vl-source-ref-name">🔗 ${u.source}</span><span class="vl-source-ref-url">Ouvrir →</span></a>`
+      : `<div class="vl-source-ref"><span class="vl-source-ref-name">📄 ${u.source}</span></div>`;
+    return `
+      <div class="vl-detail-section"><div class="vl-detail-section-title">Résumé</div><div class="vl-detail-text">${u.resume||''}</div></div>
+      <div class="vl-detail-section"><div class="vl-detail-section-title">Détail réglementaire</div><div class="vl-detail-text">${this._fmt(u.detail||'')}</div></div>
+      <div class="vl-detail-section"><div class="vl-detail-section-title">Source</div>${urlHtml}</div>`;
+  },
+
+  _renderActions(u) {
+    const actions = u.actions || [];
+    const checked = this.checkedActions[u.id] || {};
+    return `<div class="vl-detail-section">
+      <div class="vl-detail-section-title">Actions à mener</div>
+      ${actions.map((a,i)=>`
+        <div class="vl-action-item">
+          <div class="vl-action-check ${checked[i]?'checked':''}" onclick="VL.toggleAction('${u.id}',${i},this)">${checked[i]?'✓':''}</div>
+          <span class="vl-action-text ${checked[i]?'done':''}" id="vl-at-${u.id}-${i}">${a}</span>
+        </div>`).join('')}
+      ${actions.length===0?'<div class="vl-detail-text" style="color:var(--vl-txd)">Aucune action spécifique identifiée.</div>':''}
+    </div>`;
+  },
+
+  _renderChat(u) {
+    const history = this.itemChats[u.id] || [];
+    return `<div class="vl-chat-area" style="height:100%;display:flex;flex-direction:column;margin:-14px">
+      <div class="vl-chat-messages" id="vl-chat-msgs-${u.id}">
+        <div class="vl-chat-msg ai"><div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble">Pose-moi des questions sur <strong>${u.titre}</strong>. Je peux t'aider à comprendre les impacts pour tes centres UCPA.</div></div>
+        ${history.map(m=>`<div class="vl-chat-msg ${m.role}"><div class="vl-chat-av ${m.role}">${m.role==='ai'?'IA':'MOI'}</div><div class="vl-chat-bubble">${m.role==='ai'?this._fmt(m.content):this._esc(m.content)}</div></div>`).join('')}
+      </div>
+      <div class="vl-chat-input-area">
+        <textarea class="vl-chat-input" id="vl-ci-${u.id}" placeholder="Ex: Quelles sont mes obligations concrètes ?" onkeydown="VL.handleItemKey(event,'${u.id}')" rows="1" oninput="VL.autoResize(this)"></textarea>
+        <button class="vl-chat-send" id="vl-cs-${u.id}" onclick="VL.sendItemChat('${u.id}')">▶</button>
+      </div>
+    </div>`;
+  },
+
+  toggleAction(updateId, i, el) {
+    if (!this.checkedActions[updateId]) this.checkedActions[updateId] = {};
+    this.checkedActions[updateId][i] = !this.checkedActions[updateId][i];
+    const checked = this.checkedActions[updateId][i];
+    el.classList.toggle('checked', checked);
+    el.textContent = checked ? '✓' : '';
+    const t = document.getElementById(`vl-at-${updateId}-${i}`);
+    if (t) t.className = `vl-action-text ${checked?'done':''}`;
+  },
+
+  // ── Chat par item ──
+  async sendItemChat(updateId) {
+    const inp = document.getElementById('vl-ci-'+updateId);
+    const btn = document.getElementById('vl-cs-'+updateId);
+    const msgs = document.getElementById('vl-chat-msgs-'+updateId);
+    const text = (inp?.value||'').trim();
+    if (!text || !msgs) return;
+    msgs.innerHTML += `<div class="vl-chat-msg user"><div class="vl-chat-av user">MOI</div><div class="vl-chat-bubble">${this._esc(text)}</div></div>`;
+    inp.value = ''; inp.style.height = 'auto';
+    if (btn) btn.disabled = true;
+    const lid = 'vll-'+Date.now();
+    msgs.innerHTML += `<div class="vl-chat-msg ai" id="${lid}"><div class="vl-chat-av ai">IA</div><div class="vl-typing"><span></span><span></span><span></span></div></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+    if (!this.itemChats[updateId]) this.itemChats[updateId] = [];
+    const u = this.updates.find(x=>x.id===updateId);
+    this.itemChats[updateId].push({ role:'user', content:text });
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-api-key':this._apiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:900,
+          system:`Tu es un expert en réglementation technique du bâtiment en France. L'utilisateur consulte : [${this.DOMAINS[u?.domain]?.label}] ${u?.titre}. Résumé : ${u?.resume}. Détail : ${u?.detail}. L'utilisateur est Responsable technique d'un établissement UCPA (ERP type O, N, R). Réponds directement, structuré, avec références précises.`,
+          messages: this.itemChats[updateId].map(m=>({ role:m.role==='ai'?'assistant':'user', content:m.content }))
+        })
+      });
+      const data = await resp.json();
+      const reply = data.content?.[0]?.text || 'Pas de réponse.';
+      this.itemChats[updateId].push({ role:'ai', content:reply });
+      const el = document.getElementById(lid);
+      if (el) el.innerHTML = `<div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble">${this._fmt(reply)}</div>`;
+    } catch(e) {
+      const el = document.getElementById(lid);
+      if (el) el.innerHTML = `<div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble" style="color:var(--vl-fire)">⚠️ Erreur de connexion.</div>`;
+    }
+    if (btn) btn.disabled = false;
+    msgs.scrollTop = msgs.scrollHeight;
+  },
+
+  handleItemKey(e, id) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); this.sendItemChat(id); } },
+
+  // ── Chat global ──
+  openGlobalChat() {
+    this.selectedId = null;
+    const emptyD = document.getElementById('vl-empty-detail');
+    const dc = document.getElementById('vl-detail-content');
+    if (emptyD) emptyD.style.display='none';
+    if (!dc) return;
+    dc.style.display='flex';
+    dc.innerHTML = `
+      <div class="vl-detail-header">
+        <div class="vl-detail-header-top">
+          <span class="vl-domain-tag" style="background:rgba(251,191,36,.1);color:var(--vl-ai);border:1px solid rgba(251,191,36,.3)">IA</span>
+          <span class="vl-domain-tag" style="background:rgba(255,255,255,.04);color:var(--vl-txd);border:1px solid var(--vl-bd)">Tous domaines</span>
+        </div>
+        <div class="vl-detail-title">Assistant réglementaire global</div>
+        <div class="vl-detail-meta">ERP · Incendie · Énergie · PMR · Légionelle · et tous domaines</div>
+      </div>
+      <div class="vl-chat-area" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="vl-chat-messages" id="vl-global-msgs">
+          <div class="vl-chat-msg ai"><div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble">
+            <h4>Assistant réglementaire — Responsable Technique UCPA</h4>
+            Pose-moi une question ou colle un texte à analyser.<br><br>
+            Je couvre : <strong>ERP / incendie, CEE / énergie, accessibilité PMR, légionelle, amiante, cuisine, piscines, radon…</strong>
+          </div></div>
+        </div>
+        <div class="vl-chat-input-area">
+          <textarea class="vl-chat-input" id="vl-global-input" placeholder="Question ou texte à analyser…" onkeydown="VL.handleGlobalKey(event)" rows="2" oninput="VL.autoResize(this)"></textarea>
+          <button class="vl-chat-send" id="vl-global-send" onclick="VL.sendGlobalChat()">▶</button>
+        </div>
+      </div>`;
+  },
+
+  async sendGlobalChat() {
+    const inp = document.getElementById('vl-global-input');
+    const btn = document.getElementById('vl-global-send');
+    const msgs = document.getElementById('vl-global-msgs');
+    const text = (inp?.value||'').trim();
+    if (!text) return;
+    msgs.innerHTML += `<div class="vl-chat-msg user"><div class="vl-chat-av user">MOI</div><div class="vl-chat-bubble">${this._esc(text)}</div></div>`;
+    inp.value = ''; inp.style.height = 'auto';
+    if (btn) btn.disabled = true;
+    const lid = 'vlg-'+Date.now();
+    msgs.innerHTML += `<div class="vl-chat-msg ai" id="${lid}"><div class="vl-chat-av ai">IA</div><div class="vl-typing"><span></span><span></span><span></span></div></div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+    this.chatHistory.push({ role:'user', content:text });
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-api-key':this._apiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:1000,
+          system:`Tu es un expert en réglementation technique du bâtiment en France, spécialisé dans les ERP sportifs (types O, N, R) comme les centres UCPA. Tu maîtrises : sécurité incendie (arrêté 25/06/1980), énergie/décret tertiaire, accessibilité PMR, légionelle/ECS, amiante, cuisine professionnelle, piscines, radon, DUERP, chaufferie, électricité. L'utilisateur est Responsable technique d'un établissement UCPA en montagne. Réponds directement, structuré, avec références précises.`,
+          messages: this.chatHistory
+        })
+      });
+      const data = await resp.json();
+      const reply = data.content?.[0]?.text || 'Pas de réponse.';
+      this.chatHistory.push({ role:'assistant', content:reply });
+      const el = document.getElementById(lid);
+      if (el) el.innerHTML = `<div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble">${this._fmt(reply)}</div>`;
+    } catch(e) {
+      const el = document.getElementById(lid);
+      if (el) el.innerHTML = `<div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble" style="color:var(--vl-fire)">⚠️ Erreur de connexion.</div>`;
+      this.chatHistory.pop();
+    }
+    if (btn) btn.disabled = false;
+    msgs.scrollTop = msgs.scrollHeight;
+  },
+
+  handleGlobalKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); this.sendGlobalChat(); } },
+
+  // ── Utils ──
+  _urgCls(u)   { return ({high:'vl-urg-high',med:'vl-urg-med',low:'vl-urg-low',info:'vl-urg-info'})[u]||'vl-urg-info'; },
+  _urgLabel(u) { return ({high:'🔴 Urgent',med:'🟠 Important',low:'🟢 Info',info:'🔵 Nouveauté'})[u]||'Info'; },
+  _fmt(t) {
+    return (t||'').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/^#{1,3} (.+)$/gm,'<h4>$1</h4>').replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g,m=>`<ul>${m}</ul>`).replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  },
+  _esc(t) { return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
+  autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; },
+};
+
 document.addEventListener('ucpa-session-started', () => {
   setTimeout(() => Veille._loadHistory(), 500);
   setTimeout(() => DashIA._init(), 600);
@@ -15521,8 +16174,8 @@ document.addEventListener('ucpa-session-started', requestNotifPermission);
 <script>
 /* MODULE IMPORT DONNEES ALPES SUD — 9 CENTRES | 11/03/2026 */
 const UCPAImport = {
-  PATCH: {"STATION DE SKI VALLOIRE": {"3.1": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Desautel", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Sr Dauphin\u00e9", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-01-26", "prochainControle": "2027-01-26", "organisme": "Desautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphin\u00e9", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-11-12", "prochainControle": "2028-11-11", "organisme": "Bureau Veritas", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphin\u00e9", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphin\u00e9", "observations": "D\u00e9senfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-08", "prochainControle": "2026-09-08", "organisme": "Bureau Veritas", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-01-12", "prochainControle": "2027-01-12", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Schindler", "observations": "Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2022-11-29", "prochainControle": "2027-11-28", "organisme": "Bureau Veritas", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-09-22", "prochainControle": "2026-09-22", "organisme": "Reccord", "observations": "Portes auto - Contrat", "resultat": "Favorable"}, "6.4": {"dateRealisation": "2025-03-19", "prochainControle": "2026-03-19", "organisme": "Bureau Veritas", "observations": "Compacteurs - Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Idex", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-07-23", "prochainControle": "2026-07-23", "organisme": "Idex", "observations": "Ramonage - Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "Savec", "observations": "Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-04-24", "prochainControle": "2026-04-24", "organisme": "Asepti Air", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-11-23", "prochainControle": "2026-11-23", "organisme": "Eurofin", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-04-22", "prochainControle": "2026-04-22", "organisme": "SAS Savoie Vidange", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL CENIS": {"3.1": {"dateRealisation": "2024-01-19", "prochainControle": "2024-12-12", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-02-22", "prochainControle": "2025-02-21", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-11-07", "prochainControle": "2025-11-07", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-10-13", "prochainControle": "2025-10-12", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "UCPA", "observations": "D\u00e9senfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2023-03-29", "prochainControle": "2024-03-28", "organisme": "SOCOTEC", "observations": "Q19 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-10-16", "prochainControle": "2025-10-16", "organisme": "SOCOTEC", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-05-07", "prochainControle": "2025-05-07", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-28", "prochainControle": "2025-11-28", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-04", "prochainControle": "2025-09-04", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-07-25", "prochainControle": "2025-07-25", "organisme": "", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL THORENS": {"3.1": {"dateRealisation": "2025-12-08", "prochainControle": "", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-11-24", "prochainControle": "", "organisme": "UCPA", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-10-31", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2024-11-12", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-10-09", "prochainControle": "", "organisme": "CHRONOFEU", "observations": "Colonne seche PEI", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-03", "prochainControle": "", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-12-10", "prochainControle": "", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-02-11", "prochainControle": "", "organisme": "OTIS", "observations": "4 ascenseurs - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2023-11-09", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Quinquennal 4 cabines - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-12-02", "prochainControle": "", "organisme": "PORTALP", "observations": "4 portes/barrieres - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-18", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-06", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-10-14", "prochainControle": "", "organisme": "E2S (Ramonage Service)", "observations": "Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-29", "prochainControle": "", "organisme": "SAVEC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-07-03", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "12": {"dateRealisation": "2025-03-31", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": "Favorable"}}, "STATION DE SKI SERRE CHEVALIER": {"3.1": {"dateRealisation": "2025-06-03", "prochainControle": "2025-12-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-06-06", "prochainControle": "2025-12-05", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESSAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-12-08", "prochainControle": "2026-06-08", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-12-09", "prochainControle": "2028-12-08", "organisme": "BUREAU VERITAS", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESAUTEL", "observations": "Borne incendie - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-12-08", "prochainControle": "2026-12-08", "organisme": "DESSAUD", "observations": "Desenfumage mecanique - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-11", "prochainControle": "2026-09-11", "organisme": "BUREAU VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-04", "prochainControle": "2027-03-04", "organisme": "BUREAU VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-02-25", "prochainControle": "2026-03-27", "organisme": "UCPA", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-10-07", "prochainControle": "2025-11-21", "organisme": "PERDIGON", "observations": "Ascenseur - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-04-08", "prochainControle": "2025-10-07", "organisme": "PERDIGON", "observations": "Barriere - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-07-15", "prochainControle": "2026-07-15", "organisme": "SOCOTEC/BV", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-13", "prochainControle": "2026-06-13", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-02", "prochainControle": "2026-10-02", "organisme": "ALTECC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-06-10", "prochainControle": "2026-06-10", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "8.1": {"dateRealisation": "2023-09-15", "prochainControle": "2023-09-15", "organisme": "NEPSEN", "observations": "Performance energetique", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-01", "prochainControle": "2026-10-01", "organisme": "ALTECC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.2": {"dateRealisation": "2025-09-04", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "Nettoyage reseaux", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-02", "prochainControle": "2026-12-02", "organisme": "EUROFINS", "observations": "Contrat", "resultat": "Favorable"}, "15.2": {"dateRealisation": "2026-02-11", "prochainControle": "2027-02-11", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-08-01", "prochainControle": "2026-01-30", "organisme": "ORTEC", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI PRALOGNAN": {"3.1": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-11-08", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-03-31", "prochainControle": "", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2024-06-17", "prochainControle": "", "organisme": "OTIS", "observations": "Ascenseur + Quinquennal SOCOTEC Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "ceyo", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-08-02", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "12": {"dateRealisation": "", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": ""}, "13": {"dateRealisation": "2024-04-03", "prochainControle": "", "organisme": "", "observations": "Radon", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "EUROFINS", "observations": "Contrat", "resultat": ""}, "15.2": {"dateRealisation": "2021-12-04", "prochainControle": "", "organisme": "E2S", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "16": {"dateRealisation": "2022-07-05", "prochainControle": "", "organisme": "GES", "observations": "A renouveler", "resultat": "Favorable"}, "17": {"dateRealisation": "2023-04-18", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz - Contrat", "resultat": "Favorable"}}, "STATION DE SKI LES ORRES": {"3.1": {"dateRealisation": "2024-12-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "DESSAUD", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-07-17", "prochainControle": "2026-07-17", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-09", "prochainControle": "2026-06-08", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-06-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "RIA - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2024-07-02", "prochainControle": "2025-07-02", "organisme": "Dessautel", "observations": "Rideau d eau", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-06-27", "prochainControle": "2025-06-27", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2024-06-27", "prochainControle": "2024-06-27", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-05-30", "prochainControle": "2025-05-30", "organisme": "dessaud", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2024-12-07", "prochainControle": "2025-06-07", "organisme": "PARDIGON", "observations": "", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "SOCOTEC", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-11-12", "prochainControle": "2025-11-12", "organisme": "alltec", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-10-03", "prochainControle": "2025-10-03", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-09-19", "prochainControle": "2025-09-19", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "17": {"dateRealisation": "2021-05-11", "prochainControle": "2025-05-10", "organisme": "antargaz", "observations": "A renouveler", "resultat": "Favorable"}}, "VILLAGE SPORTIF LE VERDON": {"3.1": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-04-19", "prochainControle": "2025-04-19", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-08-20", "prochainControle": "2025-08-20", "organisme": "DESAUTEL", "observations": "SSI", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-16", "prochainControle": "2026-06-15", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-08-22", "prochainControle": "2025-08-22", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-04-15", "prochainControle": "2025-04-15", "organisme": "", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-17", "prochainControle": "2025-09-17", "organisme": "BRP", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2021-11-01", "prochainControle": "2022-11-01", "organisme": "EUROFINS", "observations": "Contrat - A renouveler urgence", "resultat": "Favorable"}}, "VALMEINIER": {"3.1": {"dateRealisation": "2022-12-16", "prochainControle": "2023-06-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2024", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2022-12-16", "prochainControle": "2023-12-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2025", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "SICLI", "observations": "A renouveler", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2023-12-01", "prochainControle": "2024-11-30", "organisme": "CHUBB", "observations": "SSI - A renouveler", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-01-28", "prochainControle": "2025-01-27", "organisme": "BV", "observations": "SSI Triennale - A renouveler", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "sicli", "observations": "RIA - A renouveler", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "sicli", "observations": "Desenfumage - A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Q18 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "BAES/BAEH - A renouveler", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Reseaux gaz - A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2023-01-17", "prochainControle": "2024-01-17", "organisme": "DALKIA", "observations": "A renouveler", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "SAVEC", "observations": "A renouveler", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2023-09-06", "prochainControle": "2024-09-05", "organisme": "CEYO", "observations": "A renouveler", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "savec", "observations": "A renouveler", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "bpr", "observations": "A renouveler", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "eurofin", "observations": "A renseigner", "resultat": ""}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "Dalkia", "observations": "A renseigner", "resultat": ""}, "16": {"dateRealisation": "", "prochainControle": "", "organisme": "", "observations": "Bac a graisse - A renseigner", "resultat": ""}}, "SAINT SORLIN D\u2019ARVES": {"3.1": {"dateRealisation": "2026-01-14", "prochainControle": "2027-01-14", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-04-24", "prochainControle": "2028-04-23", "organisme": "BV", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "", "prochainControle": "", "organisme": "DESAUTEL", "observations": "DAS - RV a planifier", "resultat": ""}, "4.5": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-18", "prochainControle": "2026-11-18", "organisme": "SR DAUPHINE", "observations": "A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "", "prochainControle": "2027-11-28", "organisme": "BV", "observations": "Q18", "resultat": ""}, "5.2": {"dateRealisation": "2025-07-18", "prochainControle": "2026-07-18", "organisme": "BV", "observations": "Q19", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-01", "prochainControle": "2026-12-01", "organisme": "I2S", "observations": "Ascenseur/monte-charge", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-11-26", "prochainControle": "2025-11-26", "organisme": "BV", "observations": "A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-05", "prochainControle": "2026-12-05", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "Contrat envoye", "resultat": "Favorable"}, "7.4": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "8.2": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-12-19", "prochainControle": "2026-12-19", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-12", "prochainControle": "2026-06-10", "organisme": "EUROFINS", "observations": "Semestriel", "resultat": "Favorable"}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "16": {"dateRealisation": "2025-03-14", "prochainControle": "2026-03-14", "organisme": "GES", "observations": "", "resultat": "Favorable"}, "17": {"dateRealisation": "", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz 40 mois", "resultat": ""}}},
-  SYNTHESES: {"STATION DE SKI VALLOIRE": {"nom": "VALLOIRE", "code_site": "9332", "adresse": "1038 route du Galibier", "cp": "73450", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "2017", "nb_batiments": "2", "surface_totale": "4646", "type_chauffage": "Fioul", "puissance_kw": "280", "date_commission": "2024-10-04", "periodicite_commission": "3", "prochaine_commission": "2027-10-04", "erp_categorie": "4", "erp_types": "Rh / N / L / X", "directeur": "Benoit DUGRIVEL", "tel_directeur": "06 83 63 57 58", "responsable_maintenance": "Redouane MENAA", "tel_rm": "06 46 76 84 50", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Non", "alimentation_fioul": "Oui", "volume_fioul": "14", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "annee_mise_service": "2019", "pdl": "60004170000084"}, "STATION DE SKI VAL CENIS": {"nom": "VAL CENIS", "code_site": "9331", "adresse": "Rue des rochers", "cp": "73480", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1976", "nb_batiments": "4", "surface_totale": "3640", "type_chauffage": "Fioul", "puissance_kw": "564", "date_commission": "2022-01-13", "periodicite_commission": "3", "prochaine_commission": "2025-01-12", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Philippe MERCK", "tel_directeur": "06 80 93 76 91", "responsable_maintenance": "Bon Bruno", "tel_rm": "06 31 54 10 87", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Oui", "volume_fioul": "18", "alimentation_eau": "Oui"}, "STATION DE SKI VAL THORENS": {"nom": "VAL THORENS", "code_site": "9317", "adresse": "240 rue des Pistes", "cp": "73440", "ville": "Les Belleville", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1960/2012", "date_renovation": "2012", "nb_batiments": "2", "surface_totale": "7665", "type_chauffage": "Gaz", "puissance_kw": "940", "date_commission": "2025-03-03", "periodicite_commission": "3", "prochaine_commission": "2027-03-02", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Nelly GROSSE", "tel_directeur": "06 18 92 80 95", "responsable_maintenance": "Karim CHALLAL", "tel_rm": "06 65 80 92 99", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Oui", "pdl": "30001960293218", "annee_mise_service": "2024"}, "STATION DE SKI SERRE CHEVALIER": {"nom": "SERRE-CHEVALIER", "code_site": "9424", "adresse": "2 Rte de Bez", "cp": "05240", "departement": "Haute-Alpes", "region": "PACA", "nb_batiments": "1", "surface_totale": "4910", "type_chauffage": "Gaz", "puissance_kw": "860", "volume_gaz": "21", "date_commission": "2025-06-20", "periodicite_commission": "3", "prochaine_commission": "2028-06-19", "erp_categorie": "3", "erp_types": "RH O P", "directeur": "Emmanuel MILTGEN", "tel_directeur": "06 60 70 08 40", "responsable_maintenance": "Joey RAPIN", "tel_rm": "06 88 45 14 79", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Non"}, "STATION DE SKI PRALOGNAN": {"nom": "PRALOGNAN", "code_site": "9313", "adresse": "Plan amont - BP7", "cp": "73710", "ville": "Pralognan la vanoise", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "nb_batiments": "2", "surface_totale": "2300", "type_chauffage": "Gaz", "puissance_kw": "1042", "volume_fioul": "15m3 / 6m3", "prochaine_commission": "2024-07-16", "periodicite_commission": "3", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Renaud Berthrand", "tel_directeur": "06 30 31 38 41", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Oui", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "pdl": "50000399133208", "annee_mise_service": "2014", "siret": "77568204000602", "naf": "9319Z"}, "STATION DE SKI LES ORRES": {"nom": "LES ORRES", "code_site": "9441", "adresse": "Pramouton", "cp": "05200", "departement": "Haute-Alpes", "region": "Auvergne Rhone Alpes", "nb_batiments": "4", "surface_totale": "3663", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Jacques Buhr", "tel_directeur": "06 76 17 28 71", "responsable_maintenance": "Claude Rapin", "tel_rm": "06 76 88 35 15", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "VILLAGE SPORTIF LE VERDON": {"nom": "VERDON", "code_site": "9516", "adresse": "La Placette / Vignal", "cp": "04120", "departement": "Alpes-de-Haute-Provence", "region": "PACA", "nb_batiments": "1", "surface_totale": "316", "type_chauffage": "Gaz", "erp_categorie": "4", "erp_types": "O Rh", "directeur": "Stephanie Sauvegrain", "tel_directeur": "06 62 81 46 68", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "pdl": "25682489125299"}, "VALMEINIER": {"nom": "VALMEINIER", "code_site": "", "adresse": "Centre montagne de l Armera", "cp": "73450", "ville": "VALMEINIER", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "directeur": "Sonia LEGAI", "tel_directeur": "06 22 24 50 05", "responsable_maintenance": "Simon", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SAINT SORLIN D\u2019ARVES": {"nom": "SAINT SORLIN D ARVES", "code_site": "9333", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}},
+  PATCH: {"STATION DE SKI VALLOIRE": {"3.1": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Desautel", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Sr Dauphiné", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-01-26", "prochainControle": "2027-01-26", "organisme": "Desautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-11-12", "prochainControle": "2028-11-11", "organisme": "Bureau Veritas", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-08", "prochainControle": "2026-09-08", "organisme": "Bureau Veritas", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-01-12", "prochainControle": "2027-01-12", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Schindler", "observations": "Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2022-11-29", "prochainControle": "2027-11-28", "organisme": "Bureau Veritas", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-09-22", "prochainControle": "2026-09-22", "organisme": "Reccord", "observations": "Portes auto - Contrat", "resultat": "Favorable"}, "6.4": {"dateRealisation": "2025-03-19", "prochainControle": "2026-03-19", "organisme": "Bureau Veritas", "observations": "Compacteurs - Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Idex", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-07-23", "prochainControle": "2026-07-23", "organisme": "Idex", "observations": "Ramonage - Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "Savec", "observations": "Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-04-24", "prochainControle": "2026-04-24", "organisme": "Asepti Air", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-11-23", "prochainControle": "2026-11-23", "organisme": "Eurofin", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-04-22", "prochainControle": "2026-04-22", "organisme": "SAS Savoie Vidange", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL CENIS": {"3.1": {"dateRealisation": "2024-01-19", "prochainControle": "2024-12-12", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-02-22", "prochainControle": "2025-02-21", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-11-07", "prochainControle": "2025-11-07", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-10-13", "prochainControle": "2025-10-12", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "UCPA", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2023-03-29", "prochainControle": "2024-03-28", "organisme": "SOCOTEC", "observations": "Q19 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-10-16", "prochainControle": "2025-10-16", "organisme": "SOCOTEC", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-05-07", "prochainControle": "2025-05-07", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-28", "prochainControle": "2025-11-28", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-04", "prochainControle": "2025-09-04", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-07-25", "prochainControle": "2025-07-25", "organisme": "", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL THORENS": {"3.1": {"dateRealisation": "2025-12-08", "prochainControle": "", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-11-24", "prochainControle": "", "organisme": "UCPA", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-10-31", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2024-11-12", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-10-09", "prochainControle": "", "organisme": "CHRONOFEU", "observations": "Colonne seche PEI", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-03", "prochainControle": "", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-12-10", "prochainControle": "", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-02-11", "prochainControle": "", "organisme": "OTIS", "observations": "4 ascenseurs - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2023-11-09", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Quinquennal 4 cabines - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-12-02", "prochainControle": "", "organisme": "PORTALP", "observations": "4 portes/barrieres - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-18", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-06", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-10-14", "prochainControle": "", "organisme": "E2S (Ramonage Service)", "observations": "Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-29", "prochainControle": "", "organisme": "SAVEC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-07-03", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "12": {"dateRealisation": "2025-03-31", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": "Favorable"}}, "STATION DE SKI SERRE CHEVALIER": {"3.1": {"dateRealisation": "2025-06-03", "prochainControle": "2025-12-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-06-06", "prochainControle": "2025-12-05", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESSAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-12-08", "prochainControle": "2026-06-08", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-12-09", "prochainControle": "2028-12-08", "organisme": "BUREAU VERITAS", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESAUTEL", "observations": "Borne incendie - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-12-08", "prochainControle": "2026-12-08", "organisme": "DESSAUD", "observations": "Desenfumage mecanique - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-11", "prochainControle": "2026-09-11", "organisme": "BUREAU VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-04", "prochainControle": "2027-03-04", "organisme": "BUREAU VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-02-25", "prochainControle": "2026-03-27", "organisme": "UCPA", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-10-07", "prochainControle": "2025-11-21", "organisme": "PERDIGON", "observations": "Ascenseur - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-04-08", "prochainControle": "2025-10-07", "organisme": "PERDIGON", "observations": "Barriere - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-07-15", "prochainControle": "2026-07-15", "organisme": "SOCOTEC/BV", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-13", "prochainControle": "2026-06-13", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-02", "prochainControle": "2026-10-02", "organisme": "ALTECC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-06-10", "prochainControle": "2026-06-10", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "8.1": {"dateRealisation": "2023-09-15", "prochainControle": "2023-09-15", "organisme": "NEPSEN", "observations": "Performance energetique", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-01", "prochainControle": "2026-10-01", "organisme": "ALTECC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.2": {"dateRealisation": "2025-09-04", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "Nettoyage reseaux", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-02", "prochainControle": "2026-12-02", "organisme": "EUROFINS", "observations": "Contrat", "resultat": "Favorable"}, "15.2": {"dateRealisation": "2026-02-11", "prochainControle": "2027-02-11", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-08-01", "prochainControle": "2026-01-30", "organisme": "ORTEC", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI PRALOGNAN": {"3.1": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-11-08", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-03-31", "prochainControle": "", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2024-06-17", "prochainControle": "", "organisme": "OTIS", "observations": "Ascenseur + Quinquennal SOCOTEC Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "ceyo", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-08-02", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "12": {"dateRealisation": "", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": ""}, "13": {"dateRealisation": "2024-04-03", "prochainControle": "", "organisme": "", "observations": "Radon", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "EUROFINS", "observations": "Contrat", "resultat": ""}, "15.2": {"dateRealisation": "2021-12-04", "prochainControle": "", "organisme": "E2S", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "16": {"dateRealisation": "2022-07-05", "prochainControle": "", "organisme": "GES", "observations": "A renouveler", "resultat": "Favorable"}, "17": {"dateRealisation": "2023-04-18", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz - Contrat", "resultat": "Favorable"}}, "STATION DE SKI LES ORRES": {"3.1": {"dateRealisation": "2024-12-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "DESSAUD", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-07-17", "prochainControle": "2026-07-17", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-09", "prochainControle": "2026-06-08", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-06-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "RIA - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2024-07-02", "prochainControle": "2025-07-02", "organisme": "Dessautel", "observations": "Rideau d eau", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-06-27", "prochainControle": "2025-06-27", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2024-06-27", "prochainControle": "2024-06-27", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-05-30", "prochainControle": "2025-05-30", "organisme": "dessaud", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2024-12-07", "prochainControle": "2025-06-07", "organisme": "PARDIGON", "observations": "", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "SOCOTEC", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-11-12", "prochainControle": "2025-11-12", "organisme": "alltec", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-10-03", "prochainControle": "2025-10-03", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-09-19", "prochainControle": "2025-09-19", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "17": {"dateRealisation": "2021-05-11", "prochainControle": "2025-05-10", "organisme": "antargaz", "observations": "A renouveler", "resultat": "Favorable"}}, "VILLAGE SPORTIF LE VERDON": {"3.1": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-04-19", "prochainControle": "2025-04-19", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-08-20", "prochainControle": "2025-08-20", "organisme": "DESAUTEL", "observations": "SSI", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-16", "prochainControle": "2026-06-15", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-08-22", "prochainControle": "2025-08-22", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-04-15", "prochainControle": "2025-04-15", "organisme": "", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-17", "prochainControle": "2025-09-17", "organisme": "BRP", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2021-11-01", "prochainControle": "2022-11-01", "organisme": "EUROFINS", "observations": "Contrat - A renouveler urgence", "resultat": "Favorable"}}, "VALMEINIER": {"3.1": {"dateRealisation": "2022-12-16", "prochainControle": "2023-06-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2024", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2022-12-16", "prochainControle": "2023-12-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2025", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "SICLI", "observations": "A renouveler", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2023-12-01", "prochainControle": "2024-11-30", "organisme": "CHUBB", "observations": "SSI - A renouveler", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-01-28", "prochainControle": "2025-01-27", "organisme": "BV", "observations": "SSI Triennale - A renouveler", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "sicli", "observations": "RIA - A renouveler", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "sicli", "observations": "Desenfumage - A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Q18 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "BAES/BAEH - A renouveler", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Reseaux gaz - A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2023-01-17", "prochainControle": "2024-01-17", "organisme": "DALKIA", "observations": "A renouveler", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "SAVEC", "observations": "A renouveler", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2023-09-06", "prochainControle": "2024-09-05", "organisme": "CEYO", "observations": "A renouveler", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "savec", "observations": "A renouveler", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "bpr", "observations": "A renouveler", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "eurofin", "observations": "A renseigner", "resultat": ""}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "Dalkia", "observations": "A renseigner", "resultat": ""}, "16": {"dateRealisation": "", "prochainControle": "", "organisme": "", "observations": "Bac a graisse - A renseigner", "resultat": ""}}, "SAINT SORLIN D’ARVES": {"3.1": {"dateRealisation": "2026-01-14", "prochainControle": "2027-01-14", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-04-24", "prochainControle": "2028-04-23", "organisme": "BV", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "", "prochainControle": "", "organisme": "DESAUTEL", "observations": "DAS - RV a planifier", "resultat": ""}, "4.5": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-18", "prochainControle": "2026-11-18", "organisme": "SR DAUPHINE", "observations": "A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "", "prochainControle": "2027-11-28", "organisme": "BV", "observations": "Q18", "resultat": ""}, "5.2": {"dateRealisation": "2025-07-18", "prochainControle": "2026-07-18", "organisme": "BV", "observations": "Q19", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-01", "prochainControle": "2026-12-01", "organisme": "I2S", "observations": "Ascenseur/monte-charge", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-11-26", "prochainControle": "2025-11-26", "organisme": "BV", "observations": "A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-05", "prochainControle": "2026-12-05", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "Contrat envoye", "resultat": "Favorable"}, "7.4": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "8.2": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-12-19", "prochainControle": "2026-12-19", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-12", "prochainControle": "2026-06-10", "organisme": "EUROFINS", "observations": "Semestriel", "resultat": "Favorable"}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "16": {"dateRealisation": "2025-03-14", "prochainControle": "2026-03-14", "organisme": "GES", "observations": "", "resultat": "Favorable"}, "17": {"dateRealisation": "", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz 40 mois", "resultat": ""}}, "STATION DE SKI LES 2 ALPES": {"3.1": {"dateRealisation": "2026-01-21", "prochainControle": "2027-01-21", "organisme": "", "observations": "Formations – Extincteurs & évacuation", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-01-21", "prochainControle": "2027-01-21", "organisme": "", "observations": "Formations – Centrale incendie", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-26", "prochainControle": "2027-02-26", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-09-30", "prochainControle": "2026-09-30", "organisme": "", "observations": "SSI - Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2026-01-22", "prochainControle": "2029-01-22", "organisme": "", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-09-17", "prochainControle": "2026-09-17", "organisme": "", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-09-30", "prochainControle": "2026-09-30", "organisme": "", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Vérif. électrique Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Vérif. électrique Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-09-17", "prochainControle": "2026-09-17", "organisme": "", "observations": "BAES/BAEH/Ambiance - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-01-27", "prochainControle": "2027-01-27", "organisme": "", "observations": "Ascenseurs / Monte-charge - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2025-05-27", "prochainControle": "2030-05-27", "organisme": "", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-29", "prochainControle": "2026-10-29", "organisme": "", "observations": "Contrôle réseaux gaz", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-12-14", "prochainControle": "2025-12-14", "organisme": "", "observations": "Maintenance gaz/fioul – chaudières", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-04-29", "prochainControle": "2026-04-29", "organisme": "", "observations": "Appareils cuisson feux vifs", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-12-14", "prochainControle": "2025-12-14", "organisme": "", "observations": "Ramonage conduits chaufferies", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-10-08", "prochainControle": "2026-10-08", "organisme": "", "observations": "QAI – Dégraissage hottes cuisine", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-07-25", "prochainControle": "2026-07-25", "organisme": "", "observations": "Entretien bac à graisse", "resultat": "Favorable"}}, "SKI LES 2 ALPES GENEPI": {"4.2": {"dateRealisation": "2025-12-09", "prochainControle": "2026-12-09", "organisme": "", "observations": "SSI - Système Sécurité Incendie", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-27", "prochainControle": "", "organisme": "", "observations": "Extincteurs", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-09-22", "prochainControle": "", "organisme": "", "observations": "Désenfumage", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-09-18", "prochainControle": "", "organisme": "", "observations": "Éclairage de sécurité / BAES", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-14", "prochainControle": "", "organisme": "", "observations": "Installation électrique", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-12-13", "prochainControle": "2025-12-13", "organisme": "", "observations": "Entretien chaudière", "resultat": "Favorable"}}},
+  SYNTHESES: {"STATION DE SKI VALLOIRE": {"nom": "VALLOIRE", "code_site": "9332", "adresse": "1038 route du Galibier", "cp": "73450", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "2017", "nb_batiments": "2", "surface_totale": "4646", "type_chauffage": "Fioul", "puissance_kw": "280", "date_commission": "2024-10-04", "periodicite_commission": "3", "prochaine_commission": "2027-10-04", "erp_categorie": "4", "erp_types": "Rh / N / L / X", "directeur": "Benoit DUGRIVEL", "tel_directeur": "06 83 63 57 58", "responsable_maintenance": "Redouane MENAA", "tel_rm": "06 46 76 84 50", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Non", "alimentation_fioul": "Oui", "volume_fioul": "14", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "annee_mise_service": "2019", "pdl": "60004170000084"}, "STATION DE SKI VAL CENIS": {"nom": "VAL CENIS", "code_site": "9331", "adresse": "Rue des rochers", "cp": "73480", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1976", "nb_batiments": "4", "surface_totale": "3640", "type_chauffage": "Fioul", "puissance_kw": "564", "date_commission": "2022-01-13", "periodicite_commission": "3", "prochaine_commission": "2025-01-12", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Philippe MERCK", "tel_directeur": "06 80 93 76 91", "responsable_maintenance": "Bon Bruno", "tel_rm": "06 31 54 10 87", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Oui", "volume_fioul": "18", "alimentation_eau": "Oui"}, "STATION DE SKI VAL THORENS": {"nom": "VAL THORENS", "code_site": "9317", "adresse": "240 rue des Pistes", "cp": "73440", "ville": "Les Belleville", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1960/2012", "date_renovation": "2012", "nb_batiments": "2", "surface_totale": "7665", "type_chauffage": "Gaz", "puissance_kw": "940", "date_commission": "2025-03-03", "periodicite_commission": "3", "prochaine_commission": "2027-03-02", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Nelly GROSSE", "tel_directeur": "06 18 92 80 95", "responsable_maintenance": "Karim CHALLAL", "tel_rm": "06 65 80 92 99", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Oui", "pdl": "30001960293218", "annee_mise_service": "2024"}, "STATION DE SKI SERRE CHEVALIER": {"nom": "SERRE-CHEVALIER", "code_site": "9424", "adresse": "2 Rte de Bez", "cp": "05240", "departement": "Haute-Alpes", "region": "PACA", "nb_batiments": "1", "surface_totale": "4910", "type_chauffage": "Gaz", "puissance_kw": "860", "volume_gaz": "21", "date_commission": "2025-06-20", "periodicite_commission": "3", "prochaine_commission": "2028-06-19", "erp_categorie": "3", "erp_types": "RH O P", "directeur": "Emmanuel MILTGEN", "tel_directeur": "06 60 70 08 40", "responsable_maintenance": "Joey RAPIN", "tel_rm": "06 88 45 14 79", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Non"}, "STATION DE SKI PRALOGNAN": {"nom": "PRALOGNAN", "code_site": "9313", "adresse": "Plan amont - BP7", "cp": "73710", "ville": "Pralognan la vanoise", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "nb_batiments": "2", "surface_totale": "2300", "type_chauffage": "Gaz", "puissance_kw": "1042", "volume_fioul": "15m3 / 6m3", "prochaine_commission": "2024-07-16", "periodicite_commission": "3", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Renaud Berthrand", "tel_directeur": "06 30 31 38 41", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Oui", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "pdl": "50000399133208", "annee_mise_service": "2014", "siret": "77568204000602", "naf": "9319Z"}, "STATION DE SKI LES ORRES": {"nom": "LES ORRES", "code_site": "9441", "adresse": "Pramouton", "cp": "05200", "departement": "Haute-Alpes", "region": "Auvergne Rhone Alpes", "nb_batiments": "4", "surface_totale": "3663", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Jacques Buhr", "tel_directeur": "06 76 17 28 71", "responsable_maintenance": "Claude Rapin", "tel_rm": "06 76 88 35 15", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "VILLAGE SPORTIF LE VERDON": {"nom": "VERDON", "code_site": "9516", "adresse": "La Placette / Vignal", "cp": "04120", "departement": "Alpes-de-Haute-Provence", "region": "PACA", "nb_batiments": "1", "surface_totale": "316", "type_chauffage": "Gaz", "erp_categorie": "4", "erp_types": "O Rh", "directeur": "Stephanie Sauvegrain", "tel_directeur": "06 62 81 46 68", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "pdl": "25682489125299"}, "VALMEINIER": {"nom": "VALMEINIER", "code_site": "", "adresse": "Centre montagne de l Armera", "cp": "73450", "ville": "VALMEINIER", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "directeur": "Sonia LEGAI", "tel_directeur": "06 22 24 50 05", "responsable_maintenance": "Simon", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SAINT SORLIN D’ARVES": {"nom": "SAINT SORLIN D ARVES", "code_site": "9333", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "STATION DE SKI LES 2 ALPES": {"nom": "LES 2 ALPES", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SKI LES 2 ALPES GENEPI": {"nom": "GENEPI LES 2 ALPES", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}},
 
   run() {
     if (!confirm('Importer les donnees des 9 centres Alpes Sud ?\n\nLes champs vides seront remplis. Les donnees existantes sont conservees.')) return;
