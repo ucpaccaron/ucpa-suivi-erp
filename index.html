@@ -1704,104 +1704,37 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 .veille-result-title{font-size:13px;font-weight:600;margin-bottom:4px;}
 .veille-result-snippet{font-size:11px;color:var(--muted);line-height:1.5;}
 
-/* ═══════════════════════════════════════════════════
-   MODULES OPS — Chantiers · Rapports · Tâches
-   Inspiré du design Etincelles Tech
-═══════════════════════════════════════════════════ */
+/* ══ RESSOURCES v3 (intégré depuis veille-reglementaire-v3) ══ */
+.res-profile-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:10px;}
+.res-tab{font-family:'DM Mono',monospace;font-size:9px;font-weight:700;padding:5px 12px;border-radius:3px;border:1px solid var(--border);cursor:pointer;color:var(--muted);background:none;letter-spacing:.06em;text-transform:uppercase;transition:all .15s;}
+.res-tab:hover{color:var(--text);}
+.res-tab.active-commun{color:var(--text);background:var(--bg2);border-color:var(--border);}
+.res-tab.active-region{color:#fb7185;background:rgba(251,113,133,.08);border-color:rgba(251,113,133,.4);}
+.res-tab.active-national{color:#818cf8;background:rgba(129,140,248,.08);border-color:rgba(129,140,248,.4);}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.res-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:8px;}
+.res-card:hover{border-color:var(--accent);box-shadow:0 0 0 1px rgba(232,84,26,.15);}
+.res-card-icon{font-size:22px;}
+.res-card-name{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
+.res-card-desc{font-size:11px;color:var(--muted);line-height:1.5;flex:1;}
+.res-card-type{font-family:'DM Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;width:fit-content;letter-spacing:.04em;}
+.type-official{background:rgba(52,211,153,.1);color:#34d399;border:1px solid rgba(52,211,153,.3);}
+.type-guide{background:rgba(0,212,255,.1);color:#00d4ff;border:1px solid rgba(0,212,255,.2);}
+.type-tool{background:rgba(251,191,36,.1);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
+.type-nat{background:rgba(129,140,248,.1);color:#818cf8;border:1px solid rgba(129,140,248,.3);}
+.type-reg{background:rgba(251,113,133,.1);color:#fb7185;border:1px solid rgba(251,113,133,.3);}
 
-/* ── Cartes Chantier ──────────────────────────── */
-.ccard{
-  border-radius:var(--r);overflow:hidden;
-  border:1px solid var(--border);
-  background:linear-gradient(160deg,rgba(22,40,64,.65) 0%,rgba(10,22,36,.8) 100%);
-  margin-bottom:12px;box-shadow:var(--sh-card);
-  transition:transform .18s cubic-bezier(.22,1,.36,1);
-}
-.ccard:hover{transform:translateY(-1px)}
-.ccard-hdr{padding:14px 16px 11px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer}
-.ccard-title{font-size:14px;font-weight:700;flex:1;line-height:1.3;letter-spacing:-.02em}
-.ccard-body{padding:0 16px 10px}
-.cmeta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
-.ops-prog-wrap{margin-bottom:7px}
-.ops-prog-lbl{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-bottom:5px;letter-spacing:.02em}
-.ops-prog-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
-.ops-prog-fill{height:100%;border-radius:3px;transition:width .55s cubic-bezier(.22,1,.36,1)}
-.opf-g{background:linear-gradient(90deg,#14A060,#22C47A)}
-.opf-o{background:linear-gradient(90deg,#D04010,#F07A28)}
-.opf-r{background:linear-gradient(90deg,#A01010,#F04040)}
-.opf-b{background:linear-gradient(90deg,#1060C0,#3A96F0)}
-.ccard-actions{display:flex;gap:6px;padding:10px 16px 13px;border-top:1px solid rgba(255,255,255,.05);background:rgba(0,0,0,.12)}
-
-/* ── Timeline phases ──────────────────────────── */
-.phase-row{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
-.phase-row:last-child{border-bottom:none}
-.phase-dc{display:flex;flex-direction:column;align-items:center;padding-top:3px}
-.phase-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.pd-done{background:var(--green);box-shadow:0 0 6px rgba(34,196,122,.5)}
-.pd-active{background:var(--orange);box-shadow:0 0 8px rgba(240,122,40,.7);animation:pdpulse 2s infinite}
-@keyframes pdpulse{0%,100%{box-shadow:0 0 8px rgba(240,122,40,.7)}50%{box-shadow:0 0 16px rgba(240,122,40,.9)}}
-.pd-todo{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2)}
-.phase-line{width:2px;flex:1;min-height:20px;margin-top:3px;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent)}
-.phase-info{flex:1}
-.phase-name{font-size:13px;font-weight:600;line-height:1.3}
-.phase-sub{font-size:11px;color:var(--muted);margin-top:2px}
-.phase-right{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap;padding-top:3px}
-
-/* ── Cartes Rapport ───────────────────────────── */
-.rcard{
-  border-radius:var(--r);padding:15px 17px;margin-bottom:10px;
-  background:linear-gradient(160deg,rgba(22,40,64,.65) 0%,rgba(10,22,36,.8) 100%);
-  border:1px solid var(--border);box-shadow:var(--sh-card);overflow:hidden;position:relative;
-  transition:transform .18s;
-}
-.rcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)}
-.rcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;gap:8px}
-.rcard-title{font-size:14px;font-weight:700;flex:1;line-height:1.3;letter-spacing:-.02em}
-.rcard-meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
-.rcard-excerpt{font-size:12px;color:var(--muted2);line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.rcard-actions{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)}
-
-/* ── Tâches ───────────────────────────────────── */
-.tache-row{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.045);cursor:pointer;transition:opacity .15s}
-.tache-row:last-child{border-bottom:none}
-.tache-row:hover{opacity:.8}
-.tache-check{width:20px;height:20px;border-radius:6px;border:2px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s cubic-bezier(.22,1,.36,1);background:rgba(255,255,255,.04)}
-.tache-check.done{background:var(--green);border-color:var(--green);box-shadow:0 0 8px rgba(34,196,122,.4)}
-.tache-check.done::after{content:"✓";color:#fff;font-size:11px;font-weight:800}
-.tache-info{flex:1}
-.tache-name{font-size:13px;font-weight:600;letter-spacing:-.01em}
-.tache-sub{font-size:11px;color:var(--muted);margin-top:2px}
-
-/* ── Page Tâches standalone ───────────────────── */
-.tkpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.tkpi{border-radius:var(--r-sm);padding:12px 10px;text-align:center;background:linear-gradient(160deg,rgba(22,40,64,.65) 0%,rgba(10,22,36,.8) 100%);border:1px solid var(--border)}
-.tkpi-n{font-size:26px;font-weight:800;line-height:1}
-.tkpi-l{font-size:10px;color:var(--muted);margin-top:4px;letter-spacing:.02em}
-
-/* ── Journal chantier ─────────────────────────── */
-.journal-entry{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)}
-.journal-entry:last-child{border-bottom:none}
-.journal-date{font-size:11px;color:var(--muted);margin-bottom:2px}
-.journal-text{font-size:13px;line-height:1.5}
-
-/* ── Filter chips ops ─────────────────────────── */
-.ops-fscroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:4px;scrollbar-width:none}
-.ops-fscroll::-webkit-scrollbar{display:none}
-.ops-chip{padding:5px 13px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--muted2);transition:all .18s}
-.ops-chip.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent)}
-.ops-chip:not(.active):hover{background:rgba(255,255,255,.09);color:var(--text2)}
-
-/* ── Badges statut chantier ───────────────────── */
-.b-prep{background:rgba(58,150,240,.12);color:var(--blue);border-color:rgba(58,150,240,.25)}
-.b-en_cours{background:rgba(240,122,40,.12);color:var(--orange);border-color:rgba(240,122,40,.25)}
-.b-pause{background:rgba(144,96,248,.12);color:var(--purple);border-color:rgba(144,96,248,.25)}
-.b-termine{background:rgba(34,196,122,.12);color:var(--green);border-color:rgba(34,196,122,.25)}
-.b-visite{background:rgba(58,150,240,.12);color:var(--blue);border-color:rgba(58,150,240,.25)}
-.b-chantier{background:rgba(240,122,40,.12);color:var(--orange);border-color:rgba(240,122,40,.25)}
-.b-reunion{background:rgba(144,96,248,.12);color:var(--purple);border-color:rgba(144,96,248,.25)}
-.b-tache{background:rgba(34,196,122,.12);color:var(--green);border-color:rgba(34,196,122,.25)}
-.b-securite{background:rgba(240,64,64,.12);color:var(--red);border-color:rgba(240,64,64,.25)}
-.b-hebdo{background:rgba(16,196,176,.12);color:var(--teal);border-color:rgba(16,196,176,.25)}
+/* ── Assistant Maintenance IA ── */
+.ia-msg { max-width:82%; }
+.ia-msg-sender { font-size:10px;color:var(--muted);margin-bottom:3px;font-family:'DM Mono',monospace;letter-spacing:.5px; }
+.ia-assistant { align-self:flex-start; }
+.ia-user     { align-self:flex-end; }
+.ia-msg-bubble { padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6; }
+.ia-bubble-assistant { background:var(--panel);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:3px; }
+.ia-bubble-assistant strong { color:var(--accent); }
+.ia-bubble-user { background:var(--accent);color:#fff;border-bottom-right-radius:3px; }
+.ia-side-btn { display:block;width:100%;background:none;border:none;text-align:left;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--muted2);font-family:'Barlow',sans-serif;transition:.1s; }
+.ia-side-btn:hover { background:var(--bg3);color:var(--accent); }
 </style>
 </head>
 <body>
@@ -1950,9 +1883,6 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     <div class="nav-item" onclick="App.nav('permisfeu')" data-page="permisfeu"><span class="icon">🔥</span> Permis de Feu</div>
     <div class="nav-item" onclick="App.nav('prestataires')" data-page="prestataires"><span class="icon">👷</span> Registre Prestataires <span class="nav-badge" id="badge-prest" style="display:none">0</span></div>
     <div class="nav-section">Opérations</div>
-    <div class="nav-item" onclick="App.nav('chantiers')" data-page="chantiers"><span class="icon">🏗️</span> Chantiers <span class="nav-badge" id="badge-chantiers" style="display:none">0</span></div>
-    <div class="nav-item" onclick="App.nav('rapports')" data-page="rapports"><span class="icon">📄</span> Rapports de visite</div>
-    <div class="nav-item" onclick="App.nav('taches')" data-page="taches"><span class="icon">☑️</span> Suivi de tâches <span class="nav-badge" id="badge-taches" style="display:none">0</span></div>
 
     <div class="nav-item" onclick="App.nav('rondes')" data-page="rondes"><span class="icon">🔄</span> Gammes & Rondes</div>
     <div class="nav-item" onclick="App.nav('sanitaire')" data-page="sanitaire"><span class="icon">💧</span> Carnet Sanitaire</div>
@@ -1963,7 +1893,10 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     <div class="nav-item" onclick="App.nav('rh')" data-page="rh"><span class="icon">👤</span> RH Habilitations <span class="nav-badge" id="badge-rh" style="display:none">0</span></div>
     <div class="nav-item" onclick="App.nav('contrats')" data-page="contrats"><span class="icon">📋</span> Contrats</div>
 
-    <div class="nav-section">Liens Externes</div>
+    <div class="nav-section" style="display:flex;align-items:center;justify-content:space-between;padding-right:10px">
+      <span>Liens Externes</span>
+      <button onclick="App.addCustomLink()" title="Ajouter un lien" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0;line-height:1">+</button>
+    </div>
     <a class="nav-item nav-item-ext" href="https://bvlink.bureauveritas.com/#{%22content%22:%22home%22,%22bvi%22:1}" target="_blank" rel="noopener">
       <span class="icon">🔵</span> Bureau Veritas <span style="font-size:9px;opacity:.5;margin-left:auto">↗</span>
     </a>
@@ -1973,9 +1906,13 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     <a class="nav-item nav-item-ext" href="https://samfm-ucpa.ubigreen.com/#/DashboardSelect/92" target="_blank" rel="noopener">
       <span class="icon">🌿</span> Ubigreen <span style="font-size:9px;opacity:.5;margin-left:auto">↗</span>
     </a>
+    <div id="custom-links-nav"></div>
 
     <div class="nav-section">Ressources</div>
-    <div class="nav-item" onclick="App.nav('veille')" data-page="veille"><span class="icon">📰</span> Veille Réglementaire</div>
+    <div class="nav-item" onclick="App.nav('assistant')" data-page="assistant" style="border-left:2px solid var(--accent);background:rgba(232,84,26,.06)">
+      <span class="icon">🤖</span> Veille &amp; Assistant IA
+      <span style="font-size:8px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:10px;margin-left:auto;font-family:'DM Mono',monospace;font-weight:700">IA</span>
+    </div>
     <div class="nav-section">Outils</div>
     <div class="nav-item" onclick="App.nav('notice')" data-page="notice"><span class="icon">📖</span> Notice du site</div>
     <div class="nav-item" onclick="App.nav('backup')" data-page="backup"><span class="icon">💾</span> Sauvegardes</div>
@@ -1983,6 +1920,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     <div style="padding:8px 14px;margin-top:4px;display:flex;flex-direction:column;gap:6px">
       <button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="App.exportMonthlyPDF()">📄 Rapport mensuel PDF</button>
       <button id="btn-import-pdf" class="btn btn-sm" style="width:100%;font-size:11px;background:var(--green);color:#fff;border:none;cursor:pointer" onclick="PDFImport.openFilePicker()">📥 Importer une fiche PDF</button>
+      <button class="btn btn-sm" style="width:100%;font-size:11px;background:var(--accent);color:#fff;border:none;cursor:pointer;margin-top:4px" onclick="UCPAImport.run()" title="Charger les donnees des 9 centres Alpes Sud depuis les fiches PDF">📂 Charger donnees Alpes Sud</button>
     </div>
   </nav>
 </div>
@@ -2052,6 +1990,118 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
           <div class="card-body" id="group-progress" style="max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
+
+      <!-- BLOC IA FUSIONNÉ — Veille + Maintenance -->
+      <div class="card" style="margin-top:16px" id="dash-ia-bloc">
+        <div class="card-hdr">
+          <span>🤖</span>
+          <h3>Assistant IA — Veille &amp; Maintenance</h3>
+          <div style="font-size:10px;color:var(--muted);margin-left:6px">Réglementation ERP · Procédures UCPA · Légifrance</div>
+          <div class="ml flex" style="gap:6px">
+            <!-- Onglets -->
+            <div style="display:flex;border:1px solid var(--border);border-radius:6px;overflow:hidden">
+              <button id="dash-ia-tab-maintenance" class="btn btn-ghost btn-sm dash-ia-tab active"
+                onclick="DashIA.switchTab('maintenance')"
+                style="border-radius:0;border-right:1px solid var(--border);font-size:11px;padding:4px 12px;font-weight:700">
+                🔧 Maintenance
+              </button>
+              <button id="dash-ia-tab-veille" class="btn btn-ghost btn-sm dash-ia-tab"
+                onclick="DashIA.switchTab('veille')"
+                style="border-radius:0;font-size:11px;padding:4px 12px">
+                📰 Veille réglementaire
+              </button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="DashIA.clearCurrent()" title="Effacer historique">🗑</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.nav('assistant')" title="Ouvrir en plein écran" style="font-size:13px">⛶</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 220px;gap:0;height:360px;border-top:1px solid var(--border)">
+
+          <!-- Zone chat principale -->
+          <div style="display:flex;flex-direction:column;overflow:hidden;border-right:1px solid var(--border)">
+
+            <!-- Messages Maintenance -->
+            <div id="dash-ia-msgs-maintenance" style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth">
+              <div class="ia-msg ia-assistant">
+                <div class="ia-msg-sender">Assistant UCPA</div>
+                <div class="ia-msg-bubble ia-bubble-assistant" style="font-size:12px">
+                  Bonjour ! Je réponds à tes questions sur les <strong>procédures maintenance</strong>, la <strong>réglementation ERP</strong>, les rondes, l'ECS, la sécurité incendie, les ouvertures de saison…<br>
+                  <span style="color:var(--muted)">Ou ouvre l'assistant complet pour les suggestions et raccourcis.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Messages Veille (masqué par défaut) -->
+            <div id="dash-ia-msgs-veille" style="flex:1;overflow-y:auto;padding:12px 14px;display:none;flex-direction:column;gap:8px;scroll-behavior:smooth">
+              <div class="ia-msg ia-assistant">
+                <div class="ia-msg-sender">Veille Réglementaire</div>
+                <div class="ia-msg-bubble ia-bubble-assistant" style="font-size:12px">
+                  Pose-moi une question réglementaire ou décris un contexte à analyser.<br>
+                  Je couvre : <strong>ERP / incendie, CEE / énergie, PMR, légionelle, amiante, DUERP</strong>…<br>
+                  <span style="color:var(--muted)">Pour un scan complet par domaine → module Veille Réglementaire.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Thinking indicator -->
+            <div id="dash-ia-thinking" style="display:none;padding:8px 14px;gap:4px;align-items:center;flex-shrink:0">
+              <span style="width:5px;height:5px;border-radius:50%;background:var(--muted);display:inline-block;animation:chat-bounce 1s infinite"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:var(--muted);display:inline-block;animation:chat-bounce 1s .2s infinite"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:var(--muted);display:inline-block;animation:chat-bounce 1s .4s infinite"></span>
+              <span style="font-size:10px;color:var(--muted);margin-left:5px">Réfléchit…</span>
+            </div>
+
+            <!-- Zone saisie -->
+            <div style="border-top:1px solid var(--border);padding:8px 12px;background:var(--bg);flex-shrink:0;display:flex;gap:8px">
+              <input type="text" id="dash-ia-input"
+                style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;color:var(--text);font-size:12px;font-family:'Barlow',sans-serif;outline:none"
+                placeholder="Pose ta question…"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();DashIA.send();}">
+              <button class="btn btn-primary btn-sm" id="dash-ia-send" onclick="DashIA.send()">Envoyer</button>
+            </div>
+          </div>
+
+          <!-- Panneau raccourcis -->
+          <div style="overflow-y:auto;padding:8px 0;background:var(--bg2)">
+
+            <!-- Raccourcis Maintenance -->
+            <div id="dash-ia-shortcuts-maintenance">
+              <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:8px 12px 4px">Urgences</div>
+              <button onclick="DashIA.quick('Procédure en cas de défaut sur la centrale incendie SSI ?')" class="ia-side-btn" style="font-size:11px">🔥 Défaut SSI</button>
+              <button onclick="DashIA.quick('ECS : température retour inférieure à 50°C — protocole ?')" class="ia-side-btn" style="font-size:11px">💧 ECS &lt;50°C</button>
+              <button onclick="DashIA.quick('Défibrillateur hors charge — que faire ?')" class="ia-side-btn" style="font-size:11px">❤️ DAE hors service</button>
+              <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 12px 4px">Quotidien</div>
+              <button onclick="DashIA.quick('Procédure ronde technique journalière UCPA ?')" class="ia-side-btn" style="font-size:11px">📋 Ronde du jour</button>
+              <button onclick="DashIA.quick('Contrôles obligatoires ouverture de saison ?')" class="ia-side-btn" style="font-size:11px">🔑 Ouverture saison</button>
+              <button onclick="DashIA.quick('Fréquence nettoyage filtres hottes cuisine ?')" class="ia-side-btn" style="font-size:11px">🍳 Filtres hottes</button>
+              <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 12px 4px">Réglementation</div>
+              <button onclick="DashIA.quick('Quels sont tous les contrôles réglementaires annuels obligatoires pour un ERP type UCPA ?')" class="ia-side-btn" style="font-size:11px">📜 Contrôles annuels</button>
+              <button onclick="DashIA.quick('Comment préparer la commission de sécurité ERP ?')" class="ia-side-btn" style="font-size:11px">🏛️ Commission sécu</button>
+              <button onclick="DashIA.quick('Qu\'est-ce que le DUERP et comment le mettre à jour ?')" class="ia-side-btn" style="font-size:11px">🛡️ DUERP</button>
+            </div>
+
+            <!-- Raccourcis Veille (masqués par défaut) -->
+            <div id="dash-ia-shortcuts-veille" style="display:none">
+              <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:8px 12px 4px">Sécurité ERP</div>
+              <button onclick="DashIA.quick('Quelles sont les nouveautés 2025 sur la réglementation sécurité incendie ERP ?')" class="ia-side-btn" style="font-size:11px">🔥 Incendie ERP</button>
+              <button onclick="DashIA.quick('Évolutions récentes de la réglementation légionelle ECS en 2025 ?')" class="ia-side-btn" style="font-size:11px">💧 Légionelle ECS</button>
+              <button onclick="DashIA.quick('Actualités réglementation amiante DTA 2025 ?')" class="ia-side-btn" style="font-size:11px">☣️ Amiante DTA</button>
+              <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 12px 4px">Énergie &amp; Bâtiment</div>
+              <button onclick="DashIA.quick('Où en est le décret tertiaire OPERAT pour les ERP sportifs ?')" class="ia-side-btn" style="font-size:11px">⚡ Décret tertiaire</button>
+              <button onclick="DashIA.quick('Obligations qualité air intérieur QAI pour les ERP en 2025 ?')" class="ia-side-btn" style="font-size:11px">🌬️ QAI ventilation</button>
+              <button onclick="DashIA.quick('Réglementation radon dans les ERP de montagne — obligations ?')" class="ia-side-btn" style="font-size:11px">☢️ Radon montagne</button>
+              <div style="font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 12px 4px">Sport &amp; Hébergement</div>
+              <button onclick="DashIA.quick('Réglementation piscines et espaces de baignade — obligations 2025 ?')" class="ia-side-btn" style="font-size:11px">🏊 Piscines</button>
+              <button onclick="DashIA.quick('Nouvelles obligations réglementation cuisines professionnelles ERP ?')" class="ia-side-btn" style="font-size:11px">🍳 Cuisine pro</button>
+              <button onclick="DashIA.quick('Homologation structures artificielle d\'escalade SAE — évolutions ?')" class="ia-side-btn" style="font-size:11px">🧗 SAE escalade</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <!-- /BLOC IA FUSIONNÉ -->
+
     </div>
 
     <!-- DASHBOARD CENTRE -->
@@ -2255,7 +2305,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
       <div class="reg-kpi-strip" id="finding-kpi-strip" style="margin-bottom:12px"></div>
       <div class="card">
         <div class="card-hdr">
-          <span>🔍</span><h3>Observations & Findings</h3>
+          <span>🔍</span><h3>Observations Terrain</h3>
           <div class="ml flex" style="gap:8px;flex-wrap:wrap">
             <!-- Filtres -->
             <select id="finding-filtre-statut" class="centre-selector" style="width:130px;font-size:11px" onchange="App.renderFindings()">
@@ -2610,84 +2660,8 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
 
     <!-- PAGE VEILLE RÉGLEMENTAIRE -->
-    <div id="page-veille" class="page">
-      <div class="card" style="margin-bottom:16px">
-        <div class="card-hdr">
-          <span>📰</span><h3>Veille Réglementaire ERP</h3>
-          <div style="font-size:11px;color:var(--muted);margin-left:6px">Légifrance · Registre Sécurité · Journal Officiel</div>
-          <div class="ml flex" style="gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="Veille.clearHistory()">🗑 Vider historique</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="veille-layout">
-
-        <!-- Colonne gauche : recherche réglementaire -->
-        <div>
-          <div class="card" style="margin-bottom:14px">
-            <div class="card-hdr" style="padding:10px 16px"><span>🔍</span><h3 style="font-size:13px">Recherche réglementaire</h3></div>
-            <div class="card-body" style="padding:14px 16px">
-              <div style="display:flex;gap:8px;margin-bottom:12px">
-                <input type="text" id="veille-query" placeholder="Ex: commission sécurité ERP, légionelles, ascenseurs..." 
-                  style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px"
-                  onkeydown="if(event.key==='Enter')Veille.search()">
-                <button class="btn btn-primary btn-sm" onclick="Veille.search()">Rechercher</button>
-              </div>
-              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-                <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
-                  <input type="checkbox" id="src-legifrance" checked> Légifrance
-                </label>
-                <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
-                  <input type="checkbox" id="src-registre" checked> RegistreSécurité
-                </label>
-                <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer">
-                  <input type="checkbox" id="src-web"> Web général
-                </label>
-              </div>
-              <div id="veille-results" style="max-height:360px;overflow-y:auto">
-                <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Saisissez une requête réglementaire…</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Raccourcis thématiques -->
-          <div class="card">
-            <div class="card-hdr" style="padding:10px 16px"><span>⚡</span><h3 style="font-size:13px">Accès rapides</h3></div>
-            <div class="card-body" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
-              ${['Commission de sécurité ERP','Légionellose ECS','Ascenseurs quinquennal','SSI vérification annuelle','Désenfumage ERP','Amiante DTA','Électricité Q18','Radon ERP','Défibrillateur DEA','Plan de prévention co-activité'].map(t => 
-                `<button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="Veille.quickSearch('${t.replace(/'/g,'\x27')}')">${t}</button>`
-              ).join('')}
-            </div>
-          </div>
-        </div>
-
-        <!-- Colonne droite : chatbot IA -->
-        <div>
-          <div class="card">
-            <div class="card-hdr" style="padding:10px 16px">
-              <span>🤖</span><h3 style="font-size:13px">Assistant Réglementaire IA</h3>
-              <div style="font-size:10px;color:var(--muted);margin-left:6px">Spécialisé ERP · Hôtellerie · Sport</div>
-            </div>
-            <div class="chat-wrap">
-              <div class="chat-messages" id="chat-messages">
-                <div class="chat-msg assistant">Bonjour ! Je suis ton assistant réglementaire spécialisé ERP pour les centres UCPA.<br><br>Tu peux me poser des questions sur :<br>• Les obligations de sécurité incendie<br>• Les contrôles périodiques réglementaires<br>• La réglementation sanitaire et légionellose<br>• Les commissions de sécurité<br>• Les normes PMR et accessibilité<br>• Et tout autre sujet réglementaire ERP 🏢</div>
-              </div>
-              <div id="chat-thinking" class="chat-thinking" style="display:none">
-                <span></span><span></span><span></span>
-                <span style="font-size:11px;color:var(--muted);margin-left:6px">L'assistant réfléchit…</span>
-              </div>
-              <div class="chat-input-row">
-                <input type="text" id="chat-input" placeholder="Pose ta question réglementaire…"
-                  onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();Veille.sendMessage();}">
-                <button class="btn btn-primary btn-sm" onclick="Veille.sendMessage()">Envoyer</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
+    <!-- page-veille redirigée vers assistant -->
+    <div id="page-veille" class="page" style="display:none"></div>
 
     <!-- MODALE PERSONNALISATION CARNET SANITAIRE -->
     <div id="ecs-manager-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:3000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
@@ -2793,7 +2767,9 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
             </div>
             <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="App.resetGammeChecks()">↺ Réinitialiser</button>
             <button class="btn btn-ghost btn-sm" onclick="App.exportGammePDF()" style="font-size:11px">📄 Imprimer</button>
-            <button class="btn btn-primary btn-sm" onclick="App.validerRonde()" style="font-size:11px" id="gamme-valider-btn">✅ Valider la ronde</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.exportGammePDF()" style="font-size:11px" title="Exporter la ronde avec les cases cochées">📄 Imprimer cochés</button>
+          <button class="btn btn-primary btn-sm" onclick="App.validerRonde()" style="font-size:11px" id="gamme-valider-btn">✅ Valider la ronde</button>
+          <span style="font-size:10px;color:var(--muted);align-self:center" title="Clic: cocher ✓ | Double-clic: NC | Triple-clic: vider">💡 Clic=✓ · 2×=NC · 3×=vide</span>
           </div>
         </div>
         <!-- Onglets gammes -->
@@ -2855,7 +2831,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
           <div class="ml flex" style="gap:8px">
             <button class="btn btn-ghost btn-sm" onclick="ECS.exportExcel()">📊 Excel</button>
             <button class="btn btn-ghost btn-sm" onclick="ECS.exportPDF()">📄 PDF</button>
-            <button class="btn btn-ghost btn-sm" onclick="ECS.openSectionManager()" title="Gérer les sections et points de mesure">⚙️ Personnaliser</button>
+            <button class="btn btn-ghost btn-sm" onclick="ECS.openSectionManager()" title="Gérer les sections, réordonner avec ↑↓, et modifier les points de mesure">⚙️ Personnaliser &amp; Réordonner</button>
             <button class="btn btn-primary btn-sm" onclick="ECS.saveReleve()">💾 Enregistrer le relevé</button>
           </div>
         </div>
@@ -3231,6 +3207,207 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
         <div id="prest-cards-wrap" style="display:none;padding:8px 0"></div>
       </div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         PAGE : ASSISTANT MAINTENANCE IA
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="page-assistant" class="page">
+
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Assistant IA · Veille &amp; Maintenance UCPA</div>
+          <div style="font-size:13px;color:var(--muted2)">Rondes · Sécurité incendie · ECS · Cuisine · Prestataires · Réglementation ERP · Veille législative</div>
+        </div>
+        <div id="ia-key-status" style="font-size:11px;font-family:'DM Mono',monospace;padding:4px 10px;border-radius:4px;border:1px solid var(--border);color:var(--muted)">— clé —</div>
+        <button class="btn btn-ghost btn-sm" onclick="Assistant.clearHistory()">🗑 Effacer</button>
+      </div>
+
+      <!-- Onglets principaux -->
+      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)">
+        <button id="assistant-tab-maintenance" class="btn btn-ghost btn-sm assistant-main-tab"
+          onclick="Assistant.switchMainTab('maintenance',this)"
+          style="border-radius:6px 6px 0 0;border-bottom:2px solid var(--accent);font-weight:700;padding:6px 18px">
+          🔧 Maintenance UCPA
+        </button>
+        <button id="assistant-tab-veille" class="btn btn-ghost btn-sm assistant-main-tab"
+          onclick="Assistant.switchMainTab('veille',this)"
+          style="border-radius:6px 6px 0 0;border-bottom:2px solid transparent;padding:6px 18px">
+          📰 Veille réglementaire
+        </button>
+        <button id="assistant-tab-ressources" class="btn btn-ghost btn-sm assistant-main-tab"
+          onclick="Assistant.switchMainTab('ressources',this)"
+          style="border-radius:6px 6px 0 0;border-bottom:2px solid transparent;padding:6px 18px">
+          📚 Ressources
+        </button>
+      </div>
+
+      <!-- PANNEAU : Maintenance -->
+      <div id="assistant-panel-maintenance" style="display:grid;grid-template-columns:1fr 270px;gap:16px;height:calc(100vh - var(--hdr) - 170px);min-height:480px">
+
+        <!-- Chat principal -->
+        <div class="card" style="display:flex;flex-direction:column;overflow:hidden;margin:0">
+          <div class="card-hdr" style="padding:10px 16px;flex-shrink:0">
+            <span>🤖</span>
+            <h3 style="font-size:13px">Assistant Maintenance UCPA</h3>
+            <span style="font-size:10px;color:var(--muted);margin-left:6px">Claude · Procédures + Réglementation ERP</span>
+            <div id="ia-online-dot" style="width:7px;height:7px;border-radius:50%;background:var(--muted);margin-left:auto"></div>
+          </div>
+
+          <div id="ia-messages" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth">
+            <div class="ia-msg ia-assistant">
+              <div class="ia-msg-sender">Assistant UCPA</div>
+              <div class="ia-msg-bubble ia-bubble-assistant">
+                Bonjour ! Je suis ton assistant maintenance UCPA, formé sur l'ensemble des guides et procédures du service technique.<br><br>
+                Je peux t'aider sur :<br>
+                • <strong>Rondes techniques</strong> — procédures journalières et hebdomadaires<br>
+                • <strong>Sécurité incendie ERP</strong> — SSI, registre, commissions<br>
+                • <strong>ECS &amp; Légionella</strong> — températures, procédures réglementaires<br>
+                • <strong>Cuisine collective</strong> — Article GC21, gammes de maintenance<br>
+                • <strong>Ouverture / Fermeture de saison</strong><br>
+                • <strong>Prestataires &amp; contrôles réglementaires</strong><br>
+                • <strong>Document Unique, EPI, sécurité au travail</strong><br><br>
+                Pose-moi ta question !
+              </div>
+            </div>
+          </div>
+
+          <div id="ia-thinking" style="display:none;padding:10px 14px;gap:5px;align-items:center;flex-shrink:0">
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;animation:chat-bounce 1s infinite"></span>
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;animation:chat-bounce 1s .2s infinite"></span>
+            <span style="width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;animation:chat-bounce 1s .4s infinite"></span>
+            <span style="font-size:11px;color:var(--muted);margin-left:6px">L'assistant réfléchit…</span>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding:10px 14px;background:var(--bg);flex-shrink:0">
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="Assistant.quick('Que faire en cas de défaut sur la centrale incendie SSI ?')">🔥 Défaut SSI</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="Assistant.quick('Procédure complète de ronde technique journalière UCPA ?')">📋 Ronde du jour</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="Assistant.quick('Température ECS retour inférieure à 50°C — que faire ?')">💧 ECS &lt;50°C</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="Assistant.quick('Contrôles obligatoires à réaliser à l\'ouverture de saison ?')">🔑 Ouverture saison</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="Assistant.quick('Fréquence de nettoyage des filtres de hotte de cuisine ?')">🍳 Filtres hottes</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="Assistant.quick('Je suis nouveau technicien UCPA, par quoi commencer ?')">👋 Je suis nouveau</button>
+            </div>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="ia-input"
+                style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px 13px;color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;outline:none"
+                placeholder="Pose ta question maintenance ou réglementaire…"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();Assistant.send();}">
+              <button class="btn btn-primary" id="ia-send-btn" onclick="Assistant.send()">Envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panneau latéral sujets -->
+        <div style="display:flex;flex-direction:column;gap:12px;overflow-y:auto">
+          <div class="card" style="margin:0">
+            <div class="card-hdr" style="padding:10px 14px"><span>⚡</span><h3 style="font-size:12px">Sujets fréquents</h3></div>
+            <div style="padding:6px 8px">
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:6px 8px 4px">Urgences</div>
+              <button onclick="Assistant.quick('Procédure en cas d\'incendie détecté dans les logements ?')" class="ia-side-btn">🔥 Incendie — que faire ?</button>
+              <button onclick="Assistant.quick('Le défibrillateur n\'est plus en charge — protocole ?')" class="ia-side-btn">❤️ Défibrillateur HS</button>
+              <button onclick="Assistant.quick('ECS : température de retour inférieure à 50°C — risque légionella — protocole d\'urgence ?')" class="ia-side-btn">💧 ECS — risque légionella</button>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 8px 4px">Réglementation</div>
+              <button onclick="Assistant.quick('Quels sont tous les contrôles réglementaires annuels obligatoires pour un ERP type UCPA ?')" class="ia-side-btn">📜 Contrôles annuels ERP</button>
+              <button onclick="Assistant.quick('Comment préparer la visite de la commission de sécurité ERP ?')" class="ia-side-btn">🏛️ Commission sécurité</button>
+              <button onclick="Assistant.quick('Obligations ramonage conduits cuisine — Article GC21 ?')" class="ia-side-btn">🍳 Ramonage GC21</button>
+              <button onclick="Assistant.quick('Qu\'est-ce que le DUERP et comment le rédiger ?')" class="ia-side-btn">🛡️ DUERP</button>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 8px 4px">Méthode &amp; process</div>
+              <button onclick="Assistant.quick('Comment rédiger un bon d\'intervention et assurer le suivi ?')" class="ia-side-btn">📝 Bon d'intervention</button>
+              <button onclick="Assistant.quick('Checklist complète ouverture de saison centre UCPA ?')" class="ia-side-btn">🔑 Checklist ouverture</button>
+              <button onclick="Assistant.quick('Que doit contenir un plan de prévention prestataire ?')" class="ia-side-btn">👷 Plan de prévention</button>
+            </div>
+          </div>
+          <div class="card" style="margin:0">
+            <div class="card-hdr" style="padding:10px 14px"><span>ℹ️</span><h3 style="font-size:12px">À propos</h3></div>
+            <div style="padding:10px 14px;font-size:11px;color:var(--muted);line-height:1.7">
+              Formé sur les <strong style="color:var(--text)">guides de maintenance UCPA</strong> : rondes, sécurité, ECS, cuisine, prestataires + réglementation ERP complète.<br><br>
+              <span style="color:var(--amber)">⚡</span> Urgence : agir d'abord, documenter ensuite.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- PANNEAU : Veille réglementaire -->
+      <div id="assistant-panel-veille" style="display:none">
+        <div class="veille-layout">
+          <!-- Colonne gauche : recherche -->
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <div class="card-hdr" style="padding:10px 16px"><span>🔍</span><h3 style="font-size:13px">Recherche réglementaire</h3></div>
+              <div class="card-body" style="padding:14px 16px">
+                <div style="display:flex;gap:8px;margin-bottom:12px">
+                  <input type="text" id="veille-query" placeholder="Ex: commission sécurité ERP, légionelles, ascenseurs..."
+                    style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px"
+                    onkeydown="if(event.key==='Enter')Veille.search()">
+                  <button class="btn btn-primary btn-sm" onclick="Veille.search()">Rechercher</button>
+                </div>
+                <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                  <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="src-legifrance" checked> Légifrance</label>
+                  <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="src-registre" checked> RegistreSécurité</label>
+                  <label style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="src-web"> Web général</label>
+                </div>
+                <div id="veille-results" style="max-height:360px;overflow-y:auto">
+                  <div style="font-size:12px;color:var(--muted);text-align:center;padding:20px">Saisissez une requête réglementaire…</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-hdr" style="padding:10px 16px"><span>⚡</span><h3 style="font-size:13px">Accès rapides</h3></div>
+              <div class="card-body" style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px">
+                ${['Commission de sécurité ERP','Légionellose ECS','Ascenseurs quinquennal','SSI vérification annuelle','Désenfumage ERP','Amiante DTA','Électricité Q18','Radon ERP','Défibrillateur DEA','Plan de prévention co-activité'].map(t =>
+                  `<button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="Veille.quickSearch('${t.replace(/'/g,'\x27')}')">${t}</button>`
+                ).join('')}
+              </div>
+            </div>
+          </div>
+          <!-- Colonne droite : chatbot veille -->
+          <div>
+            <div class="card">
+              <div class="card-hdr" style="padding:10px 16px">
+                <span>🤖</span><h3 style="font-size:13px">Assistant Réglementaire IA</h3>
+                <div style="font-size:10px;color:var(--muted);margin-left:6px">Spécialisé ERP · Hôtellerie · Sport</div>
+                <div class="ml"><button class="btn btn-ghost btn-sm" onclick="Veille.clearHistory()">🗑</button></div>
+              </div>
+              <div class="chat-wrap">
+                <div class="chat-messages" id="chat-messages">
+                  <div class="chat-msg assistant">Bonjour ! Je suis ton assistant réglementaire spécialisé ERP pour les centres UCPA.<br><br>Tu peux me poser des questions sur :<br>• Les obligations de sécurité incendie<br>• Les contrôles périodiques réglementaires<br>• La réglementation sanitaire et légionellose<br>• Les commissions de sécurité<br>• Les normes PMR et accessibilité<br>• Et tout autre sujet réglementaire ERP 🏢</div>
+                </div>
+                <div id="chat-thinking" class="chat-thinking" style="display:none">
+                  <span></span><span></span><span></span>
+                  <span style="font-size:11px;color:var(--muted);margin-left:6px">L'assistant réfléchit…</span>
+                </div>
+                <div class="chat-input-row">
+                  <input type="text" id="chat-input" placeholder="Pose ta question réglementaire…"
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey){event.preventDefault();Veille.sendMessage();}">
+                  <button class="btn btn-primary btn-sm" onclick="Veille.sendMessage()">Envoyer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANNEAU : Ressources -->
+      <div id="assistant-panel-ressources" style="display:none">
+        <div class="card">
+          <div class="card-hdr" style="padding:12px 16px">
+            <span>📚</span><h3>Ressources réglementaires</h3>
+            <div style="font-size:11px;color:var(--muted);margin-left:6px">Sources officielles · Guides techniques · Outils</div>
+          </div>
+          <div class="card-body" style="padding:16px">
+            <div class="res-profile-tabs" id="res-tabs">
+              <button class="res-tab active-commun" onclick="Veille.switchResTab('commun',this)">🌐 Commun</button>
+              <button class="res-tab" onclick="Veille.switchResTab('region',this)">🗺 Région</button>
+              <button class="res-tab" onclick="Veille.switchResTab('national',this)">🇫🇷 National</button>
+            </div>
+            <div id="res-grid-container" class="res-grid"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- /page-assistant -->
 
   </div><!-- /content -->
 </div><!-- /main -->
@@ -4800,7 +4977,8 @@ const App = {
       prestataires:'Registre Entrées/Sorties Prestataires',
       notice:'Notice d\'utilisation', backup:'Sauvegardes & Restauration',
       admin:'Administration — Gestion des Centres',
-      veille:'Veille Réglementaire'
+      veille:'Veille Réglementaire',
+      assistant:'Assistant Maintenance IA'
     };
     document.getElementById('page-title').textContent = titles[page] || page;
     const centre = this.centre === 'ALL' ? 'Tous les centres' : this.centre.replace('VILLAGE SPORTIF ','');
@@ -4849,16 +5027,14 @@ const App = {
         break;
       case 'sanitaire': this.renderSanitaire(); break;
       case 'rh': this.renderRH(); break;
-      case 'contrats': this.renderList('contrats', 'contrats-list', this.renderContratItem.bind(this)); break;
+      case 'contrats': this.renderContrats(); break;
       case 'investissements': this.renderInvestissements(); break;
       case 'ged':    GED.render(); break;
       case 'notice': Notice.render(); break;
       case 'backup': Backup.render(); break;
       case 'admin':  Admin.render(); App._renderAnthropicStatus(); break;
-      case 'chantiers': Ops.renderChantiers(); break;
-      case 'rapports': Ops.renderRapports(); break;
-      case 'taches': Ops.renderTaches(); break;
-      case 'veille': Veille._loadHistory(); break;
+      case 'veille': App.nav('assistant'); setTimeout(() => Assistant.switchMainTab('veille', document.getElementById('assistant-tab-veille')), 50); break;
+      case 'assistant': Assistant.init(); break;
     }
   },
 
@@ -5545,6 +5721,10 @@ const App = {
             <span>Rénovation</span>
             <span class="synth-stat-val">${d.date_renovation || '—'}</span>
           </div>
+          <div class="synth-stat-row">
+            <span>Dernière commission</span>
+            <span class="synth-stat-val" style="color:var(--accent)">${d.derniere_commission ? new Date(d.derniere_commission).getFullYear() : '—'}</span>
+          </div>
         </div>
       </div>
     `;
@@ -5695,9 +5875,15 @@ const App = {
     const icons = {'':'—','ok':'✓','warn':'~','ko':'✗','na':'N/A'};
     const cls = {'':'mce-na','ok':'mce-ok','warn':'mce-warn','ko':'mce-ko','na':'mce-na'};
 
+    // Fonction d'abréviation intelligente pour la matrice
+    const abbrCentre = c => {
+      let s = c.replace('VILLAGE SPORTIF ','').replace('CENTRE AQUATIQUE ','').replace('CENTRE NAUTIQUE ','').replace('CENTRE ','');
+      // Raccourcir à 12 chars max et forcer à la ligne sur l'espace
+      return s.length > 14 ? s.slice(0, 14) + '…' : s;
+    };
     let html = `<table class="matrix-table"><thead><tr>
       <th class="domain-col">Domaine / Libellé</th>
-      ${CENTRES.map(c => `<th style="font-size:9px;max-width:70px;word-break:break-word">${c.replace('VILLAGE SPORTIF ','VS ').replace('CENTRE AQUATIQUE ','CA ')}</th>`).join('')}
+      ${CENTRES.map(c => `<th style="font-size:10px;max-width:80px;word-break:break-word;white-space:normal;text-align:center;line-height:1.3" title="${c}">${abbrCentre(c)}</th>`).join('')}
     </tr></thead><tbody>`;
 
     groups.forEach(g => {
@@ -5776,7 +5962,7 @@ const App = {
       <th style="width:28px"><input type="checkbox" class="reg-select-cb" id="reg-select-all" onchange="App.toggleSelectAll(this.checked)" title="Tout sélectionner"></th>
       <th>Cat.</th><th>Groupe</th><th>Libellé</th><th>Périodicité</th>
       <th>Dernier contrôle</th><th>Résultat</th><th>Organisme</th>
-      <th>Prochain contrôle</th><th>Observations</th><th>📎 Doc</th><th>État</th>
+      <th>Prochain contrôle</th><th style="min-width:160px">Observations</th><th>📎 Doc</th><th>État</th>
     </tr></thead><tbody>`;
 
     centres.forEach(c => {
@@ -5835,8 +6021,9 @@ const App = {
           <td style="color:${expired?'var(--red)':soon?'var(--amber)':'var(--text)'}">
             <input class="editable-cell" type="date" value="${r.prochainControle||''}"
             onchange="App.updateRegistreField('${c}',${idx},'prochainControle',this.value)" style="width:126px;color:inherit"></td>
-          <td><input class="editable-cell" type="text" value="${r.observations||''}" placeholder="Observations"
-            onchange="App.updateRegistreField('${c}',${idx},'observations',this.value)" style="width:140px"></td>
+          <td style="min-width:160px"><textarea class="editable-cell" rows="2" placeholder="Observations"
+            onchange="App.updateRegistreField('${c}',${idx},'observations',this.value)"
+            style="width:100%;min-width:160px;resize:vertical;font-size:12px;font-family:'Barlow',sans-serif;padding:2px 4px">${r.observations||''}</textarea></td>
           <td>
             <div style="display:flex;align-items:center;gap:4px">
               <input class="editable-cell" type="url" value="${r.lien||''}" placeholder="Lien / Drive"
@@ -6595,7 +6782,7 @@ const App = {
     const prescriptions = data.prescriptions || [];
     const centreFilt = this.centre === 'ALL' ? null : this.centre;
     const pres = centreFilt ? prescriptions.filter(p => p.centre === centreFilt) : prescriptions;
-    const ouvertes  = pres.filter(p => p.statut !== 'Levée' && p.statut !== 'Sans suite').length;
+    const ouvertes  = pres.filter(p => !['Levée','Sans suite'].includes(p.statut)).length;
     const levees    = pres.filter(p => p.statut === 'Levée').length;
     const enRetard  = pres.filter(p => p.statut !== 'Levée' && p.dateEcheance && this.isExpired(p.dateEcheance)).length;
     const urgentes  = pres.filter(p => p.priorite === 'Majeure' && p.statut !== 'Levée').length;
@@ -6643,7 +6830,7 @@ const App = {
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <select id="comm-filtre-statut" class="centre-selector" style="width:140px;font-size:11px" onchange="App.showCommTab('prescriptions')">
           <option value="">Tous statuts</option>
-          <option>Prescrite</option><option>En cours</option><option>Levée</option><option>Sans suite</option>
+          <option>Prescrite</option><option>En cours</option><option>Partiellement levée</option><option>Levée</option><option>Sans suite</option>
         </select>
         <select id="comm-filtre-prio" class="centre-selector" style="width:120px;font-size:11px" onchange="App.showCommTab('prescriptions')">
           <option value="">Toutes priorités</option>
@@ -6660,7 +6847,7 @@ const App = {
         ${shown.map((p,i) => {
           const retard = p.statut !== 'Levée' && p.dateEcheance && this.isExpired(p.dateEcheance);
           const prioCls = p.priorite==='Majeure'?'ko':p.priorite==='Importante'?'warn':'na';
-          const statCls = p.statut==='Levée'?'ok':p.statut==='En cours'?'warn':retard?'ko':'';
+          const statCls = p.statut==='Levée'?'ok':p.statut==='Partiellement levée'?'warn':p.statut==='En cours'?'warn':retard?'ko':'na';
           const lienBtn = p.lien?`<a href="${p.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>';
           return `<tr style="${retard?'background:rgba(232,54,26,0.04)':''}">
             <td style="font-family:'DM Mono';font-size:10px;white-space:nowrap">${this.fmtDate(p.dateVisite)||'—'}</td>
@@ -6734,11 +6921,13 @@ const App = {
   },
 
   openCommissionModal() {
+    const lastPV   = this._lastCommNumPV || '';
+    const lastDate = this._lastCommDateVisite || this.today();
     this.openModal('Nouvelle Prescription', `
       <div class="form-grid">
         <div class="form-group"><label>Centre</label><select id="m-centre">${this.centreOptions(this.centre==='ALL'?'':this.centre)}</select></div>
-        <div class="form-group"><label>Date de la visite</label><input type="date" id="m-date-visite" value="${this.today()}"></div>
-        <div class="form-group"><label>N° PV Commission</label><input type="text" id="m-num-pv" placeholder="Ex: PV-2024-001"></div>
+        <div class="form-group"><label>Date de la visite</label><input type="date" id="m-date-visite" value="${lastDate}"></div>
+        <div class="form-group"><label>N° PV Commission <span style="font-size:9px;color:var(--muted)">(mémorisé auto)</span></label><input type="text" id="m-num-pv" value="${lastPV}" placeholder="Ex: PV-2024-001"></div>
         <div class="form-group"><label>Priorité</label>
           <select id="m-priorite">
             <option value="Majeure">🔴 Majeure</option>
@@ -6754,6 +6943,7 @@ const App = {
           <select id="m-statut">
             <option value="Prescrite">Prescrite</option>
             <option value="En cours">En cours</option>
+            <option value="Partiellement levée">Partiellement levée</option>
             <option value="Levée">Levée</option>
             <option value="Sans suite">Sans suite</option>
           </select>
@@ -6788,21 +6978,40 @@ const App = {
     const p = (data.prescriptions||[])[idx];
     if (!p) return;
     this._editCommIdx = idx;
+    // Mémoriser le N°PV et la date pour pré-remplissage futur
+    this._lastCommNumPV = p.numPV || this._lastCommNumPV || '';
+    this._lastCommDateVisite = p.dateVisite || this._lastCommDateVisite || '';
     this.openModal('Modifier la Prescription', `
       <div class="form-grid">
+        <div class="form-group"><label>Date de la visite</label>
+          <input type="date" id="m-date-visite" value="${p.dateVisite||''}">
+        </div>
+        <div class="form-group"><label>N° PV Commission</label>
+          <input type="text" id="m-num-pv" value="${p.numPV||''}" placeholder="Ex: PV-2024-001">
+        </div>
+        <div class="form-group"><label>Priorité</label>
+          <select id="m-priorite">
+            <option value="Majeure" ${p.priorite==='Majeure'?'selected':''}>🔴 Majeure</option>
+            <option value="Importante" ${p.priorite==='Importante'?'selected':''}>🟡 Importante</option>
+            <option value="Mineure" ${(p.priorite||'Mineure')==='Mineure'?'selected':''}>🟢 Mineure</option>
+          </select>
+        </div>
         <div class="form-group"><label>Statut</label>
           <select id="m-statut">
             <option ${p.statut==='Prescrite'?'selected':''}>Prescrite</option>
             <option ${p.statut==='En cours'?'selected':''}>En cours</option>
+            <option ${p.statut==='Partiellement levée'?'selected':''}>Partiellement levée</option>
             <option ${p.statut==='Levée'?'selected':''}>Levée</option>
             <option ${p.statut==='Sans suite'?'selected':''}>Sans suite</option>
           </select>
         </div>
-        <div class="form-group"><label>Date d'échéance</label><input type="date" id="m-echeance" value="${p.dateEcheance||''}"></div>
+        <div class="form-group"><label>Date d'échéance</label>
+          <input type="date" id="m-echeance" value="${p.dateEcheance||''}">
+        </div>
         <div class="form-group full" style="grid-column:span 2"><label>Description</label>
           <textarea id="m-description" rows="3">${p.description||''}</textarea>
         </div>
-        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document</label>
+        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien PV / Document Drive</label>
           <input type="url" id="m-lien" value="${p.lien||''}" placeholder="https://drive.google.com/...">
         </div>
       </div>`, 'commission-edit');
@@ -6875,11 +7084,11 @@ const App = {
       const ssSuite   = all.filter(f => f.traitement === 'Sans suite').length;
       const enRetard  = all.filter(f => f.traitement === 'A traiter' && f.dateEcheance && this.isExpired(f.dateEcheance)).length;
       kpiEl.innerHTML = `
-        <div class="kpi ${aTraiter>0?'danger':'ok'}"><div class="kpi-label">À traiter</div><div class="kpi-val">${aTraiter}</div><div class="kpi-sub">findings ouverts</div></div>
+        <div class="kpi ${aTraiter>0?'danger':'ok'}"><div class="kpi-label">À traiter</div><div class="kpi-val">${aTraiter}</div><div class="kpi-sub">observations ouvertes</div></div>
         <div class="kpi ${enRetard>0?'danger':'ok'}"><div class="kpi-label">En retard</div><div class="kpi-val">${enRetard}</div><div class="kpi-sub">échéance dépassée</div></div>
         <div class="kpi ok"><div class="kpi-label">Traitées</div><div class="kpi-val">${traitees}</div><div class="kpi-sub">clôturées</div></div>
         <div class="kpi"><div class="kpi-label">Sans suite</div><div class="kpi-val">${ssSuite}</div><div class="kpi-sub">classées</div></div>
-        <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val">${all.length}</div><div class="kpi-sub">findings</div></div>`;
+        <div class="kpi"><div class="kpi-label">Total</div><div class="kpi-val">${all.length}</div><div class="kpi-sub">observations</div></div>`;
     }
 
     const el = document.getElementById('finding-list');
@@ -7150,6 +7359,71 @@ const App = {
     if (header) return '<th>Date</th><th>Type</th><th>Agent</th>';
     return `<tr><td>${this.fmtDate(item.date)}</td><td>${item.type||'—'}</td><td>${item.agent||'—'}</td></tr>`;
   },
+  renderContrats() {
+    const items = this.load('contrats') || [];
+    const el = document.getElementById('contrats-list');
+    if (!el) return;
+    // Tri
+    const sortKey = this._contratSort || 'prestataire';
+    const sortDir = this._contratSortDir || 1;
+    const sorted = [...items].sort((a,b) => {
+      const va = (a[sortKey]||'').toLowerCase();
+      const vb = (b[sortKey]||'').toLowerCase();
+      return va < vb ? -sortDir : va > vb ? sortDir : 0;
+    });
+    // En-tête avec tri
+    const thStyle = 'cursor:pointer;user-select:none;white-space:nowrap';
+    const sortIcon = (k) => this._contratSort===k ? (this._contratSortDir===1?' ↑':' ↓') : '';
+    const thead = `<tr>
+      <th style="${thStyle}" onclick="App._sortContrats('prestataire')">Prestataire${sortIcon('prestataire')}</th>
+      <th style="${thStyle}" onclick="App._sortContrats('objet')">Objet${sortIcon('objet')}</th>
+      <th style="${thStyle}" onclick="App._sortContrats('centre')">Centre${sortIcon('centre')}</th>
+      <th style="${thStyle}" onclick="App._sortContrats('debut')">Début${sortIcon('debut')}</th>
+      <th style="${thStyle}" onclick="App._sortContrats('fin')">Fin${sortIcon('fin')}</th>
+      <th>Statut</th><th>Doc</th><th></th>
+    </tr>`;
+    if (!sorted.length) {
+      el.innerHTML = '<div class="empty-state"><div class="icon">📋</div><div>Aucun contrat — cliquez "+ Contrat" pour commencer</div></div>';
+      return;
+    }
+    const rows = sorted.map((item, i) => {
+      const realIdx = items.indexOf(item);
+      const expired = item.fin && this.isExpired(item.fin);
+      const soon    = item.fin && !expired && this.isSoonExpiring(item.fin, 60);
+      const noDoc   = !item.lien;
+      const statCls = item.statut==='Non disponible' ? 'na' : expired ? 'ko' : soon ? 'warn' : 'ok';
+      const statLbl = item.statut==='Non disponible' ? '📂 Non disponible' : expired ? '⛔ Échu' : soon ? '⚠️ Bientôt' : '✅ Valide';
+      return `<tr style="${expired?'opacity:.6':''}">
+        <td style="font-weight:600">${item.prestataire||'—'}</td>
+        <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(item.objet||'').replace(/"/g,'')}">${item.objet||'—'}</td>
+        <td style="font-size:11px;color:var(--muted)">${(item.centre||'—').replace('VILLAGE SPORTIF ','VS ')}</td>
+        <td style="font-family:'DM Mono';font-size:11px">${this.fmtDate(item.debut)||'—'}</td>
+        <td style="font-family:'DM Mono';font-size:11px;color:${expired?'var(--red)':soon?'var(--amber)':'var(--text)'}">${this.fmtDate(item.fin)||'—'}</td>
+        <td><span class="pill pill-${statCls}" style="font-size:10px">${statLbl}</span></td>
+        <td>${item.lien?`<a href="${item.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>'}</td>
+        <td style="white-space:nowrap;display:flex;gap:3px">
+          ${noDoc?`<button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px;color:var(--muted)" onclick="App._markContratNonDispo(${realIdx})" title="Marquer comme non disponible">📂</button>`:''}
+          <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="App.deleteItem('contrats',${realIdx})">🗑</button>
+        </td>
+      </tr>`;
+    }).join('');
+    el.innerHTML = `<div style="overflow-x:auto"><table><thead>${thead}</thead><tbody>${rows}</tbody></table></div>`;
+  },
+
+  _sortContrats(key) {
+    if (this._contratSort === key) { this._contratSortDir = (this._contratSortDir||1) * -1; }
+    else { this._contratSort = key; this._contratSortDir = 1; }
+    this.renderContrats();
+  },
+
+  _markContratNonDispo(idx) {
+    const items = this.load('contrats') || [];
+    if (!items[idx]) return;
+    items[idx].statut = items[idx].statut === 'Non disponible' ? '' : 'Non disponible';
+    this.save('contrats', items);
+    this.renderContrats();
+  },
+
   renderContratItem(item, header, i) {
     if (header) return '<th>Prestataire</th><th>Objet</th><th>Centre</th><th>Début</th><th>Fin</th><th>Statut</th><th>Doc</th><th></th>';
     const expired = this.isExpired(item.fin);
@@ -7547,6 +7821,16 @@ const App = {
         return worst || 'ok';
       }, 'ok');
 
+      // Prochain recyclage = habilitation expirant le plus tôt (parmi non expirées)
+      const validHabs = habs.filter(h => h.expiration && !this.isExpired(h.expiration));
+      const nextRecyclage = validHabs.length ? validHabs.reduce((min, h) => (!min || h.expiration < min.expiration) ? h : min, null) : null;
+      const nextRecyclageEl = nextRecyclage ? (() => {
+        const days = Math.ceil((new Date(nextRecyclage.expiration) - new Date()) / 86400000);
+        const cls = days <= 30 ? 'ko' : days <= 90 ? 'warn' : 'ok';
+        return `<div style="font-size:11px;font-weight:600;color:var(--${cls==='ok'?'green':cls==='warn'?'amber':'red'})">${this.fmtDate(nextRecyclage.expiration)}</div>
+                <div style="font-size:10px;color:var(--muted)">${nextRecyclage.type} — J-${days}</div>`;
+      })() : '<span style="color:var(--muted);font-size:11px">—</span>';
+
       const habPills = habs.map(h => {
         const exp  = this.isExpired(h.expiration);
         const soon = this.isSoonExpiring(h.expiration, 30);
@@ -7559,7 +7843,8 @@ const App = {
         <td style="font-weight:600">${r.nom||'—'}</td>
         <td style="font-size:11px">${r.poste||'—'}${r.matricule?`<br><span style="color:var(--muted);font-size:9px">${r.matricule}</span>`:''}</td>
         <td style="font-size:11px;color:var(--muted)">${r.centre||'—'}</td>
-        <td style="max-width:280px">${habPills}</td>
+        <td style="max-width:240px">${habPills}</td>
+        <td>${nextRecyclageEl}</td>
         <td><span class="pill pill-${worstHab}">${worstHab==='ko'?'⛔ Échu':worstHab==='warn'?'⚠️ Bientôt':'✅ Valide'}</span></td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" onclick="App.openRHModal(${realIdx})" title="Modifier">✏️</button>
@@ -7569,7 +7854,7 @@ const App = {
     });
 
     el.innerHTML = kpiBar + alertBar + `<div style="overflow-x:auto"><table>
-      <thead><tr><th>Nom</th><th>Poste</th><th>Centre</th><th>Habilitations</th><th>Statut global</th><th></th></tr></thead>
+      <thead><tr><th>Nom</th><th>Poste</th><th>Centre</th><th>Habilitations</th><th>Prochain recyclage</th><th>Statut</th><th></th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
   },
 
@@ -7847,7 +8132,7 @@ Enregistrer quand même ?`)) return;
           lien: (document.getElementById('m-lien')||{}).value || ''
         });
         this.save('contrats', items);
-        this.renderList('contrats', 'contrats-list', this.renderContratItem.bind(this));
+        this.renderContrats();
         this.renderAll();
       },
       investissement: () => {
@@ -7971,11 +8256,16 @@ Enregistrer quand même ?`)) return;
       commission: () => {
         const data = this._getCommData();
         if (!data.prescriptions) data.prescriptions = [];
+        const numPV    = (document.getElementById('m-num-pv')||{}).value || '';
+        const dateVis  = (document.getElementById('m-date-visite')||{}).value || this.today();
+        // Mémoriser pour pré-remplissage suivant
+        this._lastCommNumPV = numPV;
+        this._lastCommDateVisite = dateVis;
         data.prescriptions.unshift({
           id:           this.uuid(),
           centre:       (document.getElementById('m-centre')||{}).value || '',
-          dateVisite:   (document.getElementById('m-date-visite')||{}).value || this.today(),
-          numPV:        (document.getElementById('m-num-pv')||{}).value || '',
+          dateVisite:   dateVis,
+          numPV:        numPV,
           priorite:     (document.getElementById('m-priorite')||{}).value || 'Mineure',
           description:  (document.getElementById('m-description')||{}).value || '',
           dateEcheance: (document.getElementById('m-echeance')||{}).value || '',
@@ -7990,10 +8280,14 @@ Enregistrer quand même ?`)) return;
         const data = this._getCommData();
         const idx  = this._editCommIdx;
         if (idx !== undefined && data.prescriptions && data.prescriptions[idx]) {
-          data.prescriptions[idx].statut       = (document.getElementById('m-statut')||{}).value || '';
-          data.prescriptions[idx].dateEcheance = (document.getElementById('m-echeance')||{}).value || '';
-          data.prescriptions[idx].description  = (document.getElementById('m-description')||{}).value || '';
-          data.prescriptions[idx].lien         = (document.getElementById('m-lien')||{}).value || '';
+          const p = data.prescriptions[idx];
+          p.statut       = (document.getElementById('m-statut')||{}).value || '';
+          p.dateEcheance = (document.getElementById('m-echeance')||{}).value || '';
+          p.description  = (document.getElementById('m-description')||{}).value || '';
+          p.lien         = (document.getElementById('m-lien')||{}).value || '';
+          p.dateVisite   = (document.getElementById('m-date-visite')||{}).value || p.dateVisite || '';
+          p.numPV        = (document.getElementById('m-num-pv')||{}).value || p.numPV || '';
+          p.priorite     = (document.getElementById('m-priorite')||{}).value || p.priorite || 'Mineure';
         }
         this.save('commission', data);
         this.renderCommission();
@@ -9537,12 +9831,19 @@ Enregistrer quand même ?`)) return;
     const type  = this._currentGamme;
     const items = GAMMES_DATA[type] || [];
     const today = new Date().toLocaleDateString('fr-FR');
+    // Récupérer les cases cochées depuis la session
+    const checkKey = `gamme_checks_${type}`;
+    const saved = JSON.parse(sessionStorage.getItem(checkKey)||'{}');
     doc.setFillColor(232,84,26); doc.rect(0,0,210,18,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
     doc.text(`UCPA — Gamme ${type}`, 14, 12);
     doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(`${this.centre!=='ALL'?this.centre:'Tous centres'} · ${today}`, 130, 12);
-    let y = 26; let currentSection = '';
+    doc.text(`${this.centre!=='ALL'?this.centre:'Tous centres'} · ${today}`, 110, 12);
+    // Compter les cases cochées pour le résumé
+    const nbChecked = Object.values(saved).filter(v=>v===1).length;
+    const nbNC = Object.values(saved).filter(v=>v===2).length;
+    doc.text(`${nbChecked}/${items.length} cochés · ${nbNC} NC`, 110, 16);
+    let y = 26; let currentSection = ''; let globalIdx = 0;
     items.forEach(item => {
       if (y > 275) { doc.addPage(); y = 20; }
       const section = item.section || '';
@@ -9552,12 +9853,32 @@ Enregistrer quand même ?`)) return;
         doc.setTextColor(232,84,26); doc.setFontSize(9); doc.setFont('helvetica','bold');
         doc.text(section, 16, y); y += 7;
       }
+      // Déterminer l'état de la case
+      const SECTION_TYPES = ['Journalier','Ouverture','Fermeture'];
+      let stateKey = SECTION_TYPES.includes(type) ? `${section}_${globalIdx}` : `${globalIdx}`;
+      const state = saved[stateKey] || 0; // 0=vide, 1=coché, 2=NC
       doc.setTextColor(30,30,30); doc.setFontSize(8); doc.setFont('helvetica','normal');
+      // Dessiner la case avec état
       doc.rect(14,y-3.5,3.5,3.5);
+      if (state === 1) {
+        doc.setTextColor(0,150,80); doc.setFontSize(8); doc.setFont('helvetica','bold');
+        doc.text('✓', 14.3, y-0.2);
+        doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
+      } else if (state === 2) {
+        doc.setTextColor(100,100,100); doc.setFontSize(7);
+        doc.text('NC', 14.1, y-0.5);
+        doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
+      }
       const text = item.libelle || item.equipement || '';
-      const wrapped = doc.splitTextToSize(text, 160);
+      const wrapped = doc.splitTextToSize(text, 155);
+      doc.setFontSize(8);
+      if (state === 1) { doc.setTextColor(100,150,100); } 
+      else if (state === 2) { doc.setTextColor(160,160,160); }
+      else { doc.setTextColor(30,30,30); }
       doc.text(wrapped, 20, y);
+      doc.setTextColor(30,30,30);
       y += wrapped.length * 4.5 + 2;
+      globalIdx++;
     });
     doc.save(`UCPA_Gamme_${type}_${today.replace(/\//g,'-')}.pdf`);
   },
@@ -14027,6 +14348,48 @@ Theme.init();
 // ══════════════════════════════════════════════════════════════
 // MODULE VEILLE RÉGLEMENTAIRE + CHATBOT IA
 // ══════════════════════════════════════════════════════════════
+// ── Données ressources (portées depuis veille-reglementaire-v3) ──
+const VEILLE_RESOURCES = {
+  commun: [
+    { icon:'🏛', name:'Legifrance', desc:'Textes officiels, arrêtés, décrets, JO en temps réel.', type:'official', url:'https://legifrance.gouv.fr' },
+    { icon:'🔥', name:'sitesecurite.com', desc:'Référence sécurité incendie ERP/IGH : textes, jurisprudence, mises à jour.', type:'official', url:'https://sitesecurite.com' },
+    { icon:'⚡', name:'OPERAT (ADEME)', desc:'Plateforme décret tertiaire — déclaration consommations énergétiques.', type:'tool', url:'https://operat.ademe.fr' },
+    { icon:'💧', name:'Carnet Sanitaire ECS', desc:'Protocoles légionelle, fréquences analyses, obligations DGS.', type:'guide', url:'https://www.legifrance.gouv.fr' },
+    { icon:'♿', name:'Guide Cerema Accessibilité', desc:'Guides techniques PMR pour ERP, dérogations, Ad\'AP.', type:'guide', url:'https://www.cerema.fr' },
+    { icon:'📋', name:'Guide UCPA Maintenance', desc:'Fiches de maintenance interne : incendie, ECS, rondes, cuisine.', type:'guide', url:'#' },
+    { icon:'🔧', name:'INRS — Prévention', desc:'Fiches prévention risques professionnels, SST, EPI.', type:'official', url:'https://www.inrs.fr' },
+    { icon:'🏥', name:'ANSES — Eau sanitaire', desc:'Avis scientifiques légionelle, qualité eau, seuils réglementaires.', type:'official', url:'https://www.anses.fr' },
+    { icon:'☣', name:'INRS — Amiante', desc:'Guides opérateurs, fiches techniques désamiantage, obligations SS4.', type:'official', url:'https://www.inrs.fr/risques/amiante' },
+    { icon:'🪣', name:'ARS — Plomb & Eau', desc:'Circulaires ARS, obligations CREP, seuils plomb dans l\'eau potable.', type:'official', url:'https://www.solidarites-sante.gouv.fr' },
+    { icon:'🔼', name:'OPPBTP — Équipements', desc:'Guides sécurité ascenseurs, contrôles réglementaires, équipements sous pression.', type:'official', url:'https://www.oppbtp.fr' },
+    { icon:'🔊', name:'Cerema — Acoustique', desc:'Guides techniques acoustique ERP, normes bruit, réglementation.', type:'guide', url:'https://www.cerema.fr' },
+    { icon:'🔥', name:'COSTIC — Chaufferie', desc:'Fiches techniques chaufferies, entretien chaudières, réglementation gaz et conduits.', type:'official', url:'https://www.costic.com' },
+    { icon:'⚙', name:'ATF Gaz', desc:'Réglementation installations gaz intérieur ERP, DTU 61.1, vérifications obligatoires.', type:'official', url:'https://www.atfgaz.fr' },
+    { icon:'☢', name:'IRSN — Radon', desc:'Cartographie zones radon, obligations mesure ERP, guides techniques.', type:'official', url:'https://www.irsn.fr' },
+    { icon:'🌬', name:'Cerema — Qualité Air Intérieur', desc:'Autodiagnostic QAI obligatoire, évaluation aération, VMC ERP.', type:'guide', url:'https://www.cerema.fr' },
+    { icon:'⚡', name:'UTE — NFC 15-100', desc:'Normes installations électriques, vérifications périodiques, TGBT, IRVE.', type:'official', url:'https://www.ute-fr.com' },
+    { icon:'🍳', name:'DGAL — Hygiène alimentaire', desc:'HACCP restauration collective, agrément sanitaire, contrôles DDPP.', type:'official', url:'https://agriculture.gouv.fr' },
+    { icon:'🏊', name:'ARS — Piscines & Baignade', desc:'Qualité eau piscines, carnet sanitaire, seuils légionelle, chloramines.', type:'official', url:'https://www.solidarites-sante.gouv.fr' },
+    { icon:'🧯', name:'CNPP — Moyens de secours', desc:'Référentiel extincteurs, RIA, colonnes sèches, APSAD, DAE.', type:'official', url:'https://www.cnpp.com' },
+    { icon:'📋', name:'INRS — DUERP', desc:'Document unique évaluation risques, mise à jour annuelle, portail numérique.', type:'official', url:'https://www.inrs.fr' },
+    { icon:'🏗', name:'DHUP — Structure bâtiment', desc:'Diagnostics structure, risque sismique, RE2020, DTU rénovation.', type:'official', url:'https://www.ecologie.gouv.fr' },
+    { icon:'🏋', name:'DRAJES — Équipements sportifs', desc:'Homologation installations sportives, SAE, remontées mécaniques STRMTG.', type:'official', url:'https://www.education.gouv.fr' },
+  ],
+  region: [
+    { icon:'🗺', name:'Annuaire prestataires région', desc:'Contacts prestataires agréés par zone géographique régionale.', type:'reg', url:'#' },
+    { icon:'📅', name:'Planning visites région', desc:'Calendrier des commissions de sécurité et visites réglementaires par site.', type:'reg', url:'#' },
+    { icon:'📊', name:'Rapport régional mensuel', desc:'Synthèse des alertes de conformité pour les sites de votre périmètre.', type:'reg', url:'#' },
+    { icon:'📍', name:'Carte des centres', desc:'Vue géographique des centres et leur statut de conformité réglementaire.', type:'reg', url:'#' },
+  ],
+  national: [
+    { icon:'🇫🇷', name:'Assemblee-nationale.fr', desc:'Suivi des projets de loi et décrets en cours susceptibles d\'impacter le réseau.', type:'nat', url:'https://www.assemblee-nationale.fr' },
+    { icon:'📈', name:'Veille JO quotidienne', desc:'Journal Officiel — flux quotidien des arrêtés et décrets techniques.', type:'nat', url:'https://www.legifrance.gouv.fr/jorf/jo' },
+    { icon:'🏆', name:'Benchmarks conformité réseau', desc:'Comparatif conformité par région et type d\'établissement (O, N, R).', type:'nat', url:'#' },
+    { icon:'📤', name:'Modèles de rapports DSI', desc:'Trames standardisées pour rapports direction et reporting conformité.', type:'nat', url:'#' },
+    { icon:'🔗', name:'Réseau UCPA — Intranet', desc:'Accès documentation interne, procédures nationales, formulaires.', type:'nat', url:'#' },
+  ]
+};
+
 const Veille = {
   _history: [],
   _searching: false,
@@ -14086,7 +14449,89 @@ const Veille = {
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
-          system: `Tu es un expert en réglementation des ERP (Établissements Recevant du Public) français, spécialisé dans l'hôtellerie touristique et les centres sportifs de plein air (type UCPA). Tu maîtrises parfaitement : le Code de la construction (CCH), la réglementation incendie ERP (arrêtés du 25 juin 1980 et suivants), la réglementation sanitaire (ECS, légionelles, arrêté 1er fév 2010), les normes PMR, la réglementation ascenseurs, les contrôles périodiques obligatoires. Réponds de façon précise, pratique et cite les références légales (articles, arrêtés, décrets). Tutoie l'utilisateur.`,
+          system: `Tu es l'assistant maintenance et réglementaire UCPA (Union Nationale des Centres Sportifs de Plein Air). Tu combines expertise réglementaire ERP et expertise opérationnelle de maintenance terrain pour les centres UCPA.
+
+## TON DOUBLE RÔLE
+
+**1. Expert réglementation ERP** : Code de la construction (CCH), réglementation incendie ERP (arrêtés du 25 juin 1980 et suivants), réglementation sanitaire (ECS/légionelles, arrêté 1er fév 2010), normes PMR, réglementation ascenseurs, contrôles périodiques obligatoires. Tu cites les références légales précises (articles, arrêtés, décrets).
+
+**2. Expert maintenance UCPA** : Tu connais parfaitement l'ensemble des procédures de maintenance des centres UCPA, que tu as intégrées dans tes connaissances :
+
+### CONCEPT & OBJECTIFS UCPA
+- Les centres UCPA sont des ERP (établissements recevant du public) soumis à réglementation stricte
+- Triple responsabilité : sécurité des biens et personnes / bon fonctionnement installations / planification travaux et investissements
+- Indicateurs clés : satisfaction client, registre de sécurité, consommations eau/énergie, moyens de secours, plan d'investissement
+- Le "regard client" : ce que voit (éclairages, état bâtiment), ce que sent (température), ce qu'entend — la maintenance est invisible mais son dysfonctionnement impact direct sur la qualité du séjour
+
+### RONDES TECHNIQUES (Fiche 4)
+- **Principe absolu** : toute anomalie = réparation immédiate OU bon d'intervention signé par l'intervenant ET le N+1. Si non réalisable en saison → liste travaux intersaison.
+- **Vision client (journalier)** : éclairages d'ambiance, bon fonctionnement équipements généraux, état général bâtiment
+- **Extérieurs (journalier)** : propreté abords, parking, locaux poubelles, économat
+- **Sécurité (journalier)** : centrale incendie SSI, éclairage sécurité + détecteurs présence, accessibilité/dégagements libres
+- **Sécurité (hebdomadaire)** : colonnes sèches/RIA, défibrillateur (présence + mise sous tension), ascenseurs (visuel + affichages), portes automatiques, aires de jeux et multisports
+- **Éclairage sécurité** : contrôle permanent + mensuel consigné dans registre de sécurité
+- **CVC** : contrôle hebdomadaire chauffage, ventilation, climatisation
+
+### SÉCURITÉ INCENDIE ERP (Fiche 2 — Arrêté 25 juin 1980)
+- **Contrôles annuels obligatoires** (par prestataire habilité, mention registre sécurité) : SSI/détection incendie, désenfumage, extincteurs et RIA, installations électriques
+- **Vérifications ouverture** : consignes affichées dans TOUS les logements et lieux de travail, portes coupe-feu + ferme-portes, DAAF contrôlés, armoire SSI accessible + notice affichée, extincteurs/RIA à moins d'1m hauteur, plan pompiers à l'entrée, lieu rassemblement matérialisé, portes anti-paniques OK, issues secours signalées
+- **Formation** : personnel formé SSI, trace dans registre de sécurité
+- Levées d'observations : obligatoires avant prochaine commission, non-levée = risque fermeture administrative
+
+### ECS / LÉGIONELLA (Fiche 3)
+- **Températures seuils** : production/ballon > 60°C, retour bouclage > 50°C (minimum réglementaire absolu), zone prolifération légionelles = 25-50°C (DANGER)
+- **Relevés hebdomadaires** : mesure T° sur tous points de distribution + retour bouclage, consigner dans carnet sanitaire
+- **Chasse thermique mensuelle** : purge à T° > 70°C sur points d'usage peu utilisés (chambres fermées, douches peu fréquentées)
+- **Annuel** : détartrage, désinfection par prestataire habilité, analyse bactériologique
+- **Ouverture de saison** : chasse thermique obligatoire AVANT remise en service (T° > 70°C)
+- Si T° retour < 50°C : action corrective immédiate, augmenter réglage chaudière, purge forcée, appel prestataire si problème persiste
+
+### CUISINE COLLECTIVE (Fiche 5 — Article GC21)
+- **Obligations légales** (Arrêté 25 juin 1980, Art. GC21) : entretien régulier des appareils de cuisson, livret d'entretien annexé au registre de sécurité
+- **Ramonage conduits d'évacuation** : minimum 1 fois/an + vérification vacuité
+- **Filtres hottes** : nettoyage ou remplacement minimum 1 fois/semaine en période activité
+- **Circuit extraction** (buées/graisses, ventilateurs, récupérateurs) : nettoyage pendant périodes activité
+- **Art. GC19** : puissance utile totale ≤ 20 kW
+- **4 axes de maintenance cuisine** :
+  1. Contrat prestataire cuisiniste (annuel, vérifier liste matériel + descriptif opérations)
+  2. Check-list contrôles internes réguliers (absence de danger)
+  3. Gammes de maintenance préventive internes (Cuisson, Préparation, Froid, Plonge)
+  4. Suivi documenté : bons d'intervention + contrats + notices techniques annexés au registre de sécurité
+
+### ÉCLAIRAGE DE SÉCURITÉ (Fiche 6 — BAES)
+- Contrôle visuel quotidien
+- Test mensuel obligatoire + consignation dans registre de sécurité
+- Vérification annuelle par technicien habilité
+
+### SÉCURITÉ AU TRAVAIL (Fiche 7)
+- **Document Unique (DU/DUERP)** : obligatoire depuis 2001 pour toutes les entreprises, évaluation des risques professionnels, mis à jour annuellement ou lors de modification des conditions de travail. Référence juridique en cas d'accident du travail. (Décret n°2001-1016 du 05/11/2001)
+- **EPI obligatoires** : gants, masque, lunettes pour produits chimiques et machines-outils (armoire électrique, manipulation chlore, soudure)
+- **Plan de prévention** : obligatoire pour toute entreprise extérieure intervenant sur site (Réf. R.4512-1, L.8222-1)
+
+### PRESTATAIRES (Fiche 7.2)
+- Cahier de suivi prestataires : tracer toutes les interventions extérieures
+- Plan de prévention obligatoire avant toute intervention
+- Levées d'observations : priorité absolue, risque fermeture administrative si non levées
+- Contrôles annuels à planifier : SSI, désenfumage, extincteurs, électricité, ascenseurs (semestriel), ECS bactério, cuisiniste, ramonage
+
+### PROCÉDURE OUVERTURE DE SAISON
+- **Étape 1 — Documents** : registre sécurité à jour, plan de prévention actualisé, DTA (Dossier Technique Amiante) vérifié
+- **Étape 2 — Inspections** : tour complet installations, contrôles périodiques obligatoires réalisés, éclairage sécurité vérifié
+- **Étape 3 — Maintenance préventive** : équipements cuisine entretenus, systèmes incendie vérifiés, véhicules révisés/CT à jour, CHASSE THERMIQUE ECS (T° > 70°C) AVANT remise en service
+
+### VÉHICULES
+- Niveaux (huile, liquide refroidissement, lave-glace) et pression pneus : hebdomadaire
+- Carnet de bord : à chaque utilisation
+- Contrôle technique : tous les 2 ans
+- Révision : selon préconisations constructeur
+
+## STYLE DE RÉPONSE
+- Pratique et direct, adapté au terrain
+- Pour les urgences sécurité : procédure d'urgence en premier
+- Cite les textes réglementaires quand pertinent
+- Adapte le niveau selon si la personne est débutante ou expérimentée (si elle semble novice, sois pédagogue ; si experte, sois concis)
+- Tutoie l'utilisateur
+- Utilise des listes à puces pour les procédures étape par étape`,
           messages: this._history.map(m => ({ role: m.role, content: m.content }))
         })
       });
@@ -14178,11 +14623,58 @@ const Veille = {
     if (input) input.value = term;
     this.search();
   },
+
+  // ── Navigation onglets principaux (Recherche / Ressources) ──
+  switchTab(tab, btn) {
+    document.querySelectorAll('.veille-main-tab').forEach(b => {
+      b.classList.remove('active');
+      b.style.borderBottom = '2px solid transparent';
+      b.style.fontWeight = '';
+    });
+    btn.classList.add('active');
+    btn.style.borderBottom = '2px solid var(--accent)';
+    btn.style.fontWeight = '700';
+
+    document.getElementById('veille-panel-veille').style.display    = tab === 'veille'     ? '' : 'none';
+    document.getElementById('veille-panel-resources').style.display = tab === 'resources'  ? '' : 'none';
+
+    if (tab === 'resources') this._renderResCards('commun');
+  },
+
+  // ── Onglets Commun / Région / National dans Ressources ──
+  switchResTab(type, btn) {
+    btn.closest('#res-tabs').querySelectorAll('.res-tab').forEach(b => {
+      b.className = 'res-tab';
+    });
+    btn.className = `res-tab active-${type}`;
+    this._renderResCards(type);
+  },
+
+  _renderResCards(type) {
+    const container = document.getElementById('res-grid-container');
+    if (!container) return;
+    const items = VEILLE_RESOURCES[type] || [];
+    const typeCls   = { official:'type-official', guide:'type-guide', tool:'type-tool', nat:'type-nat', reg:'type-reg' };
+    const typeLabel = { official:'Officiel', guide:'Guide', tool:'Outil', nat:'National', reg:'Région' };
+    container.innerHTML = items.map(r => {
+      const onclick = r.url && r.url !== '#'
+        ? `onclick="window.open('${r.url}','_blank')"`
+        : '';
+      return `<div class="res-card" ${onclick}>
+        <div class="res-card-icon">${r.icon}</div>
+        <div class="res-card-name">${r.name}</div>
+        <div class="res-card-desc">${r.desc}</div>
+        <span class="res-card-type ${typeCls[r.type] || 'type-guide'}">${typeLabel[r.type] || 'Guide'}</span>
+      </div>`;
+    }).join('');
+  },
 };
 
 // Charger l'historique quand on arrive sur la page veille
 document.addEventListener('ucpa-session-started', () => {
   setTimeout(() => Veille._loadHistory(), 500);
+  setTimeout(() => DashIA._init(), 600);
+  setTimeout(() => App._renderCustomLinks(), 200);
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -14237,49 +14729,8 @@ const PDFImport = {
 
       // Prompt précis basé sur le format exact de la fiche UCPA
       const systemPrompt = `Tu es un extracteur de données pour les fiches de synthèse UCPA.
-Réponds UNIQUEMENT en JSON valide et COMPLET. Pas de markdown, pas d'explication, pas de troncature.
-
-RÈGLES DE MAPPING — correspondance entre le PDF UCPA et les catIds du registre :
-PDF "3.1 FORMATIONS EXTINCTEURS" → catId "3.1"
-PDF "3.2 SENSIBILISATION CENTRALE INCENDIE" → catId "3.2"
-PDF "4.1 EXTINCTEURS" → catId "4.1"
-PDF "4.2 S.S.I (annuel)" → catId "4.2"
-PDF "S.S.I TRIENNALE" (sous 4.2) → catId "4.3"
-PDF "4.3 D.A.S" → catId "4.4"
-PDF "4.4 R.I.A" → catId "4.5"
-PDF "4.5 COLONNE SÈCHE / PEI" → catId "4.6"
-PDF "4.6 SPRINKLER" → catId "4.7"
-PDF "4.7 DÉSENFUMAGE" → catId "4.8"
-PDF "5.1 Q18 ÉLECTRIQUE" → catId "5.1"
-PDF "5.2 BAES / BAEH" → catId "5.2"
-PDF "5.3.1 ASCENSEURS" (visite annuelle OTIS) → catId "6.1"
-PDF "5.3.1 QUINQUENNAL VRE+CTQ" → catId "6.2"
-PDF "5.4.1 RÉSEAUX GAZ" → catId "7.1"
-PDF "5.4.2 CHAUDIÈRES / COMBUSTION GAZ ET FIOUL" → catId "7.2"
-PDF "5.4.3 APPAREILS CUISINE (feux vifs)" → catId "7.3"
-PDF "5.4.4 RAMONAGE" → catId "7.4"
-PDF "5.5.1 PERFORMANCE ÉNERGÉTIQUE" → catId "8.1"
-PDF "5.5.2 CONTRÔLE ÉTANCHÉITÉ" → catId "8.2"
-PDF "5.6 EPC / EPI" → catId "9"
-PDF "5.7.1 HOTTES DE CUISINE" → catId "10.1"
-PDF "5.7.2 VENTILATION" → catId "10.2"
-PDF "5.8 INSTALLATIONS SPORTIVES" → catId "11.1"
-PDF "5.9 DÉFIBRILLATEURS" → catId "12"
-PDF "6 RADON" → catId "13"
-PDF "CARNET SANITAIRE LÉGIONELLOSE" → catId "15.1"
-PDF "DISCONNECTEUR" → catId "15.2"
-PDF "BAC À GRAISSE" → catId "16"
-PDF "CITERNE GAZ" → catId "17"
-
-AUTRES RÈGLES :
-- "Sans objet" ou ligne sans prestataire ET sans date → NE PAS inclure dans controles
-- "contrat": true si colonne Contrat = X, false sinon
-- "resultat": "Conforme" si date présente, "" si pas de date
-- Dates → format YYYY-MM-DD (convertir DD/MM/YYYY → YYYY-MM-DD, ex: 17/12/2024 → 2024-12-17)
-- erp_types : liste des codes ERP ex ["RH","N","L"] (normaliser en majuscules)
-- erp_cat : chiffre seul ex "3"
-
-JSON À RETOURNER :
+Extrait TOUTES les données du PDF et réponds UNIQUEMENT en JSON valide, sans markdown, sans explication.
+Format exact :
 {
   "nom": "",
   "siret": "",
@@ -14307,15 +14758,19 @@ JSON À RETOURNER :
   "effectif_total": "",
   "capacite_client": "",
   "nb_niveaux": "",
-  "dc_nom": "",
-  "dc_tel": "",
-  "dc_email": "",
-  "rm_nom": "",
-  "rm_tel": "",
   "controles": [
-    {"catId":"4.1","prestataire":"DESAUTEL","contrat":true,"derniere_visite":"2024-07-23","resultat":"Conforme"}
+    {
+      "catId": "4.1",
+      "prestataire": "DESAUTEL",
+      "contrat": true,
+      "derniere_visite": "23/07/2024",
+      "resultat": "Conforme"
+    }
   ]
-}`
+}
+Pour erp_types : extraire les codes exacts (ex: ["RH","N","L"]).
+Pour les contrôles : utiliser exactement les catIds du registre (3.1, 3.2, 4.1, 4.2, 4.3=SSI triennale, 4.4=DAS, 4.5=RIA, 4.6=colonne sèche/PEI, 4.7=sprinkler, 4.8=désenfumage, 5.1=Q18, 5.2=BAES, 6.1=ascenseurs, 6.2=quinquennal, 7.1=réseaux gaz, 7.2=chaudières, 7.3=cuisine, 7.4=ramonage, 8.1=perf énergie, 8.2=étanchéité, 9=EPC/EPI, 10.1=hottes, 10.2=ventilation, 11.1=sportifs, 12=DAE, 13=radon, 15.1=légionellose, 15.2=disconnecteur, 16=bac graisse, 17=citerne gaz).
+Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le contrôle.`;
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -14439,19 +14894,6 @@ JSON À RETOURNER :
     set('s-puissance_chaud',d.puissance_kw || d.nb_chaudieres);
     set('s-chauffage',      d.type_chauffage);
     set('s-erp_cat',        d.erp_cat);
-    set('s-dc_nom',         d.dc_nom);
-    set('s-dc_tel',         d.dc_tel);
-    set('s-dc_email',       d.dc_email);
-    set('s-rm_nom',         d.rm_nom);
-    set('s-rm_tel',         d.rm_tel);
-    set('s-code_naf',       d.code_naf);
-    set('s-departement',    d.departement);
-    set('s-nb_niveaux',     d.nb_niveaux);
-    set('s-alim_gaz',       d.alim_gaz);
-    set('s-alim_fioul',     d.alim_fioul);
-    set('s-volume_fioul',   d.volume_fioul);
-    set('s-annee_service',  d.annee_mise_service);
-    set('s-periodicite',    d.periodicite_commission);
 
     // Commission de sécurité
     if (d.derniere_commission) {
@@ -14490,42 +14932,25 @@ JSON À RETOURNER :
       rows = (App.load('registre') || {})[centre] || [];
     }
 
-    if (rows.length === 0) {
-      console.warn('[PDFImport] Registre toujours vide après init pour', centre);
-      return;
-    }
-
-    console.log(`[PDFImport] Registre : ${rows.length} lignes existantes pour ${centre}`);
-    console.log('[PDFImport] catIds reçus depuis PDF:', controles.map(c => c.catId).join(', '));
-    console.log('[PDFImport] catIds dans registre:', [...new Set(rows.map(r => r.catId))].join(', '));
-
     let updated = 0;
     controles.forEach(ctrl => {
       if (!ctrl.catId) return;
 
+      // Trouver la ligne correspondante dans le registre par catId
       const row = rows.find(r => r.catId === ctrl.catId);
       if (row) {
         if (ctrl.prestataire) row.prestataire = ctrl.prestataire;
-        if (ctrl.contrat !== undefined && ctrl.contrat) {
-          row.observations = row.observations ? row.observations : 'Contrat actif';
+        if (ctrl.contrat !== undefined) {
+          // Stocker info contrat dans observations si pertinent
+          if (ctrl.contrat && !row.observations) row.observations = 'Contrat actif';
         }
         if (ctrl.derniere_visite) {
           row.dateRealisation = this._normalizeDate(ctrl.derniere_visite);
           row.resultat = ctrl.resultat || 'Conforme';
-          // Calculer prochainControle si periodicite connue
-          if (row.periodicite && row.dateRealisation) {
-            try {
-              const d = new Date(row.dateRealisation);
-              d.setFullYear(d.getFullYear() + parseInt(row.periodicite));
-              row.prochainControle = d.toISOString().slice(0,10);
-            } catch(e) {}
-          }
         }
-        if (ctrl.organisme) row.organisme = ctrl.organisme;
         updated++;
-        console.log(`[PDFImport] ✅ catId ${ctrl.catId} → ${ctrl.prestataire || ''} ${ctrl.derniere_visite || ''}`);
       } else {
-        console.warn('[PDFImport] ❌ catId non trouvé dans registre:', ctrl.catId);
+        console.log('[PDFImport] catId non trouvé dans registre:', ctrl.catId);
       }
     });
 
@@ -14553,6 +14978,353 @@ JSON À RETOURNER :
   }
 };
 
+// ══════════════════════════════════════════════════════════════
+// MODULE ASSISTANT MAINTENANCE IA
+// ══════════════════════════════════════════════════════════════
+const Assistant = {
+  _history: [],
+  _loading: false,
+
+  init() {
+    try { this._history = JSON.parse(localStorage.getItem('ucpa_ia_history') || '[]'); } catch(e) { this._history = []; }
+    this._renderHistory();
+    this._updateKeyStatus();
+  },
+
+  _saveHistory() {
+    try { localStorage.setItem('ucpa_ia_history', JSON.stringify(this._history.slice(-60))); } catch(e) {}
+  },
+
+  _fmt(text) {
+    return (text || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/\n\n/g,'<br><br>')
+      .replace(/\n/g,'<br>');
+  },
+
+  _renderHistory() {
+    const el = document.getElementById('ia-messages');
+    if (!el) return;
+    // Supprimer les anciens messages user/assistant (garder le message d'accueil initial)
+    el.querySelectorAll('.ia-history-msg').forEach(n => n.remove());
+    const items = this._history.slice(-30);
+    items.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'ia-msg ia-history-msg ' + (m.role === 'user' ? 'ia-user' : 'ia-assistant');
+      div.innerHTML = `<div class="ia-msg-sender">${m.role === 'user' ? 'Vous' : 'Assistant UCPA'}</div><div class="ia-msg-bubble ${m.role === 'user' ? 'ia-bubble-user' : 'ia-bubble-assistant'}">${this._fmt(m.content)}</div>`;
+      el.appendChild(div);
+    });
+    el.scrollTop = el.scrollHeight;
+  },
+
+  clearHistory() {
+    if (!confirm('Effacer l\'historique de l\'assistant ?')) return;
+    this._history = [];
+    this._saveHistory();
+    document.querySelectorAll('.ia-history-msg').forEach(n => n.remove());
+  },
+
+  quick(text) {
+    const inp = document.getElementById('ia-input');
+    if (inp) inp.value = text;
+    this.send();
+  },
+
+  async send() {
+    if (this._loading) return;
+    const inp = document.getElementById('ia-input');
+    if (!inp) return;
+    const msg = (inp.value || '').trim();
+    if (!msg) return;
+    inp.value = '';
+
+    this._history.push({ role: 'user', content: msg });
+    this._renderHistory();
+    this._loading = true;
+    const btn = document.getElementById('ia-send-btn');
+    if (btn) btn.disabled = true;
+    const thinking = document.getElementById('ia-thinking');
+    if (thinking) thinking.style.display = 'flex';
+    const el = document.getElementById('ia-messages');
+    if (el) el.scrollTop = el.scrollHeight;
+
+    const SYSTEM = `Tu es l'assistant maintenance et réglementaire UCPA (Union Nationale des Centres Sportifs de Plein Air). Tu combines expertise réglementaire ERP et expertise opérationnelle de maintenance terrain.
+
+RÉGLEMENTATION ERP : Arrêté 25 juin 1980 + suivants, CCH, réglementation sanitaire ECS/légionelles (arrêté 1er fév 2010), normes PMR, réglementation ascenseurs, contrôles périodiques obligatoires. Cite les références légales précises.
+
+PROCÉDURES MAINTENANCE UCPA :
+
+RONDES TECHNIQUES (Fiche 4)
+Règle absolue : toute anomalie = réparation immédiate OU bon d'intervention signé intervenant + N+1. Si non réalisable en saison → liste travaux intersaison.
+Journalier : éclairages d'ambiance et équipements visibles client, état général bâtiment, extérieurs/parking/poubelles, centrale incendie SSI, éclairage sécurité + détecteurs présence, accessibilité/dégagements libres.
+Hebdomadaire : colonnes sèches/RIA, défibrillateur (présence + mise sous tension), ascenseurs, portes automatiques, aires de jeux, CVC.
+Mensuel consigné : test BAES dans registre de sécurité.
+
+SÉCURITÉ INCENDIE ERP (Arrêté 25 juin 1980)
+Contrôles annuels obligatoires par prestataire habilité avec mention registre : SSI/détection incendie, désenfumage, extincteurs/RIA, installations électriques.
+À l'ouverture : consignes affichées dans TOUS logements et lieux de travail, portes coupe-feu + ferme-portes, DAAF contrôlés, armoire SSI accessible + notice, extincteurs/RIA à moins d'1m hauteur, plan pompiers à l'entrée, lieu rassemblement matérialisé, issues secours libres et signalées.
+
+ECS / LÉGIONELLA (Arrêté 1er fév 2010)
+Seuils : production > 60°C, retour bouclage > 50°C (minimum réglementaire absolu). Zone de prolifération légionelles = 25–50°C → DANGER.
+Relevés hebdomadaires dans carnet sanitaire. Chasse thermique mensuelle (T° > 70°C) sur points peu utilisés. Analyse bactériologique annuelle par labo agréé.
+À l'ouverture : chasse thermique T° > 70°C AVANT remise en service.
+Si retour < 50°C : augmenter réglage chaudière, purge forcée, appel prestataire si problème persiste.
+
+CUISINE COLLECTIVE (Art. GC21 — Arrêté 25 juin 1980)
+Ramonage conduits d'évacuation : minimum 1 fois/an + vérification vacuité.
+Filtres hottes : nettoyage ou remplacement minimum 1 fois/semaine en activité.
+Circuit extraction (buées/graisses, ventilateurs, récupérateurs) : nettoyage régulier en période d'activité.
+Art. GC19 : puissance utile totale ≤ 20 kW.
+4 axes maintenance cuisine : contrat cuisiniste annuel (vérifier liste matériel + descriptif opérations) / check-list contrôles internes réguliers / gammes de maintenance préventive internes (Cuisson, Préparation, Froid, Plonge) / suivi documenté (bons intervention + contrats + notices annexés au registre de sécurité).
+
+ÉCLAIRAGE DE SÉCURITÉ (BAES)
+Contrôle visuel quotidien. Test mensuel obligatoire + consignation registre de sécurité. Vérification annuelle par technicien habilité.
+
+SÉCURITÉ AU TRAVAIL
+DUERP obligatoire depuis 2001 (Décret n°2001-1016 du 05/11/2001), mis à jour annuellement.
+EPI obligatoires : gants + masque + lunettes pour produits chimiques et machines-outils.
+Plan de prévention obligatoire pour toute entreprise extérieure (R.4512-1, L.8222-1).
+
+OUVERTURE DE SAISON
+Étape 1 Documents : registre sécurité à jour, plan prévention actualisé, DTA (Dossier Technique Amiante) vérifié.
+Étape 2 Inspections : tour complet installations, contrôles périodiques obligatoires réalisés, éclairage sécurité vérifié.
+Étape 3 Maintenance préventive : équipements cuisine entretenus, SSI vérifié, véhicules révisés et CT à jour, chasse thermique ECS T° > 70°C AVANT remise en service.
+
+VÉHICULES
+Niveaux (huile, refroidissement, lave-glace) et pression pneus : hebdomadaire. Carnet de bord : à chaque utilisation. Contrôle technique : tous les 2 ans.
+
+STYLE : Pratique et direct, adapté au terrain. Pour urgences sécurité : procédure immédiate en premier. Cite les textes réglementaires quand pertinent. Adapte le niveau selon l'expérience perçue. Tutoie l'utilisateur.`;
+
+    try {
+      const apiKey = window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1200,
+          system: SYSTEM,
+          messages: this._history.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await response.json();
+      const reply = data.content?.[0]?.text || 'Désolé, impossible de répondre. Réessaie.';
+      this._history.push({ role: 'assistant', content: reply });
+    } catch(err) {
+      this._history.push({ role: 'assistant', content: '⚠️ Erreur de connexion. Vérifie la clé API dans Admin et ta connexion réseau.' });
+    }
+
+    if (thinking) thinking.style.display = 'none';
+    this._loading = false;
+    if (btn) btn.disabled = false;
+    this._saveHistory();
+    this._renderHistory();
+  },
+
+  _updateKeyStatus() {
+    const el = document.getElementById('ia-key-status');
+    const dot = document.getElementById('ia-online-dot');
+    if (!el) return;
+    const hasKey = !!(window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' && ANTHROPIC_API_KEY !== 'VOTRE_CLE_API_ICI'));
+    el.textContent = hasKey ? '✅ Clé active' : '❌ Clé manquante';
+    el.style.color = hasKey ? 'var(--green)' : 'var(--red)';
+    el.style.borderColor = hasKey ? 'var(--green)' : 'var(--red)';
+    if (dot) dot.style.background = hasKey ? 'var(--green)' : 'var(--muted)';
+  },
+
+  // ── Onglets principaux page assistant ──
+  switchMainTab(tab, btn) {
+    document.querySelectorAll('.assistant-main-tab').forEach(b => {
+      b.style.borderBottom = '2px solid transparent';
+      b.style.fontWeight = '';
+    });
+    if (btn) { btn.style.borderBottom = '2px solid var(--accent)'; btn.style.fontWeight = '700'; }
+    ['maintenance','veille','ressources'].forEach(p => {
+      const el = document.getElementById('assistant-panel-' + p);
+      if (el) el.style.display = p === tab ? (p === 'maintenance' ? 'grid' : '') : 'none';
+    });
+    if (tab === 'ressources') Veille._renderResCards('commun');
+    if (tab === 'veille') setTimeout(() => Veille._loadHistory(), 100);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// WIDGET IA DASHBOARD — DashIA
+// ══════════════════════════════════════════════════════════════
+const DashIA = {
+  _currentTab: 'maintenance',
+  _histMaint: [],
+  _histVeille: [],
+  _loading: false,
+
+  _init() {
+    try { this._histMaint  = JSON.parse(localStorage.getItem('ucpa_dash_ia_maint')  || '[]'); } catch(e) {}
+    try { this._histVeille = JSON.parse(localStorage.getItem('ucpa_dash_ia_veille') || '[]'); } catch(e) {}
+    this._renderHistory('maintenance');
+    this._renderHistory('veille');
+  },
+
+  _save(tab) {
+    try {
+      if (tab === 'maintenance') localStorage.setItem('ucpa_dash_ia_maint',  JSON.stringify(this._histMaint.slice(-40)));
+      else                       localStorage.setItem('ucpa_dash_ia_veille', JSON.stringify(this._histVeille.slice(-40)));
+    } catch(e) {}
+  },
+
+  _fmt(t) {
+    return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  },
+
+  _renderHistory(tab) {
+    const el = document.getElementById('dash-ia-msgs-' + tab);
+    if (!el) return;
+    el.querySelectorAll('.dash-ia-hist').forEach(n => n.remove());
+    const hist = tab === 'maintenance' ? this._histMaint : this._histVeille;
+    hist.slice(-20).forEach(m => {
+      const d = document.createElement('div');
+      d.className = 'ia-msg ia-hist dash-ia-hist ' + (m.role === 'user' ? 'ia-user' : 'ia-assistant');
+      d.innerHTML = `<div class="ia-msg-sender">${m.role === 'user' ? 'Vous' : 'Assistant'}</div>
+        <div class="ia-msg-bubble ${m.role==='user'?'ia-bubble-user':'ia-bubble-assistant'}" style="font-size:12px">${this._fmt(m.content)}</div>`;
+      el.appendChild(d);
+    });
+    el.scrollTop = el.scrollHeight;
+  },
+
+  switchTab(tab) {
+    this._currentTab = tab;
+    ['maintenance','veille'].forEach(t => {
+      const msgs = document.getElementById('dash-ia-msgs-' + t);
+      const sc   = document.getElementById('dash-ia-shortcuts-' + t);
+      const show = t === tab;
+      if (msgs) msgs.style.display = show ? 'flex' : 'none';
+      if (sc)   sc.style.display   = show ? 'block' : 'none';
+    });
+    document.querySelectorAll('.dash-ia-tab').forEach(b => {
+      b.style.fontWeight = '';
+      b.style.background = '';
+    });
+    const activeBtn = document.getElementById('dash-ia-tab-' + tab);
+    if (activeBtn) { activeBtn.style.fontWeight = '700'; activeBtn.style.background = 'var(--bg2)'; }
+    const inp = document.getElementById('dash-ia-input');
+    if (inp) inp.placeholder = tab === 'veille' ? 'Question réglementaire…' : 'Pose ta question maintenance…';
+  },
+
+  quick(text) {
+    const inp = document.getElementById('dash-ia-input');
+    if (inp) inp.value = text;
+    this.send();
+  },
+
+  clearCurrent() {
+    if (!confirm('Effacer cet historique ?')) return;
+    if (this._currentTab === 'maintenance') { this._histMaint = []; localStorage.removeItem('ucpa_dash_ia_maint'); }
+    else                                    { this._histVeille = []; localStorage.removeItem('ucpa_dash_ia_veille'); }
+    const el = document.getElementById('dash-ia-msgs-' + this._currentTab);
+    if (el) el.querySelectorAll('.dash-ia-hist').forEach(n => n.remove());
+  },
+
+  async send() {
+    if (this._loading) return;
+    const inp = document.getElementById('dash-ia-input');
+    if (!inp) return;
+    const msg = (inp.value || '').trim();
+    if (!msg) return;
+    inp.value = '';
+
+    const tab = this._currentTab;
+    const hist = tab === 'maintenance' ? this._histMaint : this._histVeille;
+    hist.push({ role: 'user', content: msg });
+    this._renderHistory(tab);
+    this._loading = true;
+
+    const thinking = document.getElementById('dash-ia-thinking');
+    const btn = document.getElementById('dash-ia-send');
+    if (thinking) thinking.style.display = 'flex';
+    if (btn) btn.disabled = true;
+
+    const SYSTEM_MAINT = `Tu es l'assistant maintenance UCPA (centres sportifs ERP types O, N, R). Réponds de façon concise et pratique. Donne des procédures opérationnelles avec références réglementaires quand nécessaire. Tutoie l'utilisateur.`;
+    const SYSTEM_VEILLE = `Tu es un expert en réglementation technique du bâtiment en France, spécialisé dans les ERP sportifs (types O, N, R) comme les centres UCPA. Réponds avec précision, cite les textes réglementaires. Réponds de façon structurée et concise.`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 800,
+          system: tab === 'maintenance' ? SYSTEM_MAINT : SYSTEM_VEILLE,
+          messages: hist.map(m => ({ role: m.role, content: m.content }))
+        })
+      });
+      const data = await response.json();
+      const reply = data.content?.[0]?.text || 'Désolé, erreur de réponse.';
+      hist.push({ role: 'assistant', content: reply });
+    } catch(e) {
+      hist.push({ role: 'assistant', content: '⚠️ Erreur de connexion.' });
+    }
+
+    if (thinking) thinking.style.display = 'none';
+    if (btn) btn.disabled = false;
+    this._loading = false;
+    this._save(tab);
+    this._renderHistory(tab);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// LIENS EXTERNES PERSONNALISÉS
+// ══════════════════════════════════════════════════════════════
+Object.assign(App, {
+  _renderCustomLinks() {
+    const links = this.load('custom_links') || [];
+    const wrap = document.getElementById('custom-links-nav');
+    if (!wrap) return;
+    wrap.innerHTML = links.map((l, i) => `
+      <div style="display:flex;align-items:center;padding:0 8px 0 0">
+        <a class="nav-item nav-item-ext" href="${l.url}" target="_blank" rel="noopener" style="flex:1;min-width:0">
+          <span class="icon">${l.icon||'🔗'}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.label}</span>
+          <span style="font-size:9px;opacity:.5;margin-left:auto">↗</span>
+        </a>
+        <button onclick="App._deleteCustomLink(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:11px;padding:0 4px;flex-shrink:0" title="Supprimer">✕</button>
+      </div>`).join('');
+  },
+
+  addCustomLink() {
+    const label = prompt('Nom du lien (ex: OTIS, Portalp, Ecolab…)');
+    if (!label) return;
+    const url = prompt('URL du lien (ex: https://...)');
+    if (!url || !url.startsWith('http')) { alert('URL invalide — doit commencer par https://'); return; }
+    const icon = prompt('Emoji icône (facultatif, ex: 🔧)', '🔗') || '🔗';
+    const links = this.load('custom_links') || [];
+    links.push({ label, url, icon });
+    this.save('custom_links', links);
+    this._renderCustomLinks();
+  },
+
+  _deleteCustomLink(i) {
+    if (!confirm('Supprimer ce lien ?')) return;
+    const links = this.load('custom_links') || [];
+    links.splice(i, 1);
+    this.save('custom_links', links);
+    this._renderCustomLinks();
+  }
+});
+
 // Charger la clé Anthropic depuis localStorage si Firebase absent
 window.addEventListener('firebase-ready', function() {
   if (!window._anthropicKey) {
@@ -14565,905 +15337,6 @@ window.addEventListener('firebase-ready', function() {
     } catch(e) {}
   }
 });
-
-// ══════════════════════════════════════════════════════════════
-// MODULE OPS — Chantiers · Rapports de visite · Suivi de tâches
-// Style inspiré de Etincelles Tech v5
-// ══════════════════════════════════════════════════════════════
-const Ops = {
-
-  // ── HELPERS ─────────────────────────────────────────────────
-  _key(type) { return `ops_${type}_${App._storagePrefix}`; },
-
-  load(type) {
-    const raw = App.load(this._key(type));
-    return raw || [];
-  },
-
-  save(type, data) {
-    App.save(this._key(type), data);
-  },
-
-  uuid() { return 'ops_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); },
-
-  today() { return new Date().toISOString().slice(0, 10); },
-
-  fd(d) {
-    if (!d) return '—';
-    try {
-      return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-    } catch(e) { return d; }
-  },
-
-  dLeft(d) {
-    if (!d) return null;
-    const diff = Math.round((new Date(d) - new Date()) / 86400000);
-    return diff;
-  },
-
-  progClass(pct) {
-    if (pct >= 80) return 'opf-g';
-    if (pct >= 40) return 'opf-o';
-    return 'opf-r';
-  },
-
-  CSTATS: [
-    { id: 'prep',     l: 'Préparation',  c: 'blue' },
-    { id: 'en_cours', l: 'En cours',     c: 'en_cours' },
-    { id: 'pause',    l: 'En pause',     c: 'pause' },
-    { id: 'termine',  l: 'Terminé',      c: 'termine' },
-  ],
-
-  RTYPES: [
-    { id: 'visite',   l: 'Visite terrain',  i: '👁️',  c: 'visite' },
-    { id: 'chantier', l: 'CR Chantier',     i: '🏗️',  c: 'chantier' },
-    { id: 'reunion',  l: 'CR Réunion',      i: '🤝',   c: 'reunion' },
-    { id: 'securite', l: 'Rapport sécurité',i: '🚨',   c: 'securite' },
-    { id: 'tache',    l: 'Rapport de tâche',i: '✅',   c: 'tache' },
-    { id: 'hebdo',    l: 'Rapport hebdo',   i: '📊',   c: 'hebdo' },
-  ],
-
-  PRIOS: [
-    { id: 'urgent',   l: 'Urgent',   c: 'red' },
-    { id: 'normal',   l: 'Normal',   c: 'blue' },
-    { id: 'faible',   l: 'Faible',   c: 'muted' },
-  ],
-
-  gcs(id) { return this.CSTATS.find(s => s.id === id) || { l: id, c: 'muted' }; },
-  grt(id) { return this.RTYPES.find(t => t.id === id) || { l: id, i: '📄', c: 'blue' }; },
-  gp(id)  { return this.PRIOS.find(p => p.id === id)  || { l: id, c: 'muted' }; },
-
-  _chanFilter: 'tous',
-  _rapFilter:  'tous',
-  _tacFilter:  'tous',
-
-  // ══════════════════════════════════════════════════════════════
-  // PAGE CHANTIERS
-  // ══════════════════════════════════════════════════════════════
-  renderChantiers() {
-    const chantiers = this.load('chantiers');
-    const centre = App.centre !== 'ALL' ? App.centre : null;
-    const list = centre ? chantiers.filter(c => c.centre === centre) : chantiers;
-
-    // KPIs
-    const actifs  = list.filter(c => c.stat === 'en_cours').length;
-    const enRetard = list.filter(c => {
-      if (!c.fin || c.stat === 'termine') return false;
-      return new Date(c.fin) < new Date();
-    }).length;
-    const budgetTotal = list.reduce((s, c) => s + (c.budget || 0), 0);
-    const depTotal    = list.reduce((s, c) => s + (c.depense || 0), 0);
-    const budPct = budgetTotal > 0 ? Math.round(depTotal / budgetTotal * 100) : 0;
-
-    const kpiEl = document.getElementById('chantiers-kpi-strip');
-    if (kpiEl) kpiEl.innerHTML = `
-      <div class="reg-kpi" style="cursor:pointer" onclick="Ops._setChanFilter('en_cours')">
-        <span class="reg-kpi-n" style="color:var(--orange)">${actifs}</span>
-        <span class="reg-kpi-l">En cours</span>
-      </div>
-      <div class="reg-kpi" style="cursor:pointer" onclick="Ops._setChanFilter('tous')">
-        <span class="reg-kpi-n">${list.length}</span>
-        <span class="reg-kpi-l">Total</span>
-      </div>
-      <div class="reg-kpi" style="cursor:pointer" onclick="Ops._setChanFilter('termine')">
-        <span class="reg-kpi-n" style="color:var(--green)">${list.filter(c=>c.stat==='termine').length}</span>
-        <span class="reg-kpi-l">Terminés</span>
-      </div>
-      <div class="reg-kpi">
-        <span class="reg-kpi-n" style="color:${enRetard>0?'var(--red)':'var(--muted)'}">${enRetard}</span>
-        <span class="reg-kpi-l">En retard</span>
-      </div>
-      <div class="reg-kpi">
-        <span class="reg-kpi-n" style="color:${budPct>90?'var(--red)':budPct>70?'var(--orange)':'var(--green)'}">${budPct}%</span>
-        <span class="reg-kpi-l">Budget</span>
-      </div>`;
-
-    // Filtres
-    const fEl = document.getElementById('chantiers-filters');
-    if (fEl) {
-      const filters = [['tous','Tous'], ['prep','Prépa'], ['en_cours','En cours'], ['pause','Pause'], ['termine','Terminé']];
-      fEl.innerHTML = filters.map(([id, l]) =>
-        `<button class="ops-chip${this._chanFilter===id?' active':''}" onclick="Ops._setChanFilter('${id}')">${l}</button>`
-      ).join('');
-    }
-
-    // Badge nav
-    const badge = document.getElementById('badge-chantiers');
-    if (badge) { badge.textContent = actifs; badge.style.display = actifs > 0 ? '' : 'none'; }
-
-    // Liste
-    const listEl = document.getElementById('chantiers-list');
-    if (!listEl) return;
-
-    const vis = this._chanFilter === 'tous' ? list : list.filter(c => c.stat === this._chanFilter);
-
-    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:12px;color:var(--muted)">${vis.length} chantier${vis.length>1?'s':''}</span>
-      <button class="btn btn-sm" style="background:var(--green);color:#fff;border:none;font-size:11px;cursor:pointer" onclick="Ops.openNewChantier()">＋ Nouveau chantier</button>
-    </div>`;
-
-    if (vis.length === 0) {
-      html += `<div class="card" style="text-align:center;padding:32px;color:var(--muted)">
-        <div style="font-size:32px;margin-bottom:8px">🏗️</div>
-        <div>Aucun chantier${this._chanFilter!=='tous'?' pour ce filtre':''}</div>
-      </div>`;
-    } else {
-      vis.sort((a, b) => (a.fin || '').localeCompare(b.fin || '')).forEach(ch => {
-        html += this._chantierCard(ch);
-      });
-    }
-    listEl.innerHTML = html;
-  },
-
-  _setChanFilter(f) { this._chanFilter = f; this.renderChantiers(); },
-
-  _chantierCard(c) {
-    const cs = this.gcs(c.stat);
-    const phases = c.phases || [];
-    const tot = phases.length;
-    const don = phases.filter(p => p.s === 'done').length;
-    const pct = tot > 0 ? Math.round(don / tot * 100) : 0;
-    const bpct = c.budget > 0 ? Math.round((c.depense || 0) / c.budget * 100) : 0;
-    const dl = this.dLeft(c.fin);
-    const dlColor = dl === null ? 'var(--muted)' : dl < 0 ? 'var(--red)' : dl < 7 ? 'var(--orange)' : 'var(--muted2)';
-    const taches = c.taches || [];
-    const doneTaches = taches.filter(t => t.done).length;
-    const p = this.gp(c.prio || 'normal');
-
-    return `<div class="ccard">
-      <div class="ccard-hdr" onclick="Ops.openChantierDetail('${c.id}')">
-        <span class="ccard-title">${c.titre}</span>
-        <span class="badge b-${cs.c}">${cs.l}</span>
-      </div>
-      <div class="ccard-body">
-        <div class="cmeta">
-          <span class="mtag">📍 ${c.centre || App.centre}</span>
-          ${c.presta ? `<span class="mtag">👷 ${c.presta}</span>` : ''}
-          <span class="mtag" style="color:${dlColor}">🗓 ${dl === null ? '—' : dl < 0 ? 'En retard' : 'J-' + dl}</span>
-          <span class="mtag">${c.budget ? Math.round(c.budget/1000)+'k€' : '—'}</span>
-          ${taches.length > 0 ? `<span class="mtag">☑ ${doneTaches}/${taches.length}</span>` : ''}
-        </div>
-        <div class="ops-prog-wrap">
-          <div class="ops-prog-lbl"><span>Avancement</span><span>${pct}% — ${don}/${tot} phases</span></div>
-          <div class="ops-prog-bar"><div class="ops-prog-fill ${this.progClass(pct)}" style="width:${pct}%"></div></div>
-        </div>
-        ${c.budget > 0 ? `<div class="ops-prog-wrap">
-          <div class="ops-prog-lbl"><span>Budget</span><span>${bpct}% — ${Math.round((c.depense||0)/1000*10)/10}k / ${Math.round(c.budget/1000*10)/10}k€</span></div>
-          <div class="ops-prog-bar"><div class="ops-prog-fill ${this.progClass(100 - bpct)}" style="width:${Math.min(bpct,100)}%"></div></div>
-        </div>` : ''}
-      </div>
-      <div class="ccard-actions">
-        <button class="btn btn-sm btn-ghost" style="flex:1;font-size:11px" onclick="event.stopPropagation();Ops.openChantierDetail('${c.id}')">👁 Détail</button>
-        <button class="btn btn-sm btn-ghost" style="flex:1;font-size:11px" onclick="event.stopPropagation();Ops.openEditChantier('${c.id}')">✏️ Modifier</button>
-        <button class="btn btn-sm" style="font-size:11px;background:rgba(240,64,64,.1);color:var(--red);border:1px solid rgba(240,64,64,.2)" onclick="event.stopPropagation();if(confirm('Supprimer ce chantier ?'))Ops.deleteChantier('${c.id}')">🗑</button>
-      </div>
-    </div>`;
-  },
-
-  openChantierDetail(id) {
-    const c = this.load('chantiers').find(x => x.id === id);
-    if (!c) return;
-    const cs = this.gcs(c.stat);
-    const phases = c.phases || [];
-    const tot = phases.length, don = phases.filter(p => p.s === 'done').length;
-    const pct = tot > 0 ? Math.round(don / tot * 100) : 0;
-    const bpct = c.budget > 0 ? Math.round((c.depense||0) / c.budget * 100) : 0;
-    const taches = c.taches || [];
-    const doneTaches = taches.filter(t => t.done).length;
-
-    const phasesHTML = phases.map((ph, i) => `
-      <div class="phase-row">
-        <div class="phase-dc">
-          <div class="phase-dot pd-${ph.s}"></div>
-          ${i < phases.length - 1 ? '<div class="phase-line"></div>' : ''}
-        </div>
-        <div class="phase-info">
-          <div class="phase-name">${ph.n}</div>
-          <div class="phase-sub">${ph.notes || '—'}</div>
-        </div>
-        <div class="phase-right">
-          ${this.fd(ph.d)}<br>
-          <span onclick="Ops._cyclePhase('${id}',${i})" style="cursor:pointer;color:var(--${ph.s==='done'?'green':ph.s==='active'?'orange':'muted'})">
-            ${ph.s==='done'?'✓ Fait':ph.s==='active'?'● Actif':'◦ À faire'}
-          </span>
-        </div>
-      </div>`).join('') || '<div style="color:var(--muted);font-size:13px;text-align:center;padding:12px">Aucune phase</div>';
-
-    const tachesHTML = taches.map((ta, i) => `
-      <div class="tache-row" onclick="Ops._toggleTache('${id}',${i})">
-        <div class="tache-check${ta.done?' done':''}"></div>
-        <div class="tache-info">
-          <div class="tache-name" style="${ta.done?'text-decoration:line-through;color:var(--muted)':''}">${ta.n}</div>
-          <div class="tache-sub">${ta.who?'👤 '+ta.who:''}${ta.due?' · 🗓 '+this.fd(ta.due):''}</div>
-        </div>
-      </div>`).join('') || '<div style="color:var(--muted);font-size:13px;text-align:center;padding:8px">Aucune tâche</div>';
-
-    const journal = c.journal || [];
-    const journalHTML = journal.map(j => `
-      <div class="journal-entry">
-        <div class="journal-date">${this.fd(j.date)} — ${j.author || 'Équipe'}</div>
-        <div class="journal-text">${j.text}</div>
-      </div>`).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px">Aucune entrée</div>';
-
-    App.openModal(`
-      <div class="modal-header">
-        <div>
-          <div class="modal-title">${c.titre}</div>
-          <div class="modal-subtitle">📍 ${c.centre || ''} · ${this.fd(c.debut)} → ${this.fd(c.fin)}</div>
-        </div>
-        <button class="modal-close" onclick="App.closeModal()">✕</button>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-        <span class="badge b-${cs.c}">${cs.l}</span>
-        ${c.presta ? `<span class="mtag">👷 ${c.presta}</span>` : ''}
-      </div>
-
-      <div class="card" style="margin-bottom:12px">
-        <div class="ops-prog-lbl" style="margin-bottom:5px"><span>Avancement</span><span>${pct}% — ${don}/${tot} phases</span></div>
-        <div class="ops-prog-bar" style="margin-bottom:10px"><div class="ops-prog-fill ${this.progClass(pct)}" style="width:${pct}%"></div></div>
-        ${c.budget > 0 ? `
-        <div class="ops-prog-lbl" style="margin-bottom:5px"><span>Budget</span><span>${bpct}% — ${Math.round((c.depense||0)/1000*10)/10}k / ${Math.round(c.budget/1000*10)/10}k€</span></div>
-        <div class="ops-prog-bar"><div class="ops-prog-fill ${this.progClass(100-bpct)}" style="width:${Math.min(bpct,100)}%"></div></div>
-        ` : ''}
-      </div>
-
-      <div class="section-title" style="margin-top:0">Phases du chantier</div>
-      <div class="card" style="padding:10px 14px;margin-bottom:8px">${phasesHTML}</div>
-      <button class="btn btn-sm btn-ghost" style="margin-bottom:12px;width:100%" onclick="Ops._openAddPhase('${id}')">＋ Ajouter une phase</button>
-
-      <div class="section-title">Tâches (${doneTaches}/${taches.length})</div>
-      <div class="card" style="padding:10px 14px;margin-bottom:8px">${tachesHTML}</div>
-      <button class="btn btn-sm btn-ghost" style="margin-bottom:12px;width:100%" onclick="Ops._openAddTache('chantier','${id}')">＋ Ajouter une tâche</button>
-
-      <div class="section-title">Journal de chantier</div>
-      <div class="card" style="padding:10px 14px;margin-bottom:8px">${journalHTML}</div>
-      <div style="display:flex;gap:8px;margin-bottom:16px">
-        <input class="form-input" id="ops-journal-txt" placeholder="Nouvelle entrée..." style="flex:1;margin:0">
-        <button class="btn btn-sm btn-ghost" onclick="Ops._addJournal('${id}')">＋</button>
-      </div>
-
-      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
-      <label class="form-label">Statut</label>
-      <select class="form-select" id="ops-cd-stat">${this.CSTATS.map(s=>`<option value="${s.id}"${c.stat===s.id?' selected':''}>${s.l}</option>`).join('')}</select>
-      <label class="form-label">Dépenses engagées (€)</label>
-      <input type="number" class="form-input" id="ops-cd-dep" value="${c.depense||0}">
-      <label class="form-label">Notes</label>
-      <textarea class="form-textarea" id="ops-cd-notes">${c.notes||''}</textarea>
-      <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="Ops._saveChantierDetail('${id}')">Enregistrer</button>
-      <button class="btn" style="width:100%;background:rgba(240,64,64,.1);color:var(--red);border:1px solid rgba(240,64,64,.2)" onclick="if(confirm('Supprimer ?')){Ops.deleteChantier('${id}');App.closeModal()}">🗑 Supprimer</button>
-    `);
-  },
-
-  _saveChantierDetail(id) {
-    const data = this.load('chantiers');
-    const c = data.find(x => x.id === id);
-    if (!c) return;
-    c.stat = document.getElementById('ops-cd-stat').value;
-    c.depense = parseInt(document.getElementById('ops-cd-dep').value) || 0;
-    c.notes = document.getElementById('ops-cd-notes').value;
-    this.save('chantiers', data);
-    App.closeModal();
-    App.toast('✅ Chantier mis à jour', 'success');
-    this.renderChantiers();
-  },
-
-  _cyclePhase(id, i) {
-    const data = this.load('chantiers');
-    const c = data.find(x => x.id === id);
-    if (!c) return;
-    const cycle = ['todo', 'active', 'done'];
-    c.phases[i].s = cycle[(cycle.indexOf(c.phases[i].s) + 1) % 3];
-    this.save('chantiers', data);
-    this.openChantierDetail(id);
-  },
-
-  _toggleTache(chantierId, i) {
-    const data = this.load('chantiers');
-    const c = data.find(x => x.id === chantierId);
-    if (c && c.taches[i]) { c.taches[i].done = !c.taches[i].done; this.save('chantiers', data); }
-    this.openChantierDetail(chantierId);
-  },
-
-  _addJournal(id) {
-    const txt = document.getElementById('ops-journal-txt')?.value?.trim();
-    if (!txt) return;
-    const data = this.load('chantiers');
-    const c = data.find(x => x.id === id);
-    if (!c) return;
-    if (!c.journal) c.journal = [];
-    c.journal.unshift({ date: this.today(), author: App._currentUser?.name || App.centre, text: txt });
-    this.save('chantiers', data);
-    App.toast('✅ Entrée journal ajoutée', 'success');
-    this.openChantierDetail(id);
-  },
-
-  _openAddPhase(id) {
-    App.openModal(`
-      <div class="modal-header">
-        <div class="modal-title">Nouvelle phase</div>
-        <button class="modal-close" onclick="Ops.openChantierDetail('${id}')">✕</button>
-      </div>
-      <label class="form-label">Nom de la phase *</label>
-      <input class="form-input" id="ops-ap-n" placeholder="Ex : Pose carrelage...">
-      <label class="form-label">Date prévue</label>
-      <input type="date" class="form-input" id="ops-ap-d">
-      <label class="form-label">Notes</label>
-      <input class="form-input" id="ops-ap-notes" placeholder="Contraintes, infos...">
-      <button class="btn btn-primary" style="width:100%" onclick="Ops._savePhase('${id}')">Ajouter la phase</button>
-    `);
-  },
-
-  _savePhase(id) {
-    const n = document.getElementById('ops-ap-n').value.trim();
-    if (!n) { App.toast('Nom obligatoire', 'error'); return; }
-    const data = this.load('chantiers');
-    const c = data.find(x => x.id === id);
-    if (!c) return;
-    c.phases.push({ n, s: 'todo', d: document.getElementById('ops-ap-d').value, notes: document.getElementById('ops-ap-notes').value });
-    this.save('chantiers', data);
-    App.toast('✅ Phase ajoutée', 'success');
-    this.openChantierDetail(id);
-  },
-
-  _openAddTache(target, id) {
-    App.openModal(`
-      <div class="modal-header">
-        <div class="modal-title">Nouvelle tâche</div>
-        <button class="modal-close" onclick="${target==='chantier'?'Ops.openChantierDetail':'Ops.openTacheDetail'}('${id}')">✕</button>
-      </div>
-      <label class="form-label">Description *</label>
-      <input class="form-input" id="ops-nt-n" placeholder="Ex : Vérifier livraison matériaux...">
-      <label class="form-label">Responsable</label>
-      <input class="form-input" id="ops-nt-who" placeholder="Nom du responsable...">
-      <label class="form-label">Date limite</label>
-      <input type="date" class="form-input" id="ops-nt-due">
-      <button class="btn btn-primary" style="width:100%" onclick="Ops._saveTache('${target}','${id}')">Ajouter</button>
-    `);
-  },
-
-  _saveTache(target, id) {
-    const n = document.getElementById('ops-nt-n').value.trim();
-    if (!n) { App.toast('Description obligatoire', 'error'); return; }
-    const who = document.getElementById('ops-nt-who').value;
-    const due = document.getElementById('ops-nt-due').value;
-    if (target === 'chantier') {
-      const data = this.load('chantiers');
-      const c = data.find(x => x.id === id);
-      if (c) { if (!c.taches) c.taches = []; c.taches.push({ n, done: false, who, due }); this.save('chantiers', data); }
-      this.openChantierDetail(id);
-    } else {
-      const data = this.load('taches');
-      const t = data.find(x => x.id === id);
-      if (t) { if (!t.sous_taches) t.sous_taches = []; t.sous_taches.push({ n, done: false, who, due }); this.save('taches', data); }
-      this.openTacheDetail(id);
-    }
-    App.toast('✅ Tâche ajoutée', 'success');
-  },
-
-  openEditChantier(id) {
-    const isNew = id === 'new';
-    const c = isNew ? {} : this.load('chantiers').find(x => x.id === id);
-    if (!c && !isNew) return;
-    App.openModal(`
-      <div class="modal-header">
-        <div class="modal-title">${isNew ? 'Nouveau chantier' : 'Modifier le chantier'}</div>
-        <button class="modal-close" onclick="App.closeModal()">✕</button>
-      </div>
-      <label class="form-label">Centre</label>
-      <input class="form-input" id="ops-nc-centre" value="${c.centre || App.centre || ''}" placeholder="Centre UCPA...">
-      <label class="form-label">Intitulé *</label>
-      <input class="form-input" id="ops-nc-titre" value="${c.titre || ''}" placeholder="Ex : Rénovation hall entrée...">
-      <label class="form-label">Description</label>
-      <textarea class="form-textarea" id="ops-nc-desc" placeholder="Lots concernés, périmètre...">${c.desc || ''}</textarea>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-        <div>
-          <label class="form-label">Date début</label>
-          <input type="date" class="form-input" id="ops-nc-deb" value="${c.debut || this.today()}" style="margin:0">
-        </div>
-        <div>
-          <label class="form-label">Date fin prévue</label>
-          <input type="date" class="form-input" id="ops-nc-fin" value="${c.fin || ''}" style="margin:0">
-        </div>
-      </div>
-      <label class="form-label">Budget prévisionnel (€)</label>
-      <input type="number" class="form-input" id="ops-nc-budget" value="${c.budget || 0}">
-      <label class="form-label">Priorité</label>
-      <select class="form-select" id="ops-nc-prio">${this.PRIOS.map(p=>`<option value="${p.id}"${(c.prio||'normal')===p.id?' selected':''}>${p.l}</option>`).join('')}</select>
-      <label class="form-label">Prestataire principal</label>
-      <input class="form-input" id="ops-nc-presta" value="${c.presta || ''}" placeholder="Entreprise principale...">
-      <label class="form-label">Notes / contraintes</label>
-      <textarea class="form-textarea" id="ops-nc-notes" placeholder="Accès, horaires, présence clients...">${c.notes || ''}</textarea>
-      <button class="btn btn-primary" style="width:100%" onclick="Ops._saveChantier('${id}')">${isNew ? 'Créer le chantier' : 'Enregistrer'}</button>
-    `);
-  },
-
-  _saveChantier(id) {
-    const isNew = id === 'new';
-    const titre = document.getElementById('ops-nc-titre').value.trim();
-    if (!titre) { App.toast('Titre obligatoire', 'error'); return; }
-    const data = this.load('chantiers');
-    if (isNew) {
-      data.unshift({
-        id: this.uuid(), centre: document.getElementById('ops-nc-centre').value,
-        titre, desc: document.getElementById('ops-nc-desc').value,
-        stat: 'prep', prio: document.getElementById('ops-nc-prio').value,
-        budget: parseInt(document.getElementById('ops-nc-budget').value) || 0, depense: 0,
-        debut: document.getElementById('ops-nc-deb').value,
-        fin:   document.getElementById('ops-nc-fin').value,
-        presta: document.getElementById('ops-nc-presta').value,
-        phases: [{ n: 'Démarrage', s: 'todo', d: '', notes: '' }],
-        taches: [], notes: document.getElementById('ops-nc-notes').value, journal: [],
-      });
-    } else {
-      const c = data.find(x => x.id === id);
-      if (!c) return;
-      Object.assign(c, {
-        centre: document.getElementById('ops-nc-centre').value,
-        titre, desc: document.getElementById('ops-nc-desc').value,
-        prio: document.getElementById('ops-nc-prio').value,
-        budget: parseInt(document.getElementById('ops-nc-budget').value) || 0,
-        debut: document.getElementById('ops-nc-deb').value,
-        fin:   document.getElementById('ops-nc-fin').value,
-        presta: document.getElementById('ops-nc-presta').value,
-        notes: document.getElementById('ops-nc-notes').value,
-      });
-    }
-    this.save('chantiers', data);
-    App.closeModal();
-    App.toast('✅ Chantier sauvegardé', 'success');
-    this.renderChantiers();
-  },
-
-  deleteChantier(id) {
-    const data = this.load('chantiers').filter(x => x.id !== id);
-    this.save('chantiers', data);
-    App.toast('Chantier supprimé', 'warning');
-    this.renderChantiers();
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // PAGE RAPPORTS DE VISITE
-  // ══════════════════════════════════════════════════════════════
-  renderRapports() {
-    const rapports = this.load('rapports');
-    const centre = App.centre !== 'ALL' ? App.centre : null;
-    const list = centre ? rapports.filter(r => r.centre === centre) : rapports;
-
-    // KPIs
-    const thisMonth = new Date().toISOString().slice(0, 7);
-    const cesMois = list.filter(r => r.date.startsWith(thisMonth)).length;
-
-    const kpiEl = document.getElementById('rapports-kpi-strip');
-    if (kpiEl) kpiEl.innerHTML = `
-      <div class="reg-kpi"><span class="reg-kpi-n">${list.length}</span><span class="reg-kpi-l">Total</span></div>
-      <div class="reg-kpi"><span class="reg-kpi-n" style="color:var(--teal)">${cesMois}</span><span class="reg-kpi-l">Ce mois</span></div>
-      <div class="reg-kpi"><span class="reg-kpi-n" style="color:var(--blue)">${list.filter(r=>r.type==='visite').length}</span><span class="reg-kpi-l">Visites</span></div>
-      <div class="reg-kpi"><span class="reg-kpi-n" style="color:var(--orange)">${list.filter(r=>r.type==='chantier').length}</span><span class="reg-kpi-l">CR Chantier</span></div>`;
-
-    // Filtres
-    const fEl = document.getElementById('rapports-filters');
-    if (fEl) {
-      fEl.innerHTML = [['tous','Tous'], ...this.RTYPES.map(t=>[t.id, t.i+' '+t.l])].map(([id, l]) =>
-        `<button class="ops-chip${this._rapFilter===id?' active':''}" onclick="Ops._setRapFilter('${id}')">${l}</button>`
-      ).join('');
-    }
-
-    // Liste
-    const listEl = document.getElementById('rapports-list');
-    if (!listEl) return;
-    const vis = this._rapFilter === 'tous' ? list : list.filter(r => r.type === this._rapFilter);
-    vis.sort((a, b) => b.date.localeCompare(a.date));
-
-    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:12px;color:var(--muted)">${vis.length} rapport${vis.length>1?'s':''}</span>
-      <button class="btn btn-sm" style="background:var(--green);color:#fff;border:none;font-size:11px;cursor:pointer" onclick="Ops.openNewRapport()">＋ Nouveau rapport</button>
-    </div>`;
-
-    if (vis.length === 0) {
-      html += `<div class="card" style="text-align:center;padding:32px;color:var(--muted)">
-        <div style="font-size:32px;margin-bottom:8px">📄</div>
-        <div>Aucun rapport${this._rapFilter!=='tous'?' pour ce type':''}</div>
-      </div>`;
-    } else {
-      vis.forEach(r => { html += this._rapportCard(r); });
-    }
-    listEl.innerHTML = html;
-  },
-
-  _setRapFilter(f) { this._rapFilter = f; this.renderRapports(); },
-
-  _rapportCard(r) {
-    const rt = this.grt(r.type);
-    const decisions = r.decisions || [];
-    const doneD = decisions.filter(d => d.done).length;
-    return `<div class="rcard">
-      <div class="rcard-top">
-        <span class="rcard-title">${r.titre}</span>
-        <span class="badge b-${rt.c}">${rt.i}</span>
-      </div>
-      <div class="rcard-meta">
-        <span class="mtag">📍 ${r.centre || ''}</span>
-        <span class="mtag">📅 ${this.fd(r.date)}</span>
-        <span class="mtag">✍️ ${r.redacteur || '—'}</span>
-        ${decisions.length > 0 ? `<span class="mtag">✅ ${doneD}/${decisions.length} décisions</span>` : ''}
-      </div>
-      ${r.contenu ? `<div class="rcard-excerpt">${r.contenu}</div>` : ''}
-      <div class="rcard-actions">
-        <button class="btn btn-sm btn-ghost" style="flex:1;font-size:11px" onclick="Ops.openRapportDetail('${r.id}')">👁 Voir</button>
-        <button class="btn btn-sm btn-ghost" style="flex:1;font-size:11px" onclick="Ops.openEditRapport('${r.id}')">✏️ Modifier</button>
-        <button class="btn btn-sm" style="font-size:11px;background:rgba(240,64,64,.1);color:var(--red);border:1px solid rgba(240,64,64,.2)" onclick="if(confirm('Supprimer ?'))Ops.deleteRapport('${r.id}')">🗑</button>
-      </div>
-    </div>`;
-  },
-
-  openRapportDetail(id) {
-    const r = this.load('rapports').find(x => x.id === id);
-    if (!r) return;
-    const rt = this.grt(r.type);
-    const decisions = r.decisions || [];
-    const decisionsHTML = decisions.map((d, i) => `
-      <div class="tache-row" onclick="Ops._toggleDecision('${id}',${i})">
-        <div class="tache-check${d.done?' done':''}"></div>
-        <div class="tache-info">
-          <div class="tache-name" style="${d.done?'text-decoration:line-through;color:var(--muted)':''}">${d.text}</div>
-          <div class="tache-sub">${d.resp?'👤 '+d.resp:''}${d.due?' · 🗓 '+this.fd(d.due):''}</div>
-        </div>
-      </div>`).join('') || '<div style="color:var(--muted);font-size:13px;padding:8px">Aucune décision</div>';
-
-    App.openModal(`
-      <div class="modal-header">
-        <div>
-          <div class="modal-title">${r.titre}</div>
-          <div class="modal-subtitle">${rt.i} ${rt.l} · ${this.fd(r.date)}</div>
-        </div>
-        <button class="modal-close" onclick="App.closeModal()">✕</button>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-        <span class="badge b-${rt.c}">${rt.i} ${rt.l}</span>
-        <span class="mtag">📍 ${r.centre || ''}</span>
-        <span class="mtag">✍️ ${r.redacteur || '—'}</span>
-      </div>
-      ${r.participants?.length ? `<div style="margin-bottom:12px">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.1em;text-transform:uppercase">Participants</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">${r.participants.map(p=>`<span class="mtag">👤 ${p}</span>`).join('')}</div>
-      </div>` : ''}
-      ${r.contenu ? `<div class="card" style="margin-bottom:12px">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:.1em;text-transform:uppercase">Compte-rendu</div>
-        <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${r.contenu}</div>
-      </div>` : ''}
-      <div class="section-title" style="margin-top:0">Décisions / Actions (${decisions.filter(d=>d.done).length}/${decisions.length})</div>
-      <div class="card" style="padding:10px 14px;margin-bottom:8px">${decisionsHTML}</div>
-      <button class="btn btn-sm btn-ghost" style="width:100%;margin-bottom:12px" onclick="Ops._openAddDecision('${id}')">＋ Ajouter une décision</button>
-      <button class="btn" style="width:100%;background:rgba(240,64,64,.1);color:var(--red);border:1px solid rgba(240,64,64,.2)" onclick="if(confirm('Supprimer ?')){Ops.deleteRapport('${id}');App.closeModal()}">🗑 Supprimer</button>
-    `);
-  },
-
-  _toggleDecision(rapportId, i) {
-    const data = this.load('rapports');
-    const r = data.find(x => x.id === rapportId);
-    if (r && r.decisions[i]) { r.decisions[i].done = !r.decisions[i].done; this.save('rapports', data); }
-    this.openRapportDetail(rapportId);
-  },
-
-  _openAddDecision(id) {
-    App.openModal(`
-      <div class="modal-header">
-        <div class="modal-title">Nouvelle décision</div>
-        <button class="modal-close" onclick="Ops.openRapportDetail('${id}')">✕</button>
-      </div>
-      <label class="form-label">Décision / action *</label>
-      <input class="form-input" id="ops-nd-text" placeholder="Ex : Commander extincteurs manquants...">
-      <label class="form-label">Responsable</label>
-      <input class="form-input" id="ops-nd-resp" placeholder="Nom...">
-      <label class="form-label">Échéance</label>
-      <input type="date" class="form-input" id="ops-nd-due">
-      <button class="btn btn-primary" style="width:100%" onclick="Ops._saveDecision('${id}')">Ajouter</button>
-    `);
-  },
-
-  _saveDecision(id) {
-    const text = document.getElementById('ops-nd-text').value.trim();
-    if (!text) { App.toast('Décision obligatoire', 'error'); return; }
-    const data = this.load('rapports');
-    const r = data.find(x => x.id === id);
-    if (!r) return;
-    if (!r.decisions) r.decisions = [];
-    r.decisions.push({ text, resp: document.getElementById('ops-nd-resp').value, due: document.getElementById('ops-nd-due').value, done: false });
-    this.save('rapports', data);
-    App.toast('✅ Décision ajoutée', 'success');
-    this.openRapportDetail(id);
-  },
-
-  openNewRapport() { this.openEditRapport('new'); },
-
-  openEditRapport(id) {
-    const isNew = id === 'new';
-    const r = isNew ? {} : this.load('rapports').find(x => x.id === id);
-    if (!r && !isNew) return;
-    App.openModal(`
-      <div class="modal-header">
-        <div class="modal-title">${isNew ? 'Nouveau rapport' : 'Modifier le rapport'}</div>
-        <button class="modal-close" onclick="App.closeModal()">✕</button>
-      </div>
-      <label class="form-label">Type</label>
-      <select class="form-select" id="ops-nr-type">${this.RTYPES.map(t=>`<option value="${t.id}"${(r.type||'visite')===t.id?' selected':''}>${t.i} ${t.l}</option>`).join('')}</select>
-      <label class="form-label">Titre *</label>
-      <input class="form-input" id="ops-nr-titre" value="${r.titre || ''}" placeholder="Ex : Visite terrain bâtiment A...">
-      <label class="form-label">Centre</label>
-      <input class="form-input" id="ops-nr-centre" value="${r.centre || App.centre || ''}" placeholder="Centre UCPA...">
-      <label class="form-label">Date</label>
-      <input type="date" class="form-input" id="ops-nr-date" value="${r.date || this.today()}">
-      <label class="form-label">Rédacteur</label>
-      <input class="form-input" id="ops-nr-redacteur" value="${r.redacteur || App._currentUser?.name || ''}" placeholder="Nom prénom...">
-      <label class="form-label">Participants (séparés par virgule)</label>
-      <input class="form-input" id="ops-nr-participants" value="${(r.participants || []).join(', ')}" placeholder="Jean Dupont, Marie Martin...">
-      <label class="form-label">Compte-rendu</label>
-      <textarea class="form-textarea" id="ops-nr-contenu" placeholder="Points abordés, observations, constats..." style="min-height:120px">${r.contenu || ''}</textarea>
-      <button class="btn btn-primary" style="width:100%" onclick="Ops._saveRapport('${id}')">${isNew ? 'Créer le rapport' : 'Enregistrer'}</button>
-    `);
-  },
-
-  _saveRapport(id) {
-    const isNew = id === 'new';
-    const titre = document.getElementById('ops-nr-titre').value.trim();
-    if (!titre) { App.toast('Titre obligatoire', 'error'); return; }
-    const participantsRaw = document.getElementById('ops-nr-participants').value;
-    const participants = participantsRaw.split(',').map(p => p.trim()).filter(Boolean);
-    const data = this.load('rapports');
-    const rapportData = {
-      type: document.getElementById('ops-nr-type').value,
-      titre,
-      centre: document.getElementById('ops-nr-centre').value,
-      date: document.getElementById('ops-nr-date').value,
-      redacteur: document.getElementById('ops-nr-redacteur').value,
-      participants,
-      contenu: document.getElementById('ops-nr-contenu').value,
-    };
-    if (isNew) {
-      data.unshift({ id: this.uuid(), ...rapportData, decisions: [] });
-    } else {
-      const r = data.find(x => x.id === id);
-      if (r) Object.assign(r, rapportData);
-    }
-    this.save('rapports', data);
-    App.closeModal();
-    App.toast('✅ Rapport sauvegardé', 'success');
-    this.renderRapports();
-  },
-
-  deleteRapport(id) {
-    this.save('rapports', this.load('rapports').filter(x => x.id !== id));
-    App.toast('Rapport supprimé', 'warning');
-    this.renderRapports();
-  },
-
-  // ══════════════════════════════════════════════════════════════
-  // PAGE SUIVI DE TÂCHES
-  // ══════════════════════════════════════════════════════════════
-  renderTaches() {
-    const taches = this.load('taches');
-    const centre = App.centre !== 'ALL' ? App.centre : null;
-    const list = centre ? taches.filter(t => t.centre === centre) : taches;
-
-    // Tâches provenant aussi des chantiers
-    const chantiers = this.load('chantiers');
-    const chanTaches = [];
-    chantiers.forEach(c => {
-      (c.taches || []).forEach(t => {
-        if (!centre || c.centre === centre) {
-          chanTaches.push({ ...t, _source: '🏗️ ' + c.titre, _chantierId: c.id, _centreLabel: c.centre });
-        }
-      });
-    });
-
-    const enCours   = list.filter(t => !t.done && t.stat !== 'annulee').length;
-    const terminees = list.filter(t => t.done).length;
-    const enRetard  = list.filter(t => !t.done && t.due && new Date(t.due) < new Date()).length;
-    const chanEnCours = chanTaches.filter(t => !t.done).length;
-
-    const kpiEl = document.getElementById('taches-kpi-strip');
-    if (kpiEl) kpiEl.innerHTML = `
-      <div class="tkpi" style="cursor:pointer" onclick="Ops._setTacFilter('actives')">
-        <div class="tkpi-n" style="color:var(--orange)">${enCours}</div>
-        <div class="tkpi-l">En cours</div>
-      </div>
-      <div class="tkpi" style="cursor:pointer" onclick="Ops._setTacFilter('retard')">
-        <div class="tkpi-n" style="color:${enRetard>0?'var(--red)':'var(--muted)'}">${enRetard}</div>
-        <div class="tkpi-l">En retard</div>
-      </div>
-      <div class="tkpi" style="cursor:pointer" onclick="Ops._setTacFilter('chantiers')">
-        <div class="tkpi-n" style="color:var(--blue)">${chanEnCours}</div>
-        <div class="tkpi-l">Chantiers</div>
-      </div>`;
-
-    // Badge nav
-    const badge = document.getElementById('badge-taches');
-    if (badge) { badge.textContent = enCours + enRetard; badge.style.display = (enCours + enRetard) > 0 ? '' : 'none'; }
-
-    // Filtres
-    const fEl = document.getElementById('taches-filters');
-    if (fEl) fEl.innerHTML = [
-      ['tous','Toutes'], ['actives','En cours'], ['retard','En retard'], ['terminees','Terminées'], ['chantiers','Chantiers'],
-    ].map(([id, l]) => `<button class="ops-chip${this._tacFilter===id?' active':''}" onclick="Ops._setTacFilter('${id}')">${l}</button>`).join('');
-
-    const listEl = document.getElementById('taches-list');
-    if (!listEl) return;
-
-    let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <span style="font-size:12px;color:var(--muted)">Tâches autonomes</span>
-      <button class="btn btn-sm" style="background:var(--green);color:#fff;border:none;font-size:11px;cursor:pointer" onclick="Ops.openNewTache()">＋ Nouvelle tâche</button>
-    </div>`;
-
-    // Tâches autonomes
-    let visTaches = list;
-    if (this._tacFilter === 'actives')   visTaches = list.filter(t => !t.done && t.stat !== 'annulee');
-    if (this._tacFilter === 'retard')    visTaches = list.filter(t => !t.done && t.due && new Date(t.due) < new Date());
-    if (this._tacFilter === 'terminees') visTaches = list.filter(t => t.done);
-    if (this._tacFilter === 'chantiers') visTaches = [];
-
-    visTaches.sort((a, b) => (a.due || '9999').localeCompare(b.due || '9999')).forEach(t => {
-      const dl = this.dLeft(t.due);
-      const dlColor = dl === null ? 'var(--muted)' : dl < 0 ? 'var(--red)' : dl < 3 ? 'var(--orange)' : 'var(--muted2)';
-      html += `<div class="card" style="margin-bottom:8px;padding:12px 15px">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div class="tache-check${t.done?' done':''}" style="margin-top:2px" onclick="Ops._toggleStandaloneTache('${t.id}')"></div>
-          <div style="flex:1">
-            <div class="tache-name" style="${t.done?'text-decoration:line-through;color:var(--muted)':''}">${t.titre}</div>
-            <div class="tache-sub" style="margin-top:4px">
-              ${t.centre ? `<span class="mtag" style="margin-right:4px">📍 ${t.centre}</span>` : ''}
-              ${t.responsable ? `<span class="mtag" style="margin-right:4px">👤 ${t.responsable}</span>` : ''}
-              ${t.due ? `<span class="mtag" style="color:${dlColor}">🗓 ${this.fd(t.due)}${dl!==null&&dl<0?' ⚠️':''}</span>` : ''}
-            </div>
-            ${t.desc ? `<div style="font-size:12px;color:var(--muted2);margin-top:5px">${t.desc}</div>` : ''}
-          </div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <button class="btn btn-sm btn-ghost" style="font-size:10px" onclick="Ops.openEditTache('${t.id}')">✏️</button>
-            <button class="btn btn-sm" style="font-size:10px;background:rgba(240,64,64,.1);color:var(--red);border:1px solid rgba(240,64,64,.2)" onclick="if(confirm('Supprimer ?'))Ops.deleteTache('${t.id}')">🗑</button>
-          </div>
-        </div>
-      </div>`;
-    });
-
-    if (visTaches.length === 0 && this._tacFilter !== 'chantiers') {
-      html += `<div class="card" style="text-align:center;padding:24px;color:var(--muted)">
-        <div style="font-size:28px;margin-bottom:8px">☑️</div>
-        <div>Aucune tâche ${this._tacFilter==='retard'?'en retard':this._tacFilter==='terminees'?'terminée':'en cours'}</div>
-      </div>`;
-    }
-
-    // Tâches issues des chantiers
-    if (this._tacFilter === 'tous' || this._tacFilter === 'chantiers' || this._tacFilter === 'actives' || this._tacFilter === 'retard') {
-      const filteredChan = this._tacFilter === 'retard'
-        ? chanTaches.filter(t => !t.done && t.due && new Date(t.due) < new Date())
-        : this._tacFilter === 'actives'
-        ? chanTaches.filter(t => !t.done)
-        : chanTaches.filter(t => this._tacFilter === 'chantiers' ? !t.done : true);
-
-      if (filteredChan.length > 0) {
-        html += `<div class="section-title" style="margin-top:16px">Tâches issues des chantiers</div>`;
-        filteredChan.forEach(t => {
-          const dl = this.dLeft(t.due);
-          const dlColor = dl === null ? 'var(--muted)' : dl < 0 ? 'var(--red)' : dl < 3 ? 'var(--orange)' : 'var(--muted2)';
-          html += `<div class="card" style="margin-bottom:8px;padding:12px 15px;border-left:3px solid var(--orange)">
-            <div style="display:flex;align-items:flex-start;gap:10px">
-              <div class="tache-check${t.done?' done':''}" style="margin-top:2px" onclick="Ops._toggleChantierTacheFromPage('${t._chantierId}','${t.n}')"></div>
-              <div style="flex:1">
-                <div class="tache-name" style="${t.done?'text-decoration:line-through;color:var(--muted)':''}">${t.n}</div>
-                <div class="tache-sub" style="margin-top:4px">
-                  <span class="mtag" style="margin-right:4px">${t._source}</span>
-                  ${t.who ? `<span class="mtag" style="margin-right:4px">👤 ${t.who}</span>` : ''}
-                  ${t.due ? `<span class="mtag" style="color:${dlColor}">🗓 ${this.fd(t.due)}${dl!==null&&dl<0?' ⚠️':''}</span>` : ''}
-                </div>
-              </div>
-              <button class="btn btn-sm btn-ghost" style="font-size:10px" onclick="Ops.openChantierDetail('${t._chantierId}')">🏗️</button>
-            </div>
-          </div>`;
-        });
-      }
-    }
-
-    listEl.innerHTML = html;
-  },
-
-  _setTacFilter(f) { this._tacFilter = f; this.renderTaches(); },
-
-  _toggleStandaloneTache(id) {
-    const data = this.load('taches');
-    const t = data.find(x => x.id === id);
-    if (t) { t.done = !t.done; this.save('taches', data); }
-    this.renderTaches();
-  },
-
-  _toggleChantierTacheFromPage(chantierId, nom) {
-    const data = this.load('chantiers');
-    const c = data.find(x => x.id === chantierId);
-    if (c) {
-      const t = c.taches.find(x => x.n === nom);
-      if (t) { t.done = !t.done; this.save('chantiers', data); }
-    }
-    this.renderTaches();
-  },
-
-  openNewTache() { this.openEditTache('new'); },
-
-  openEditTache(id) {
-    const isNew = id === 'new';
-    const t = isNew ? {} : this.load('taches').find(x => x.id === id);
-    if (!t && !isNew) return;
-    const PRIOS_HTML = this.PRIOS.map(p=>`<option value="${p.id}"${(t.prio||'normal')===p.id?' selected':''}>${p.l}</option>`).join('');
-    App.openModal(`
-      <div class="modal-header">
-        <div class="modal-title">${isNew ? 'Nouvelle tâche' : 'Modifier la tâche'}</div>
-        <button class="modal-close" onclick="App.closeModal()">✕</button>
-      </div>
-      <label class="form-label">Titre *</label>
-      <input class="form-input" id="ops-nt2-titre" value="${t.titre || ''}" placeholder="Ex : Vérifier extincteurs bâtiment B...">
-      <label class="form-label">Centre</label>
-      <input class="form-input" id="ops-nt2-centre" value="${t.centre || App.centre || ''}" placeholder="Centre UCPA...">
-      <label class="form-label">Responsable</label>
-      <input class="form-input" id="ops-nt2-resp" value="${t.responsable || ''}" placeholder="Nom du responsable...">
-      <label class="form-label">Priorité</label>
-      <select class="form-select" id="ops-nt2-prio">${PRIOS_HTML}</select>
-      <label class="form-label">Échéance</label>
-      <input type="date" class="form-input" id="ops-nt2-due" value="${t.due || ''}">
-      <label class="form-label">Description</label>
-      <textarea class="form-textarea" id="ops-nt2-desc" placeholder="Détails, localisation, contexte...">${t.desc || ''}</textarea>
-      <button class="btn btn-primary" style="width:100%" onclick="Ops._saveTache2('${id}')">${isNew ? 'Créer la tâche' : 'Enregistrer'}</button>
-    `);
-  },
-
-  _saveTache2(id) {
-    const isNew = id === 'new';
-    const titre = document.getElementById('ops-nt2-titre').value.trim();
-    if (!titre) { App.toast('Titre obligatoire', 'error'); return; }
-    const data = this.load('taches');
-    const tacheData = {
-      titre,
-      centre: document.getElementById('ops-nt2-centre').value,
-      responsable: document.getElementById('ops-nt2-resp').value,
-      prio: document.getElementById('ops-nt2-prio').value,
-      due: document.getElementById('ops-nt2-due').value,
-      desc: document.getElementById('ops-nt2-desc').value,
-    };
-    if (isNew) {
-      data.unshift({ id: this.uuid(), ...tacheData, done: false, stat: 'active', date: this.today() });
-    } else {
-      const t = data.find(x => x.id === id);
-      if (t) Object.assign(t, tacheData);
-    }
-    this.save('taches', data);
-    App.closeModal();
-    App.toast('✅ Tâche sauvegardée', 'success');
-    this.renderTaches();
-  },
-
-  deleteTache(id) {
-    this.save('taches', this.load('taches').filter(x => x.id !== id));
-    App.toast('Tâche supprimée', 'warning');
-    this.renderTaches();
-  },
-};
-
 
 // Démarrage
 window.addEventListener('DOMContentLoaded', () => {
@@ -15645,42 +15518,55 @@ document.addEventListener('ucpa-session-started', requestNotifPermission);
      Réf. : C. trav. R.4512-1 | L.8222-1
 ═══════════════════════════════════════════════════════════ -->
 
-<!-- ═══════════════════════════════════════════════
-     PAGE CHANTIERS
-════════════════════════════════════════════════ -->
-<div id="page-chantiers" class="page" style="display:none">
-  <!-- KPIs -->
-  <div class="reg-kpi-strip" id="chantiers-kpi-strip" style="margin-bottom:14px"></div>
-  <!-- Filtres -->
-  <div class="ops-fscroll" id="chantiers-filters"></div>
-  <!-- Liste -->
-  <div id="chantiers-list"></div>
-</div>
+<script>
+/* MODULE IMPORT DONNEES ALPES SUD — 9 CENTRES | 11/03/2026 */
+const UCPAImport = {
+  PATCH: {"STATION DE SKI VALLOIRE": {"3.1": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Desautel", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Sr Dauphin\u00e9", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-01-26", "prochainControle": "2027-01-26", "organisme": "Desautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphin\u00e9", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-11-12", "prochainControle": "2028-11-11", "organisme": "Bureau Veritas", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphin\u00e9", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphin\u00e9", "observations": "D\u00e9senfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-08", "prochainControle": "2026-09-08", "organisme": "Bureau Veritas", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-01-12", "prochainControle": "2027-01-12", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Schindler", "observations": "Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2022-11-29", "prochainControle": "2027-11-28", "organisme": "Bureau Veritas", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-09-22", "prochainControle": "2026-09-22", "organisme": "Reccord", "observations": "Portes auto - Contrat", "resultat": "Favorable"}, "6.4": {"dateRealisation": "2025-03-19", "prochainControle": "2026-03-19", "organisme": "Bureau Veritas", "observations": "Compacteurs - Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Idex", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-07-23", "prochainControle": "2026-07-23", "organisme": "Idex", "observations": "Ramonage - Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "Savec", "observations": "Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-04-24", "prochainControle": "2026-04-24", "organisme": "Asepti Air", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-11-23", "prochainControle": "2026-11-23", "organisme": "Eurofin", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-04-22", "prochainControle": "2026-04-22", "organisme": "SAS Savoie Vidange", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL CENIS": {"3.1": {"dateRealisation": "2024-01-19", "prochainControle": "2024-12-12", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-02-22", "prochainControle": "2025-02-21", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-11-07", "prochainControle": "2025-11-07", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-10-13", "prochainControle": "2025-10-12", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "UCPA", "observations": "D\u00e9senfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2023-03-29", "prochainControle": "2024-03-28", "organisme": "SOCOTEC", "observations": "Q19 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-10-16", "prochainControle": "2025-10-16", "organisme": "SOCOTEC", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-05-07", "prochainControle": "2025-05-07", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-28", "prochainControle": "2025-11-28", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-04", "prochainControle": "2025-09-04", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-07-25", "prochainControle": "2025-07-25", "organisme": "", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL THORENS": {"3.1": {"dateRealisation": "2025-12-08", "prochainControle": "", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-11-24", "prochainControle": "", "organisme": "UCPA", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-10-31", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2024-11-12", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-10-09", "prochainControle": "", "organisme": "CHRONOFEU", "observations": "Colonne seche PEI", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-03", "prochainControle": "", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-12-10", "prochainControle": "", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-02-11", "prochainControle": "", "organisme": "OTIS", "observations": "4 ascenseurs - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2023-11-09", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Quinquennal 4 cabines - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-12-02", "prochainControle": "", "organisme": "PORTALP", "observations": "4 portes/barrieres - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-18", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-06", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-10-14", "prochainControle": "", "organisme": "E2S (Ramonage Service)", "observations": "Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-29", "prochainControle": "", "organisme": "SAVEC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-07-03", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "12": {"dateRealisation": "2025-03-31", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": "Favorable"}}, "STATION DE SKI SERRE CHEVALIER": {"3.1": {"dateRealisation": "2025-06-03", "prochainControle": "2025-12-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-06-06", "prochainControle": "2025-12-05", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESSAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-12-08", "prochainControle": "2026-06-08", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-12-09", "prochainControle": "2028-12-08", "organisme": "BUREAU VERITAS", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESAUTEL", "observations": "Borne incendie - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-12-08", "prochainControle": "2026-12-08", "organisme": "DESSAUD", "observations": "Desenfumage mecanique - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-11", "prochainControle": "2026-09-11", "organisme": "BUREAU VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-04", "prochainControle": "2027-03-04", "organisme": "BUREAU VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-02-25", "prochainControle": "2026-03-27", "organisme": "UCPA", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-10-07", "prochainControle": "2025-11-21", "organisme": "PERDIGON", "observations": "Ascenseur - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-04-08", "prochainControle": "2025-10-07", "organisme": "PERDIGON", "observations": "Barriere - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-07-15", "prochainControle": "2026-07-15", "organisme": "SOCOTEC/BV", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-13", "prochainControle": "2026-06-13", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-02", "prochainControle": "2026-10-02", "organisme": "ALTECC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-06-10", "prochainControle": "2026-06-10", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "8.1": {"dateRealisation": "2023-09-15", "prochainControle": "2023-09-15", "organisme": "NEPSEN", "observations": "Performance energetique", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-01", "prochainControle": "2026-10-01", "organisme": "ALTECC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.2": {"dateRealisation": "2025-09-04", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "Nettoyage reseaux", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-02", "prochainControle": "2026-12-02", "organisme": "EUROFINS", "observations": "Contrat", "resultat": "Favorable"}, "15.2": {"dateRealisation": "2026-02-11", "prochainControle": "2027-02-11", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-08-01", "prochainControle": "2026-01-30", "organisme": "ORTEC", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI PRALOGNAN": {"3.1": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-11-08", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-03-31", "prochainControle": "", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2024-06-17", "prochainControle": "", "organisme": "OTIS", "observations": "Ascenseur + Quinquennal SOCOTEC Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "ceyo", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-08-02", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "12": {"dateRealisation": "", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": ""}, "13": {"dateRealisation": "2024-04-03", "prochainControle": "", "organisme": "", "observations": "Radon", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "EUROFINS", "observations": "Contrat", "resultat": ""}, "15.2": {"dateRealisation": "2021-12-04", "prochainControle": "", "organisme": "E2S", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "16": {"dateRealisation": "2022-07-05", "prochainControle": "", "organisme": "GES", "observations": "A renouveler", "resultat": "Favorable"}, "17": {"dateRealisation": "2023-04-18", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz - Contrat", "resultat": "Favorable"}}, "STATION DE SKI LES ORRES": {"3.1": {"dateRealisation": "2024-12-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "DESSAUD", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-07-17", "prochainControle": "2026-07-17", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-09", "prochainControle": "2026-06-08", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-06-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "RIA - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2024-07-02", "prochainControle": "2025-07-02", "organisme": "Dessautel", "observations": "Rideau d eau", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-06-27", "prochainControle": "2025-06-27", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2024-06-27", "prochainControle": "2024-06-27", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-05-30", "prochainControle": "2025-05-30", "organisme": "dessaud", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2024-12-07", "prochainControle": "2025-06-07", "organisme": "PARDIGON", "observations": "", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "SOCOTEC", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-11-12", "prochainControle": "2025-11-12", "organisme": "alltec", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-10-03", "prochainControle": "2025-10-03", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-09-19", "prochainControle": "2025-09-19", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "17": {"dateRealisation": "2021-05-11", "prochainControle": "2025-05-10", "organisme": "antargaz", "observations": "A renouveler", "resultat": "Favorable"}}, "VILLAGE SPORTIF LE VERDON": {"3.1": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-04-19", "prochainControle": "2025-04-19", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-08-20", "prochainControle": "2025-08-20", "organisme": "DESAUTEL", "observations": "SSI", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-16", "prochainControle": "2026-06-15", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-08-22", "prochainControle": "2025-08-22", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-04-15", "prochainControle": "2025-04-15", "organisme": "", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-17", "prochainControle": "2025-09-17", "organisme": "BRP", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2021-11-01", "prochainControle": "2022-11-01", "organisme": "EUROFINS", "observations": "Contrat - A renouveler urgence", "resultat": "Favorable"}}, "VALMEINIER": {"3.1": {"dateRealisation": "2022-12-16", "prochainControle": "2023-06-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2024", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2022-12-16", "prochainControle": "2023-12-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2025", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "SICLI", "observations": "A renouveler", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2023-12-01", "prochainControle": "2024-11-30", "organisme": "CHUBB", "observations": "SSI - A renouveler", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-01-28", "prochainControle": "2025-01-27", "organisme": "BV", "observations": "SSI Triennale - A renouveler", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "sicli", "observations": "RIA - A renouveler", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "sicli", "observations": "Desenfumage - A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Q18 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "BAES/BAEH - A renouveler", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Reseaux gaz - A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2023-01-17", "prochainControle": "2024-01-17", "organisme": "DALKIA", "observations": "A renouveler", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "SAVEC", "observations": "A renouveler", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2023-09-06", "prochainControle": "2024-09-05", "organisme": "CEYO", "observations": "A renouveler", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "savec", "observations": "A renouveler", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "bpr", "observations": "A renouveler", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "eurofin", "observations": "A renseigner", "resultat": ""}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "Dalkia", "observations": "A renseigner", "resultat": ""}, "16": {"dateRealisation": "", "prochainControle": "", "organisme": "", "observations": "Bac a graisse - A renseigner", "resultat": ""}}, "SAINT SORLIN D\u2019ARVES": {"3.1": {"dateRealisation": "2026-01-14", "prochainControle": "2027-01-14", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-04-24", "prochainControle": "2028-04-23", "organisme": "BV", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "", "prochainControle": "", "organisme": "DESAUTEL", "observations": "DAS - RV a planifier", "resultat": ""}, "4.5": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-18", "prochainControle": "2026-11-18", "organisme": "SR DAUPHINE", "observations": "A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "", "prochainControle": "2027-11-28", "organisme": "BV", "observations": "Q18", "resultat": ""}, "5.2": {"dateRealisation": "2025-07-18", "prochainControle": "2026-07-18", "organisme": "BV", "observations": "Q19", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-01", "prochainControle": "2026-12-01", "organisme": "I2S", "observations": "Ascenseur/monte-charge", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-11-26", "prochainControle": "2025-11-26", "organisme": "BV", "observations": "A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-05", "prochainControle": "2026-12-05", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "Contrat envoye", "resultat": "Favorable"}, "7.4": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "8.2": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-12-19", "prochainControle": "2026-12-19", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-12", "prochainControle": "2026-06-10", "organisme": "EUROFINS", "observations": "Semestriel", "resultat": "Favorable"}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "16": {"dateRealisation": "2025-03-14", "prochainControle": "2026-03-14", "organisme": "GES", "observations": "", "resultat": "Favorable"}, "17": {"dateRealisation": "", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz 40 mois", "resultat": ""}}},
+  SYNTHESES: {"STATION DE SKI VALLOIRE": {"nom": "VALLOIRE", "code_site": "9332", "adresse": "1038 route du Galibier", "cp": "73450", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "2017", "nb_batiments": "2", "surface_totale": "4646", "type_chauffage": "Fioul", "puissance_kw": "280", "date_commission": "2024-10-04", "periodicite_commission": "3", "prochaine_commission": "2027-10-04", "erp_categorie": "4", "erp_types": "Rh / N / L / X", "directeur": "Benoit DUGRIVEL", "tel_directeur": "06 83 63 57 58", "responsable_maintenance": "Redouane MENAA", "tel_rm": "06 46 76 84 50", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Non", "alimentation_fioul": "Oui", "volume_fioul": "14", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "annee_mise_service": "2019", "pdl": "60004170000084"}, "STATION DE SKI VAL CENIS": {"nom": "VAL CENIS", "code_site": "9331", "adresse": "Rue des rochers", "cp": "73480", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1976", "nb_batiments": "4", "surface_totale": "3640", "type_chauffage": "Fioul", "puissance_kw": "564", "date_commission": "2022-01-13", "periodicite_commission": "3", "prochaine_commission": "2025-01-12", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Philippe MERCK", "tel_directeur": "06 80 93 76 91", "responsable_maintenance": "Bon Bruno", "tel_rm": "06 31 54 10 87", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Oui", "volume_fioul": "18", "alimentation_eau": "Oui"}, "STATION DE SKI VAL THORENS": {"nom": "VAL THORENS", "code_site": "9317", "adresse": "240 rue des Pistes", "cp": "73440", "ville": "Les Belleville", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1960/2012", "date_renovation": "2012", "nb_batiments": "2", "surface_totale": "7665", "type_chauffage": "Gaz", "puissance_kw": "940", "date_commission": "2025-03-03", "periodicite_commission": "3", "prochaine_commission": "2027-03-02", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Nelly GROSSE", "tel_directeur": "06 18 92 80 95", "responsable_maintenance": "Karim CHALLAL", "tel_rm": "06 65 80 92 99", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Oui", "pdl": "30001960293218", "annee_mise_service": "2024"}, "STATION DE SKI SERRE CHEVALIER": {"nom": "SERRE-CHEVALIER", "code_site": "9424", "adresse": "2 Rte de Bez", "cp": "05240", "departement": "Haute-Alpes", "region": "PACA", "nb_batiments": "1", "surface_totale": "4910", "type_chauffage": "Gaz", "puissance_kw": "860", "volume_gaz": "21", "date_commission": "2025-06-20", "periodicite_commission": "3", "prochaine_commission": "2028-06-19", "erp_categorie": "3", "erp_types": "RH O P", "directeur": "Emmanuel MILTGEN", "tel_directeur": "06 60 70 08 40", "responsable_maintenance": "Joey RAPIN", "tel_rm": "06 88 45 14 79", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Non"}, "STATION DE SKI PRALOGNAN": {"nom": "PRALOGNAN", "code_site": "9313", "adresse": "Plan amont - BP7", "cp": "73710", "ville": "Pralognan la vanoise", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "nb_batiments": "2", "surface_totale": "2300", "type_chauffage": "Gaz", "puissance_kw": "1042", "volume_fioul": "15m3 / 6m3", "prochaine_commission": "2024-07-16", "periodicite_commission": "3", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Renaud Berthrand", "tel_directeur": "06 30 31 38 41", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Oui", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "pdl": "50000399133208", "annee_mise_service": "2014", "siret": "77568204000602", "naf": "9319Z"}, "STATION DE SKI LES ORRES": {"nom": "LES ORRES", "code_site": "9441", "adresse": "Pramouton", "cp": "05200", "departement": "Haute-Alpes", "region": "Auvergne Rhone Alpes", "nb_batiments": "4", "surface_totale": "3663", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Jacques Buhr", "tel_directeur": "06 76 17 28 71", "responsable_maintenance": "Claude Rapin", "tel_rm": "06 76 88 35 15", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "VILLAGE SPORTIF LE VERDON": {"nom": "VERDON", "code_site": "9516", "adresse": "La Placette / Vignal", "cp": "04120", "departement": "Alpes-de-Haute-Provence", "region": "PACA", "nb_batiments": "1", "surface_totale": "316", "type_chauffage": "Gaz", "erp_categorie": "4", "erp_types": "O Rh", "directeur": "Stephanie Sauvegrain", "tel_directeur": "06 62 81 46 68", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "pdl": "25682489125299"}, "VALMEINIER": {"nom": "VALMEINIER", "code_site": "", "adresse": "Centre montagne de l Armera", "cp": "73450", "ville": "VALMEINIER", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "directeur": "Sonia LEGAI", "tel_directeur": "06 22 24 50 05", "responsable_maintenance": "Simon", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SAINT SORLIN D\u2019ARVES": {"nom": "SAINT SORLIN D ARVES", "code_site": "9333", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}},
 
-<!-- ═══════════════════════════════════════════════
-     PAGE RAPPORTS DE VISITE
-════════════════════════════════════════════════ -->
-<div id="page-rapports" class="page" style="display:none">
-  <!-- KPIs -->
-  <div class="reg-kpi-strip" id="rapports-kpi-strip" style="margin-bottom:14px"></div>
-  <!-- Filtres -->
-  <div class="ops-fscroll" id="rapports-filters"></div>
-  <!-- Liste -->
-  <div id="rapports-list"></div>
-</div>
+  run() {
+    if (!confirm('Importer les donnees des 9 centres Alpes Sud ?\n\nLes champs vides seront remplis. Les donnees existantes sont conservees.')) return;
 
-<!-- ═══════════════════════════════════════════════
-     PAGE SUIVI DE TÂCHES
-════════════════════════════════════════════════ -->
-<div id="page-taches" class="page" style="display:none">
-  <!-- KPIs -->
-  <div class="tkpi-grid" id="taches-kpi-strip"></div>
-  <!-- Filtres -->
-  <div class="ops-fscroll" id="taches-filters"></div>
-  <!-- Liste -->
-  <div id="taches-list"></div>
-</div>
+    const prefix = (typeof App !== 'undefined' && App._storagePrefix) ? App._storagePrefix : 'ucpa_alpes_sud_';
 
-<!-- Modales OPS (réutilise le système modal existant) -->
+    let reg;
+    try { reg = (typeof App !== 'undefined') ? (App.load('registre') || {}) : {}; } catch(e) { reg = {}; }
+
+    let nbFilled = 0;
+    Object.entries(this.PATCH).forEach(([centre, catPatch]) => {
+      const rows = reg[centre];
+      if (!Array.isArray(rows)) { console.warn('[UCPAImport] Centre absent:', centre); return; }
+      Object.entries(catPatch).forEach(([catId, vals]) => {
+        const row = rows.find(r => r.catId === catId);
+        if (!row) return;
+        if (!row.organisme       && vals.organisme)       { row.organisme       = vals.organisme;       nbFilled++; }
+        if (!row.dateRealisation  && vals.dateRealisation) { row.dateRealisation  = vals.dateRealisation; nbFilled++; }
+        if (!row.prochainControle && vals.prochainControle){ row.prochainControle = vals.prochainControle; nbFilled++; }
+        if (!row.observations     && vals.observations)    { row.observations     = vals.observations;    nbFilled++; }
+        if (!row.resultat         && vals.resultat)        { row.resultat         = vals.resultat;        nbFilled++; }
+      });
+    });
+
+    if (typeof App !== 'undefined') App.save('registre', reg);
+
+    let synth;
+    try { synth = (typeof App !== 'undefined') ? (App.load('syntheses') || {}) : {}; } catch(e) { synth = {}; }
+    Object.entries(this.SYNTHESES).forEach(([centre, sdata]) => {
+      if (!synth[centre]) synth[centre] = {};
+      Object.entries(sdata).forEach(([key, val]) => { if (!synth[centre][key] && val) synth[centre][key] = val; });
+    });
+    if (typeof App !== 'undefined') App.save('syntheses', synth);
+
+    if (typeof App !== 'undefined') {
+      try { if (App._currentPage === 'registre') App.renderRegistre(); } catch(e) {}
+      try { if (App._currentPage === 'synthese') App.renderSynthese && App.renderSynthese(); } catch(e) {}
+    }
+
+    const nb = Object.keys(this.PATCH).length;
+    const total = Object.values(this.PATCH).reduce((s,e) => s + Object.keys(e).length, 0);
+    alert('Import termine !\n\n' + nb + ' centres / ' + total + ' lignes traitees\n' + nbFilled + ' champs remplis');
+  }
+};
+</script>
 </body>
 </html>
