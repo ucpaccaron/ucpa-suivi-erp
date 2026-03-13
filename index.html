@@ -2329,6 +2329,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
                 style="border-radius:0;font-size:11px;padding:4px 10px">Liste</button>
             </div>
             <button class="btn btn-secondary btn-sm" onclick="Cal.exportPDF()" style="margin-left:4px">📄 PDF</button>
+            <button class="btn btn-sm" onclick="Cal.autoFill()" style="margin-left:4px;background:var(--green);color:#fff;border:none;cursor:pointer" title="Pré-remplir le calendrier depuis le registre et créer les rondes types">⚡ Pré-remplir</button>
           </div>
         </div>
         <!-- Filtres catégories -->
@@ -14481,6 +14482,98 @@ const Cal = {
     this.render();
   },
   setView(v) { this._view = v; this._weekStart = 0; this.render(); },
+
+  // ── Pré-remplissage automatique depuis les données ERP ──
+  autoFill() {
+    const centres = Object.values(window.REGIONS || {})
+      .flatMap(r => r.centres || []);
+
+    // 1. Charger le registre si vide via UCPAImport
+    const reg = App.load('registre') || {};
+    const hasRegistre = Object.values(reg).some(rows => Array.isArray(rows) && rows.some(r => r.prochainControle));
+    if (!hasRegistre && typeof UCPAImport !== 'undefined') {
+      // Import silencieux sans confirm
+      let nbFilled = 0;
+      const regInit = App.load('registre') || {};
+      Object.entries(UCPAImport.PATCH).forEach(([centre, catPatch]) => {
+        const rows = regInit[centre];
+        if (!Array.isArray(rows)) return;
+        Object.entries(catPatch).forEach(([catId, vals]) => {
+          const row = rows.find(r => r.catId === catId);
+          if (!row) return;
+          ['organisme','dateRealisation','prochainControle','observations','resultat'].forEach(k => {
+            if (!row[k] && vals[k]) { row[k] = vals[k]; nbFilled++; }
+          });
+        });
+      });
+      App.save('registre', regInit);
+
+      // Synthèses aussi
+      const synth = App.load('syntheses') || {};
+      Object.entries(UCPAImport.SYNTHESES).forEach(([centre, sdata]) => {
+        if (!synth[centre]) synth[centre] = {};
+        Object.entries(sdata).forEach(([key, val]) => { if (!synth[centre][key] && val) synth[centre][key] = val; });
+      });
+      App.save('syntheses', synth);
+    }
+
+    // 2. Générer les rondes de référence pour chaque centre
+    const rondes = App.load('rondes') || [];
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    // Types de rondes à générer par centre
+    const RONDES_TYPES = [
+      { type: 'Ronde quotidienne',   jours: 1,  label: 'Ronde de sécurité quotidienne' },
+      { type: 'Ronde hebdomadaire',  jours: 7,  label: 'Ronde hebdomadaire - vérifications techniques' },
+      { type: 'Ronde mensuelle',     jours: 30, label: 'Ronde mensuelle - contrôle général' },
+    ];
+
+    let nbRondes = 0;
+    centres.forEach(centre => {
+      RONDES_TYPES.forEach(rt => {
+        // Vérifier si ce type de ronde existe déjà pour ce centre
+        const exists = rondes.find(r => r.centre === centre && r.type === rt.type);
+        if (exists) return; // déjà présente, ne pas dupliquer
+
+        // Créer une ronde de référence datée d'hier (pour déclencher la projection future)
+        const refDate = new Date(today);
+        refDate.setDate(today.getDate() - 1);
+        const dateStr = App.today ? (()=>{
+          const d = refDate;
+          return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        })() : refDate.toISOString().split('T')[0];
+
+        rondes.push({
+          id: App.uuid(),
+          date: dateStr,
+          centre: centre,
+          type: rt.type,
+          agent: '',
+          observations: rt.label + ' — généré automatiquement',
+          _auto: true
+        });
+        nbRondes++;
+      });
+    });
+
+    App.save('rondes', rondes);
+
+    // 3. Rafraîchir le calendrier
+    this.render();
+
+    const nbCentres = Object.keys(UCPAImport.PATCH || {}).length;
+    const msg = [
+      '⚡ Calendrier pré-rempli !\n',
+      hasRegistre
+        ? '✅ Registre : données déjà présentes'
+        : `✅ Registre : ${nbCentres} centres chargés depuis les données UCPA`,
+      nbRondes > 0
+        ? `✅ Rondes : ${nbRondes} rondes types créées (quotidienne, hebdo, mensuelle)`
+        : '✅ Rondes : déjà configurées',
+      '\nLe calendrier affiche maintenant les prochains contrôles et les rondes planifiées.'
+    ].join('\n');
+    alert(msg);
+  },
   toggleFilter(cat) { this._filters[cat] = !this._filters[cat]; this.render(); },
 
   // ── Utilitaires ──
@@ -15331,305 +15424,767 @@ document.addEventListener('ucpa-session-started', () => {
 });
 
 // ══════════════════════════════════════════════════════════════
-// MODULE IMPORT PDF — Fiche de Synthèse
+// MODULE IMPORT PDF IA — Détection & import multi-documents
 // ══════════════════════════════════════════════════════════════
-const PDFImport = {
 
-  // ── Ouvrir le sélecteur de fichier ─────────────────────────
-  openFilePicker() {
-    let input = document.getElementById('pdf-import-input');
-    if (!input) {
-      input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'application/pdf,.pdf';
-      input.id = 'pdf-import-input';
-      input.style.display = 'none';
-      document.body.appendChild(input);
-      input.addEventListener('change', e => {
-        if (e.target.files[0]) this.importFile(e.target.files[0]);
-        input.value = '';
-      });
-    }
-    input.click();
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `
+#pdf-import-modal{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+#pdf-import-modal.hidden{display:none}
+.pim-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;width:min(920px,96vw);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.45)}
+.pim-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pim-head h3{margin:0;font-size:15px;font-weight:700;color:var(--text);flex:1}
+.pim-close{cursor:pointer;font-size:18px;color:var(--muted);padding:4px 8px;border-radius:6px;background:none;border:none}
+.pim-close:hover{background:var(--bg2);color:var(--text)}
+.pim-drop{margin:14px 20px 8px;border:2px dashed var(--border);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);background:var(--bg)}
+.pim-drop:hover,.pim-drop.dragover{border-color:var(--accent);color:var(--accent);background:rgba(232,84,26,.04)}
+.pim-drop-icon{font-size:28px;margin-bottom:6px}
+.pim-drop p{margin:3px 0;font-size:12px}
+.pim-drop p strong{color:var(--text)}
+.pim-queue{padding:0 20px 6px;display:flex;flex-direction:column;gap:5px;max-height:170px;overflow-y:auto;flex-shrink:0}
+.pim-file-row{display:flex;align-items:center;gap:8px;padding:7px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px}
+.pim-fname{flex:1;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pim-ftype{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;background:var(--bg3);color:var(--muted);white-space:nowrap}
+.pim-ftype.registre{background:rgba(58,123,213,.12);color:var(--blue)}
+.pim-ftype.rapport{background:rgba(29,185,84,.12);color:var(--green)}
+.pim-ftype.contrat{background:rgba(232,84,26,.12);color:var(--accent)}
+.pim-ftype.facture{background:rgba(245,166,35,.12);color:var(--amber)}
+.pim-ftype.habilitation{background:rgba(139,92,246,.12);color:#8b5cf6}
+.pim-ftype.audit{background:rgba(236,72,153,.12);color:#ec4899}
+.pim-fstatus{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.pim-fstatus.idle{color:var(--muted)}
+.pim-fstatus.detecting{background:rgba(139,92,246,.12);color:#8b5cf6}
+.pim-fstatus.extracting{background:rgba(245,166,35,.12);color:var(--amber)}
+.pim-fstatus.ok{background:rgba(29,185,84,.12);color:var(--green)}
+.pim-fstatus.err{background:rgba(232,54,26,.12);color:var(--red)}
+.pim-preview{flex:1;overflow-y:auto;padding:0 20px 12px;display:flex;flex-direction:column;gap:10px}
+.pim-preview-card{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.pim-card-head{padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.pim-card-title{font-size:13px;font-weight:700;color:var(--text);flex:1}
+.pim-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700}
+.pim-badge.ok{background:rgba(29,185,84,.15);color:var(--green)}
+.pim-badge.warn{background:rgba(245,166,35,.15);color:var(--amber)}
+.pim-badge.err{background:rgba(232,54,26,.15);color:var(--red)}
+.pim-badge.info{background:rgba(58,123,213,.15);color:var(--blue)}
+.pim-card-body{padding:12px 14px;background:var(--bg);display:flex;flex-direction:column;gap:8px}
+.pim-section-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.pim-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:5px}
+.pim-field{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 10px}
+.pim-flabel{font-size:10px;color:var(--muted);margin-bottom:1px}
+.pim-fval{font-size:12px;font-weight:600;color:var(--text)}
+.pim-fval.empty{color:var(--muted);font-style:italic;font-weight:400}
+.pim-ctrl-table{width:100%;border-collapse:collapse;font-size:11px}
+.pim-ctrl-table th{text-align:left;padding:5px 8px;background:var(--bg2);color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.pim-ctrl-table td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+.pim-ctrl-table tr:last-child td{border-bottom:none}
+.pim-catid{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;color:var(--accent)}
+.pim-res-ok{color:var(--green);font-weight:700;font-size:10px}
+.pim-res-no{color:var(--red);font-weight:700;font-size:10px}
+.pim-res-nc{color:var(--muted);font-size:10px}
+.pim-centre-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.pim-centre-row label{font-weight:600;color:var(--text);white-space:nowrap;min-width:80px}
+.pim-centre-row select{font-size:12px;padding:4px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;color:var(--text);flex:1;min-width:0}
+.pim-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pim-count{flex:1;font-size:12px;color:var(--muted)}
+.pim-btn{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.pim-btn-cancel{background:var(--bg);border:1px solid var(--border);color:var(--text)}
+.pim-btn-cancel:hover{background:var(--bg2)}
+.pim-btn-analyse{background:var(--blue);color:#fff}
+.pim-btn-analyse:hover{opacity:.9}
+.pim-btn-import{background:var(--green);color:#fff}
+.pim-btn-import:hover{opacity:.9}
+.pim-btn-import:disabled{opacity:.4;cursor:not-allowed}
+.pim-warn{font-size:11px;color:var(--amber);background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:6px;padding:7px 10px}
+.pim-type-banner{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;font-size:12px}
+.pim-type-icon{font-size:16px}
+.pim-type-name{font-weight:700;color:var(--text)}
+.pim-type-desc{color:var(--muted);flex:1}
+`;
+  document.head.appendChild(s);
+})();
+
+const PDFImport = {
+  _queue:   [],
+
+  // ── Types de documents reconnus ────────────────────────────
+  DOC_TYPES: {
+    registre_ucpa:    { icon:'📋', label:'Registre UCPA',          desc:'Synthèse commission / registre sécurité',  color:'var(--blue)'   },
+    rapport_verif:    { icon:'🔍', label:'Rapport de vérification', desc:'Bureau Veritas, Socotec, Apave, DEKRA…',   color:'var(--green)'  },
+    contrat:          { icon:'📑', label:'Contrat prestataire',     desc:'Contrat de maintenance ou de service',     color:'var(--accent)' },
+    facture_devis:    { icon:'💶', label:'Facture / Devis',         desc:'Facture prestataire ou devis travaux',     color:'var(--amber)'  },
+    habilitation:     { icon:'🎓', label:'Habilitation / Formation',desc:'Attestation, diplôme, certificat SSIAP…', color:'#8b5cf6'      },
+    rapport_audit:    { icon:'📊', label:'Rapport d\'audit',        desc:'Inspection, audit sécurité, observation',  color:'#ec4899'      },
+    inconnu:          { icon:'❓', label:'Document non reconnu',    desc:'Type indéterminé',                         color:'var(--muted)'  },
   },
 
-  // ── Importer et analyser le PDF ────────────────────────────
-  async importFile(file) {
-    console.log('[PDFImport] Fichier:', file.name);
-    const btn = document.getElementById('btn-import-pdf');
-    const origHTML = btn ? btn.innerHTML : '';
-    const setBtn = (txt, col) => { if (btn) { btn.innerHTML = txt; btn.style.background = col || ''; } };
+  CAT_LABELS: {
+    '3.1':'Formations extincteurs/évacuation','3.2':'Formations centrale incendie',
+    '4.1':'Extincteurs','4.2':'SSI','4.3':'SSI Triennale','4.4':'DAS',
+    '4.5':'RIA','4.6':'Colonne sèche / PEI','4.7':'Sprinkler','4.8':'Désenfumage',
+    '5.1':'Élec Q18','5.2':'Élec Q19','5.3':'BAES / BAEH / Ambiance',
+    '6.1':'Ascenseurs / Monte-charge','6.2':'Quinquennal VRE+CTQ','6.3':'Portes automatiques',
+    '7.1':'Réseaux gaz','7.2':'Chaudières / Fioul','7.3':'Appareils cuisson',
+    '7.4':'Ramonage','8.1':'Perf. énergétique','8.2':'Étanchéité frigorigène',
+    '10.1':'Hottes cuisine (QAI)','10.2':'Ventilation','11.1':'EPC/EPI sportifs',
+    '12':'DAE défibrillateurs','13':'Radon','15.1':'Légionellose / ECS',
+    '15.2':'Disconnecteur','16':'Bac à graisse','17':'Citerne gaz'
+  },
 
-    setBtn('⏳ Lecture PDF…', '#6366f1');
+  _apiKey() { return window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : ''); },
+  _allCentres() {
+    const list = [];
+    Object.values(window.REGIONS || {}).forEach(r => r.centres?.forEach(c => list.push(c)));
+    return list.sort();
+  },
+  _toISO(str) {
+    if (!str) return '';
+    str = String(str).trim();
+    const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    return str;
+  },
 
-    try {
-      // Lire le fichier en base64
-      const base64 = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload  = e => resolve(e.target.result.split(',')[1]);
-        reader.onerror = () => reject(new Error('Lecture fichier échouée'));
-        reader.readAsDataURL(file);
-      });
-
-      setBtn('🤖 Analyse IA…', '#f59e0b');
-
-      const apiKey = window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
-      if (!apiKey || apiKey === 'VOTRE_CLE_API_ICI') {
-        alert('Clé API Anthropic non configurée.\nVa dans Admin → Configuration API Anthropic pour la renseigner.');
-        setBtn(origHTML, '');
-        return;
-      }
-
-      // Prompt précis basé sur le format exact de la fiche UCPA
-      const systemPrompt = `Tu es un extracteur de données pour les fiches de synthèse UCPA.
-Extrait TOUTES les données du PDF et réponds UNIQUEMENT en JSON valide, sans markdown, sans explication.
-Format exact :
-{
-  "nom": "",
-  "siret": "",
-  "code_naf": "",
-  "adresse": "",
-  "cp": "",
-  "ville": "",
-  "code_site": "",
-  "departement": "",
-  "region": "",
-  "nb_batiments": "",
-  "surface": "",
-  "pdl": "",
-  "alim_gaz": "",
-  "alim_fioul": "",
-  "volume_fioul": "",
-  "type_chauffage": "",
-  "annee_mise_service": "",
-  "puissance_kw": "",
-  "erp_types": [],
-  "erp_cat": "",
-  "periodicite_commission": "",
-  "derniere_commission": "",
-  "prochaine_commission": "",
-  "effectif_total": "",
-  "capacite_client": "",
-  "nb_niveaux": "",
-  "controles": [
-    {
-      "catId": "4.1",
-      "prestataire": "DESAUTEL",
-      "contrat": true,
-      "derniere_visite": "23/07/2024",
-      "resultat": "Conforme"
+  // ── Point d'entrée ─────────────────────────────────────────
+  openFilePicker() {
+    if (!this._apiKey() || this._apiKey() === 'VOTRE_CLE_API_ICI') {
+      alert('Clé API Anthropic non configurée.\nVa dans Admin → Configuration API Anthropic.');
+      return;
     }
+    this._queue = [];
+    this._renderModal();
+  },
+
+  // ── Modale ─────────────────────────────────────────────────
+  _renderModal() {
+    let modal = document.getElementById('pdf-import-modal');
+    if (!modal) { modal = document.createElement('div'); modal.id = 'pdf-import-modal'; document.body.appendChild(modal); }
+    modal.innerHTML = `
+<div class="pim-box">
+  <div class="pim-head">
+    <span style="font-size:20px">📥</span>
+    <h3>Import IA — Documents UCPA</h3>
+    <button class="pim-close" onclick="PDFImport._closeModal()">✕</button>
+  </div>
+  <div class="pim-drop" id="pim-drop-zone">
+    <div class="pim-drop-icon">📄</div>
+    <p><strong>Glissez vos documents PDF ici</strong> ou cliquez pour sélectionner</p>
+    <p>Registres · Rapports de vérification · Contrats · Factures · Habilitations · Audits</p>
+  </div>
+  <div class="pim-queue" id="pim-queue-list"></div>
+  <div class="pim-preview" id="pim-preview-area" style="display:none"></div>
+  <div class="pim-foot">
+    <span class="pim-count" id="pim-count-lbl"></span>
+    <button class="pim-btn pim-btn-cancel" onclick="PDFImport._closeModal()">Annuler</button>
+    <button class="pim-btn pim-btn-analyse" id="pim-btn-analyse" style="display:none" onclick="PDFImport._analyseAll()">🤖 Analyser avec l'IA</button>
+    <button class="pim-btn pim-btn-import" id="pim-btn-import" style="display:none" disabled onclick="PDFImport._importAll()">✅ Importer les données</button>
+  </div>
+</div>`;
+    modal.classList.remove('hidden');
+    const drop = document.getElementById('pim-drop-zone');
+    drop.addEventListener('click', () => this._pickFiles());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', e => {
+      e.preventDefault(); drop.classList.remove('dragover');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type==='application/pdf'||f.name.endsWith('.pdf'));
+      if (files.length) this._addFiles(files);
+    });
+  },
+
+  _pickFiles() {
+    let inp = document.getElementById('pim-file-input');
+    if (!inp) { inp = document.createElement('input'); inp.type='file'; inp.id='pim-file-input'; inp.accept='application/pdf,.pdf'; inp.multiple=true; inp.style.display='none'; document.body.appendChild(inp); }
+    inp.onchange = e => { if (e.target.files.length) this._addFiles(Array.from(e.target.files)); inp.value=''; };
+    inp.click();
+  },
+
+  _addFiles(files) {
+    files.forEach(f => { if (!this._queue.find(q => q.name===f.name)) this._queue.push({file:f, name:f.name, status:'idle', docType:null, data:null, errMsg:''}); });
+    this._renderQueue();
+  },
+
+  _removeFile(i) { this._queue.splice(i,1); this._renderQueue(); },
+
+  _renderQueue() {
+    const list = document.getElementById('pim-queue-list');
+    const btnA = document.getElementById('pim-btn-analyse');
+    const lbl  = document.getElementById('pim-count-lbl');
+    if (!list) return;
+    list.innerHTML = this._queue.map((q,i) => {
+      const dt = q.docType ? this.DOC_TYPES[q.docType] : null;
+      const statusTxt = {idle:'En attente',detecting:'🔍 Détection…',extracting:'⏳ Extraction…',ok:'✅ Prêt',err:'❌ Erreur'}[q.status]||'';
+      return `<div class="pim-file-row">
+        <span>📄</span>
+        <span class="pim-fname">${q.name}</span>
+        ${dt ? `<span class="pim-ftype">${dt.icon} ${dt.label}</span>` : ''}
+        <span class="pim-fstatus ${q.status}">${statusTxt}${q.status==='err'&&q.errMsg?' — '+q.errMsg.slice(0,30):''}</span>
+        ${q.status==='idle'?`<span style="cursor:pointer;color:var(--muted);font-size:14px" onclick="PDFImport._removeFile(${i})">✕</span>`:''}
+      </div>`;
+    }).join('');
+    if (btnA) btnA.style.display = this._queue.length && this._queue.some(q=>q.status==='idle') ? '' : 'none';
+    if (lbl)  lbl.textContent = this._queue.length ? `${this._queue.length} fichier(s)` : '';
+  },
+
+  // ── Pipeline IA : détection → extraction ──────────────────
+  async _analyseAll() {
+    document.getElementById('pim-btn-analyse').style.display = 'none';
+    const pending = this._queue.filter(q => q.status==='idle');
+    for (const item of pending) {
+      try {
+        // Étape 1 : lire le PDF en base64
+        const base64 = await this._toBase64(item.file);
+
+        // Étape 2 : détection du type
+        item.status = 'detecting'; this._renderQueue();
+        item.docType = await this._detectType(base64);
+
+        // Étape 3 : extraction selon le type
+        item.status = 'extracting'; this._renderQueue();
+        item.data = await this._extract(base64, item.docType);
+        item.status = 'ok';
+      } catch(e) {
+        item.status = 'err'; item.errMsg = e.message;
+      }
+      this._renderQueue();
+    }
+    this._renderPreview();
+  },
+
+  async _toBase64(file) {
+    return new Promise((res,rej) => {
+      const r = new FileReader();
+      r.onload = e => res(e.target.result.split(',')[1]);
+      r.onerror = () => rej(new Error('Lecture fichier échouée'));
+      r.readAsDataURL(file);
+    });
+  },
+
+  async _callAPI(base64, systemPrompt, userText, maxTokens=3000) {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':this._apiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:maxTokens,
+        system: systemPrompt,
+        messages:[{role:'user',content:[
+          {type:'document',source:{type:'base64',media_type:'application/pdf',data:base64}},
+          {type:'text',text:userText}
+        ]}]
+      })
+    });
+    if (!resp.ok) throw new Error('API error ' + resp.status);
+    const d = await resp.json();
+    return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+  },
+
+  _parseJSON(text) {
+    try { return JSON.parse(text); } catch(e) {
+      try {
+        const opens = (text.match(/\[/g)||[]).length-(text.match(/\]/g)||[]).length;
+        const openb = (text.match(/\{/g)||[]).length-(text.match(/\}/g)||[]).length;
+        let fixed = text.replace(/,\s*$/, '');
+        fixed += ']'.repeat(Math.max(0,opens))+'}'.repeat(Math.max(0,openb));
+        return JSON.parse(fixed);
+      } catch(e2) { throw new Error('Réponse IA non parseable'); }
+    }
+  },
+
+  // ── Étape 1 : détection du type ───────────────────────────
+  async _detectType(base64) {
+    const sys = `Tu analyses un document PDF et détermine son type parmi ces catégories exactes :
+- registre_ucpa : Registre de sécurité UCPA, fiche synthèse commission, tableau de contrôles périodiques
+- rapport_verif : Rapport de vérification ou de contrôle d'un organisme (Bureau Veritas, Socotec, Apave, DEKRA, Veritas, Qualiconsult, etc.)
+- contrat : Contrat de prestation, contrat de maintenance, convention de service
+- facture_devis : Facture, bon de commande, devis, note d'honoraires
+- habilitation : Attestation de formation, certificat, habilitation électrique, diplôme SSIAP, SST, etc.
+- rapport_audit : Rapport d'audit, rapport d'inspection, rapport de visite, compte-rendu
+- inconnu : Aucune des catégories ci-dessus
+
+Réponds UNIQUEMENT avec le mot-clé exact, sans explication.`;
+    const result = await this._callAPI(base64, sys, 'Quel est le type de ce document ?', 50);
+    const type = result.trim().toLowerCase().replace(/[^a-z_]/g,'');
+    return this.DOC_TYPES[type] ? type : 'inconnu';
+  },
+
+  // ── Étape 2 : extraction selon le type ────────────────────
+  async _extract(base64, docType) {
+    const prompts = {
+
+      registre_ucpa: {
+        sys: `Tu extrais les données d'un registre de sécurité ou d'une fiche de synthèse UCPA.
+Réponds UNIQUEMENT en JSON valide, sans markdown.
+Format :
+{
+  "centre": "Nom exact du centre",
+  "nom_court": "",
+  "code_site": "",
+  "adresse": "", "cp": "", "ville": "", "departement": "",
+  "erp_cat": "", "erp_types": [],
+  "nb_batiments": "", "surface_totale": "",
+  "type_chauffage": "", "puissance_kw": "",
+  "alim_gaz": "Oui/Non", "alim_fioul": "Oui/Non", "alim_eau": "Oui/Non", "alim_incendie": "Oui/Non",
+  "directeur": "", "tel_directeur": "",
+  "responsable_maintenance": "", "tel_rm": "",
+  "date_commission": "JJ/MM/AAAA",
+  "periodicite_commission": "",
+  "prochaine_commission": "JJ/MM/AAAA",
+  "controles": [
+    {"catId":"4.1","observations":"","prestataire":"","dateRealisation":"JJ/MM/AAAA","prochainControle":"JJ/MM/AAAA","resultat":"Favorable"}
   ]
 }
-Pour erp_types : extraire les codes exacts (ex: ["RH","N","L"]).
-Pour les contrôles : utiliser exactement les catIds du registre (3.1, 3.2, 4.1, 4.2, 4.3=SSI triennale, 4.4=DAS, 4.5=RIA, 4.6=colonne sèche/PEI, 4.7=sprinkler, 4.8=désenfumage, 5.1=Q18, 5.2=BAES, 6.1=ascenseurs, 6.2=quinquennal, 7.1=réseaux gaz, 7.2=chaudières, 7.3=cuisine, 7.4=ramonage, 8.1=perf énergie, 8.2=étanchéité, 9=EPC/EPI, 10.1=hottes, 10.2=ventilation, 11.1=sportifs, 12=DAE, 13=radon, 15.1=légionellose, 15.2=disconnecteur, 16=bac graisse, 17=citerne gaz).
-Pour les dates : format DD/MM/YYYY ou YYYY-MM-DD. Si "Sans objet" → omettre le contrôle.`;
+CatIds : 3.1=formations extincteurs, 3.2=formations centrale, 4.1=extincteurs, 4.2=SSI annuel, 4.3=SSI triennale, 4.4=DAS, 4.5=RIA, 4.6=colonne sèche/PEI, 4.8=désenfumage, 5.1=Q18, 5.2=Q19, 5.3=BAES/BAEH, 6.1=ascenseurs, 6.2=quinquennal VRE+CTQ, 6.3=portes auto, 7.1=réseaux gaz, 7.2=chaudières/fioul, 7.3=cuisson feux vifs, 7.4=ramonage, 10.1=hottes cuisine, 15.1=légionellose, 15.2=disconnecteur, 16=bac à graisse, 17=citerne gaz.
+Dates : format JJ/MM/AAAA. Ignorer les lignes "Non concerné".`,
+        user: 'Extrais toutes les données de ce registre UCPA en JSON complet.'
+      },
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': (window._anthropicKey || ANTHROPIC_API_KEY),
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 4000,
-          system: systemPrompt,
-          messages: [{
-            role: 'user',
-            content: [{
-              type: 'document',
-              source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-            }, {
-              type: 'text',
-              text: 'Extrais toutes les données de cette fiche de synthèse UCPA. Réponds UNIQUEMENT en JSON valide et COMPLET, sans rien tronquer.'
-            }]
-          }]
-        })
-      });
+      rapport_verif: {
+        sys: `Tu extrais les données d'un rapport de vérification ou de contrôle technique.
+Réponds UNIQUEMENT en JSON valide, sans markdown.
+Format :
+{
+  "organisme": "Bureau Veritas",
+  "type_controle": "Vérification électrique Q18",
+  "catId": "5.1",
+  "centre": "Nom du site/établissement contrôlé",
+  "adresse_site": "",
+  "dateRealisation": "JJ/MM/AAAA",
+  "prochainControle": "JJ/MM/AAAA",
+  "resultat": "Favorable",
+  "observations": "Résumé des observations principales",
+  "nb_ecarts": "",
+  "prestataire": "",
+  "verificateur": "",
+  "reference_rapport": ""
+}
+CatIds selon le type de contrôle :
+SSI/incendie annuel→4.2, SSI triennale→4.3, DAS→4.4, extincteurs→4.1, désenfumage→4.8, colonnes→4.6,
+électrique Q18→5.1, électrique Q19→5.2, BAES/éclairage→5.3,
+ascenseurs→6.1, quinquennal ascenseur→6.2, portes auto→6.3,
+gaz→7.1, chaudière/fioul→7.2, cuisson→7.3, ramonage→7.4,
+hottes/QAI→10.1, légionellose→15.1, disconnecteur→15.2, bac graisse→16, citerne→17.
+Dates : format JJ/MM/AAAA. Résultat : "Favorable", "Défavorable", "Non conforme" ou "Avec réserves".`,
+        user: 'Extrais les informations clés de ce rapport de vérification en JSON.'
+      },
 
-      if (!response.ok) {
-        const err = await response.text();
-        throw new Error('API error ' + response.status + ': ' + err.slice(0, 200));
+      contrat: {
+        sys: `Tu extrais les données d'un contrat de prestation ou de maintenance.
+Réponds UNIQUEMENT en JSON valide, sans markdown.
+Format :
+{
+  "prestataire": "Nom de l'entreprise prestataire",
+  "centre": "Nom du site / établissement",
+  "objet": "Description de la prestation",
+  "type_contrat": "Maintenance / Service / Vérification",
+  "domaine": "Incendie / Électrique / Ascenseurs / etc.",
+  "catIds_concernes": ["4.1","4.2"],
+  "debut": "JJ/MM/AAAA",
+  "fin": "JJ/MM/AAAA",
+  "periodicite": "Annuelle / Semestrielle / Trimestrielle / Mensuelle",
+  "montant_ht": "",
+  "contact_prestataire": "",
+  "tel_prestataire": "",
+  "email_prestataire": "",
+  "numero_contrat": "",
+  "observations": ""
+}
+Dates : format JJ/MM/AAAA.`,
+        user: 'Extrais les informations de ce contrat en JSON.'
+      },
+
+      facture_devis: {
+        sys: `Tu extrais les données d'une facture ou d'un devis de travaux/prestation.
+Réponds UNIQUEMENT en JSON valide, sans markdown.
+Format :
+{
+  "type_doc": "Facture ou Devis",
+  "prestataire": "Nom fournisseur",
+  "centre": "Site / établissement bénéficiaire",
+  "numero": "N° facture ou devis",
+  "date": "JJ/MM/AAAA",
+  "objet": "Description courte de la prestation",
+  "categorie": "Sécurité incendie / Électrique / Ascenseurs / Chauffage / Travaux / etc.",
+  "catIds_concernes": [],
+  "montant_ht": "",
+  "tva": "",
+  "montant_ttc": "",
+  "statut": "Payée / En attente / Devis",
+  "observations": ""
+}
+Dates : format JJ/MM/AAAA.`,
+        user: 'Extrais les informations de cette facture ou de ce devis en JSON.'
+      },
+
+      habilitation: {
+        sys: `Tu extrais les données d'une attestation de formation ou d'une habilitation.
+Réponds UNIQUEMENT en JSON valide, sans markdown.
+Format :
+{
+  "nom_agent": "Nom Prénom",
+  "centre": "Centre UCPA d'affectation si mentionné",
+  "poste": "Fonction / poste",
+  "habilitation": "Type exact : SSIAP1 / SSIAP2 / SST / Habilitation élec B1 / H0 / etc.",
+  "organisme_formation": "Nom de l'organisme",
+  "dateObtention": "JJ/MM/AAAA",
+  "expiration": "JJ/MM/AAAA",
+  "numero_certificat": "",
+  "observations": ""
+}
+Dates : format JJ/MM/AAAA.`,
+        user: 'Extrais les informations de cette attestation ou habilitation en JSON.'
+      },
+
+      rapport_audit: {
+        sys: `Tu extrais les données d'un rapport d'audit ou d'inspection de sécurité.
+Réponds UNIQUEMENT en JSON valide, sans markdown.
+Format :
+{
+  "centre": "Site audité",
+  "date": "JJ/MM/AAAA",
+  "type_audit": "Audit sécurité / Inspection / Visite commission / etc.",
+  "auditeur": "",
+  "organisme_audit": "",
+  "observations": [
+    {"categorie": "Incendie", "description": "Observation...", "gravite": "Majeure/Mineure/Recommandation", "action": "Action corrective proposée"}
+  ],
+  "conclusion": "Conforme / Non conforme / Avec réserves",
+  "nb_ecarts_majeurs": "",
+  "nb_ecarts_mineurs": "",
+  "prochaine_visite": "JJ/MM/AAAA"
+}
+Dates : format JJ/MM/AAAA.`,
+        user: 'Extrais les informations de ce rapport d\'audit en JSON.'
+      },
+
+      inconnu: {
+        sys: `Tu analyses un document PDF de nature inconnue lié à la gestion d'un établissement.
+Extrais toutes les informations utiles que tu peux identifier.
+Réponds UNIQUEMENT en JSON valide :
+{
+  "type_detecte": "Description du type de document",
+  "centre": "Site ou établissement si mentionné",
+  "date": "JJ/MM/AAAA",
+  "emetteur": "",
+  "objet": "",
+  "informations_cles": {},
+  "observations": ""
+}`,
+        user: 'Extrais les informations disponibles dans ce document en JSON.'
       }
-
-      const data = await response.json();
-      let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-      text = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-
-      let extracted = {};
-      try {
-        extracted = JSON.parse(text);
-      } catch(e) {
-        console.error('[PDFImport] JSON parse error:', e, '\nTexte reçu:', text.slice(0, 500));
-        // Tentative de réparation : extraire la partie valide du JSON
-        try {
-          // Trouver la dernière virgule complète et fermer les structures ouvertes
-          let fixed = text;
-          // Supprimer la dernière ligne incomplète
-          const lines = fixed.split('\n');
-          while (lines.length > 1) {
-            try { JSON.parse(lines.join('\n') + '\n]}'); break; } catch(_) {}
-            try { JSON.parse(lines.join('\n') + '\n]\n}'); break; } catch(_) {}
-            try { JSON.parse(lines.join('\n') + '\n}'); break; } catch(_) {}
-            lines.pop();
-          }
-          fixed = lines.join('\n');
-          // Fermer les structures ouvertes
-          const opens = (fixed.match(/\[/g)||[]).length - (fixed.match(/\]/g)||[]).length;
-          const openb = (fixed.match(/\{/g)||[]).length - (fixed.match(/\}/g)||[]).length;
-          // Supprimer trailing comma
-          fixed = fixed.replace(/,\s*$/, '');
-          fixed += ']'.repeat(Math.max(0, opens)) + '}'.repeat(Math.max(0, openb));
-          extracted = JSON.parse(fixed);
-          console.warn('[PDFImport] JSON réparé avec succès');
-        } catch(e2) {
-          throw new Error('Réponse IA non parseable. Voir console (F12).');
-        }
-      }
-
-      console.log('[PDFImport] Données extraites:', extracted);
-      setBtn('📝 Remplissage…', '#10b981');
-      await this._fillAll(extracted);
-
-      setBtn('✅ Import réussi !', '#10b981');
-      setTimeout(() => setBtn(origHTML, ''), 3000);
-
-    } catch(err) {
-      console.error('[PDFImport] Erreur:', err);
-      alert('Erreur import PDF :\n' + err.message + '\n\nOuvre la console (F12) pour plus de détails.');
-      setBtn('❌ Erreur', '#dc2626');
-      setTimeout(() => setBtn(origHTML, ''), 3000);
-    }
-  },
-
-  // ── Remplir tous les onglets ────────────────────────────────
-  async _fillAll(d) {
-    // 1. Naviguer vers la fiche synthèse
-    App.nav('synthese');
-    await new Promise(r => setTimeout(r, 600));
-
-    // 2. Remplir la fiche synthèse
-    this._fillSynthese(d);
-    await new Promise(r => setTimeout(r, 300));
-
-    // 3. Remplir le registre de sécurité
-    if (d.controles && d.controles.length > 0) {
-      this._fillRegistre(d.controles, d.nom || App.centre);
-    }
-
-    // 4. Sauvegarder la synthèse
-    if (typeof App.saveSynthese === 'function') App.saveSynthese();
-
-    console.log('[PDFImport] Import complet.');
-  },
-
-  // ── Fiche Synthèse ──────────────────────────────────────────
-  _fillSynthese(d) {
-    const set = (id, val) => {
-      if (!val && val !== 0) return;
-      const el = document.getElementById(id);
-      if (el) el.value = String(val);
     };
 
-    set('s-nom',            d.nom);
-    set('s-adresse',        d.adresse);
-    set('s-cp',             d.cp);
-    set('s-ville',          d.ville);
-    set('s-siret',          d.siret);
-    set('s-code_site',      d.code_site);
-    set('s-nb_batiments',   d.nb_batiments);
-    set('s-surface',        d.surface);
-    set('s-capacite',       d.effectif_total || d.capacite_client);
-    set('s-num_pdl',        d.pdl);
-    set('s-puissance_chaud',d.puissance_kw || d.nb_chaudieres);
-    set('s-chauffage',      d.type_chauffage);
-    set('s-erp_cat',        d.erp_cat);
-
-    // Commission de sécurité
-    if (d.derniere_commission) {
-      const dateStr = this._normalizeDate(d.derniere_commission);
-      set('s-derniere_commission', dateStr);
-    }
-    if (d.prochaine_commission) {
-      const dateStr = this._normalizeDate(d.prochaine_commission);
-      set('s-prochaine_commission', dateStr);
-    }
-
-    // Types ERP multi-sélection
-    if (Array.isArray(d.erp_types) && d.erp_types.length > 0) {
-      const types = d.erp_types.map(t => t.toUpperCase().trim());
-      document.querySelectorAll('#erp-type-grid .erp-type-item').forEach(el => {
-        const code = (el.querySelector('.erp-type-code')?.textContent || '').trim().toUpperCase();
-        if (types.includes(code)) {
-          el.classList.add('selected');
-        }
-      });
-      console.log('[PDFImport] Types ERP sélectionnés:', types);
-    }
+    const p = prompts[docType] || prompts.inconnu;
+    const text = await this._callAPI(base64, p.sys, p.user, 3500);
+    return this._parseJSON(text);
   },
 
-  // ── Registre de Sécurité ────────────────────────────────────
-  _fillRegistre(controles, centreName) {
-    const centre = centreName || (App.centre !== 'ALL' ? App.centre : null);
-    if (!centre) { console.warn('[PDFImport] Pas de centre sélectionné pour le registre'); return; }
+  // ── Rendu prévisualisation ─────────────────────────────────
+  _renderPreview() {
+    const area = document.getElementById('pim-preview-area');
+    const btnI = document.getElementById('pim-btn-import');
+    if (!area) return;
+    const okItems = this._queue.filter(q => q.status==='ok' && q.data);
+    if (!okItems.length) { area.style.display='none'; if(btnI) btnI.disabled=true; return; }
 
-    const all = App.load('registre') || {};
-    let rows = all[centre] || [];
+    area.style.display = 'flex';
+    const centres = this._allCentres();
 
-    // Si le registre est vide → l'initialiser d'abord
-    if (rows.length === 0) {
-      App._initCentreRegistre(centre);
-      rows = (App.load('registre') || {})[centre] || [];
+    area.innerHTML = okItems.map((item, idx) => {
+      const d = item.data;
+      const dt = this.DOC_TYPES[item.docType];
+      let body = '';
+
+      const centreOpts = ['<option value="">— Sélectionner un centre —</option>',
+        ...centres.map(c => `<option value="${c}" ${(d.centre&&c.toLowerCase().includes(d.centre.toLowerCase().slice(0,8)))||c===d.centre?'selected':''}>${c}</option>`)
+      ].join('');
+
+      const centreRow = `
+        <div class="pim-section-lbl">Centre cible</div>
+        <div class="pim-centre-row">
+          <label>Associer à :</label>
+          <select id="pim-centre-sel-${idx}" onchange="PDFImport._updateCentre(${idx},this.value)">${centreOpts}</select>
+        </div>`;
+
+      // Rendu selon le type
+      if (item.docType === 'registre_ucpa') {
+        const ctrls = Array.isArray(d.controles) ? d.controles.filter(c=>c.catId) : [];
+        const matched = ctrls.filter(c=>this.CAT_LABELS[c.catId]).length;
+        const badgeCls = ctrls.length===0?'err':matched<ctrls.length?'warn':'ok';
+        const fields = [
+          ['Code site',d.code_site],['Catégorie ERP',d.erp_cat],['Types ERP',Array.isArray(d.erp_types)?d.erp_types.join(' / '):d.erp_types],
+          ['Surfaces',d.surface_totale?d.surface_totale+' m²':''],['Bâtiments',d.nb_batiments],
+          ['Chauffage',d.type_chauffage],['Directeur',d.directeur],['Resp. maintenance',d.responsable_maintenance],
+          ['Dernière commission',d.date_commission],['Prochaine commission',d.prochaine_commission]
+        ].filter(([,v])=>v);
+        body = `${centreRow}
+          ${fields.length?`<div class="pim-section-lbl">Données extraites</div>
+          <div class="pim-fields">${fields.map(([l,v])=>`<div class="pim-field"><div class="pim-flabel">${l}</div><div class="pim-fval">${v}</div></div>`).join('')}</div>`:''}
+          <div class="pim-section-lbl">Contrôles <span class="pim-badge ${badgeCls}" style="margin-left:4px">${matched}/${ctrls.length} reconnus</span></div>
+          ${ctrls.length?`<div style="overflow-x:auto"><table class="pim-ctrl-table">
+            <thead><tr><th></th><th>CatID</th><th>Libellé</th><th>Réalisé</th><th>Prochain</th><th>Prestataire</th><th>Résultat</th></tr></thead>
+            <tbody>${ctrls.map(c=>{
+              const lbl=this.CAT_LABELS[c.catId]||'?';
+              const rc=c.resultat==='Favorable'?'pim-res-ok':c.resultat?'pim-res-no':'pim-res-nc';
+              return `<tr><td><input type="checkbox" checked class="pim-ctrl-check" data-idx="${idx}" data-catid="${c.catId}"></td>
+                <td class="pim-catid">${c.catId}</td><td>${lbl}</td>
+                <td>${c.dateRealisation||'—'}</td><td>${c.prochainControle||'—'}</td>
+                <td>${c.prestataire||''}</td><td class="${rc}">${c.resultat||'—'}</td></tr>`;
+            }).join('')}</tbody>
+          </table></div>`:`<div class="pim-warn">⚠️ Aucun contrôle reconnu dans ce document.</div>`}`;
+
+      } else if (item.docType === 'rapport_verif') {
+        const lbl = this.CAT_LABELS[d.catId]||d.type_controle||'?';
+        const rc = d.resultat==='Favorable'?'pim-res-ok':d.resultat?'pim-res-no':'pim-res-nc';
+        body = `${centreRow}
+          <div class="pim-section-lbl">Données extraites</div>
+          <div class="pim-fields">
+            ${[['Organisme',d.organisme],['Type de contrôle',d.type_controle],['CatID ERP',d.catId],['Réalisé le',d.dateRealisation],
+               ['Prochain contrôle',d.prochainControle],['Résultat',d.resultat],['N° rapport',d.reference_rapport],['Vérificateur',d.verificateur]
+              ].filter(([,v])=>v).map(([l,v])=>`<div class="pim-field"><div class="pim-flabel">${l}</div><div class="pim-fval">${v}</div></div>`).join('')}
+          </div>
+          ${d.catId?`<div class="pim-section-lbl">Contrôle à mettre à jour</div>
+          <table class="pim-ctrl-table"><thead><tr><th></th><th>CatID</th><th>Libellé</th><th>Réalisé</th><th>Prochain</th><th>Organisme</th><th>Résultat</th></tr></thead>
+          <tbody><tr><td><input type="checkbox" checked class="pim-ctrl-check" data-idx="${idx}" data-catid="${d.catId}"></td>
+            <td class="pim-catid">${d.catId}</td><td>${lbl}</td><td>${d.dateRealisation||'—'}</td><td>${d.prochainControle||'—'}</td>
+            <td>${d.organisme||''}</td><td class="${rc}">${d.resultat||'—'}</td></tr></tbody></table>
+          ${d.observations?`<div class="pim-warn" style="border-color:var(--border)">💬 ${d.observations}</div>`:''}`:
+          `<div class="pim-warn">⚠️ CatID non détecté — vérifiez le type de contrôle.</div>`}`;
+
+      } else if (item.docType === 'contrat') {
+        body = `${centreRow}
+          <div class="pim-section-lbl">Données extraites</div>
+          <div class="pim-fields">
+            ${[['Prestataire',d.prestataire],['Objet',d.objet],['Type',d.type_contrat],['Domaine',d.domaine],
+               ['Début',d.debut],['Fin',d.fin],['Périodicité',d.periodicite],['Montant HT',d.montant_ht?d.montant_ht+' €':''],
+               ['Contact',d.contact_prestataire],['Tél.',d.tel_prestataire],['N° contrat',d.numero_contrat]
+              ].filter(([,v])=>v).map(([l,v])=>`<div class="pim-field"><div class="pim-flabel">${l}</div><div class="pim-fval">${v}</div></div>`).join('')}
+          </div>
+          ${d.observations?`<div class="pim-warn" style="border-color:var(--border)">💬 ${d.observations}</div>`:''}`;
+
+      } else if (item.docType === 'facture_devis') {
+        body = `${centreRow}
+          <div class="pim-section-lbl">Données extraites</div>
+          <div class="pim-fields">
+            ${[['Type',d.type_doc],['N°',d.numero],['Date',d.date],['Prestataire',d.prestataire],
+               ['Objet',d.objet],['Catégorie',d.categorie],['Montant HT',d.montant_ht?d.montant_ht+' €':''],
+               ['TVA',d.tva?d.tva+' €':''],['Montant TTC',d.montant_ttc?d.montant_ttc+' €':''],['Statut',d.statut]
+              ].filter(([,v])=>v).map(([l,v])=>`<div class="pim-field"><div class="pim-flabel">${l}</div><div class="pim-fval">${v}</div></div>`).join('')}
+          </div>`;
+
+      } else if (item.docType === 'habilitation') {
+        body = `${centreRow}
+          <div class="pim-section-lbl">Données extraites</div>
+          <div class="pim-fields">
+            ${[['Agent',d.nom_agent],['Poste',d.poste],['Habilitation',d.habilitation],
+               ['Organisme',d.organisme_formation],['Obtention',d.dateObtention],['Expiration',d.expiration],
+               ['N° certificat',d.numero_certificat]
+              ].filter(([,v])=>v).map(([l,v])=>`<div class="pim-field"><div class="pim-flabel">${l}</div><div class="pim-fval">${v}</div></div>`).join('')}
+          </div>`;
+
+      } else if (item.docType === 'rapport_audit') {
+        const obs = Array.isArray(d.observations) ? d.observations : [];
+        body = `${centreRow}
+          <div class="pim-section-lbl">Données extraites</div>
+          <div class="pim-fields">
+            ${[['Date',d.date],['Type audit',d.type_audit],['Auditeur',d.auditeur],['Organisme',d.organisme_audit],
+               ['Conclusion',d.conclusion],['Écarts majeurs',d.nb_ecarts_majeurs],['Écarts mineurs',d.nb_ecarts_mineurs],
+               ['Prochaine visite',d.prochaine_visite]
+              ].filter(([,v])=>v).map(([l,v])=>`<div class="pim-field"><div class="pim-flabel">${l}</div><div class="pim-fval">${v}</div></div>`).join('')}
+          </div>
+          ${obs.length?`<div class="pim-section-lbl">Observations (${obs.length})</div>
+          <div style="overflow-x:auto"><table class="pim-ctrl-table">
+            <thead><tr><th></th><th>Catégorie</th><th>Description</th><th>Gravité</th><th>Action</th></tr></thead>
+            <tbody>${obs.map((o,oi)=>`<tr>
+              <td><input type="checkbox" checked class="pim-obs-check" data-idx="${idx}" data-oi="${oi}"></td>
+              <td>${o.categorie||''}</td><td>${o.description||''}</td>
+              <td><span class="pim-badge ${o.gravite==='Majeure'?'err':o.gravite==='Mineure'?'warn':'info'}">${o.gravite||'—'}</span></td>
+              <td>${o.action||''}</td></tr>`).join('')}
+            </tbody></table></div>`:''  }`;
+
+      } else {
+        // inconnu
+        body = `<div class="pim-warn">⚠️ Type de document non reconnu automatiquement. Les données extraites ci-dessous ne seront pas importées automatiquement.
+        <br><br><strong>Détecté :</strong> ${d.type_detecte||'?'}<br><strong>Objet :</strong> ${d.objet||'—'}</div>`;
+      }
+
+      return `<div class="pim-preview-card">
+        <div class="pim-card-head">
+          <span style="font-size:18px">${dt.icon}</span>
+          <span class="pim-card-title">${item.name}</span>
+          <span class="pim-badge info">${dt.label}</span>
+        </div>
+        <div class="pim-card-body">${body}</div>
+      </div>`;
+    }).join('');
+
+    if (btnI) { btnI.disabled=false; btnI.style.display=''; }
+  },
+
+  _updateCentre(idx, centre) {
+    const item = this._queue.filter(q=>q.status==='ok'&&q.data)[idx];
+    if (item?.data) item.data._overrideCentre = centre;
+  },
+
+  // ── Import final ───────────────────────────────────────────
+  async _importAll() {
+    const okItems = this._queue.filter(q=>q.status==='ok'&&q.data);
+    const stats = {registre:0, synthese:0, contrats:0, investissements:0, rh:0, observations:0};
+
+    for (let idx=0; idx<okItems.length; idx++) {
+      const item = okItems[idx];
+      const d = item.data;
+      const centre = d._overrideCentre || d.centre || '';
+
+      if (item.docType === 'registre_ucpa') {
+        if (!centre) { alert(`Centre non défini pour "${item.name}" — assignez-le avant d'importer.`); return; }
+        const checks = document.querySelectorAll(`.pim-ctrl-check[data-idx="${idx}"]`);
+        const active = new Set(); checks.forEach(cb=>{ if(cb.checked) active.add(cb.dataset.catid); });
+        const ctrls = (d.controles||[]).filter(c=>active.has(c.catId));
+        if (ctrls.length) stats.registre += this._fillRegistre(ctrls, centre);
+        if (d.directeur||d.code_site||d.erp_cat) { this._fillSynthese(d, centre); stats.synthese++; }
+
+      } else if (item.docType === 'rapport_verif') {
+        if (!centre) { alert(`Centre non défini pour "${item.name}".`); return; }
+        const checks = document.querySelectorAll(`.pim-ctrl-check[data-idx="${idx}"]`);
+        let hasChecked = false; checks.forEach(cb=>{ if(cb.checked) hasChecked=true; });
+        if (hasChecked && d.catId) {
+          stats.registre += this._fillRegistre([{
+            catId: d.catId, prestataire: d.organisme||d.prestataire||'',
+            dateRealisation: d.dateRealisation, prochainControle: d.prochainControle,
+            resultat: d.resultat, observations: d.observations||''
+          }], centre);
+        }
+
+      } else if (item.docType === 'contrat') {
+        const all = App.load('contrats') || [];
+        all.unshift({
+          id: App.uuid(), centre: centre||d.centre||'',
+          prestataire: d.prestataire||'', objet: d.objet||'',
+          debut: this._toISO(d.debut), fin: this._toISO(d.fin),
+          observations: [d.periodicite, d.montant_ht?d.montant_ht+' € HT':'', d.numero_contrat].filter(Boolean).join(' · ')
+        });
+        App.save('contrats', all); stats.contrats++;
+
+      } else if (item.docType === 'facture_devis') {
+        const all = App.load('investissements') || [];
+        all.unshift({
+          id: App.uuid(), centre: centre||d.centre||'',
+          annee: d.date ? d.date.split('/')[2] || new Date().getFullYear() : new Date().getFullYear(),
+          categorie: d.categorie||'Travaux', typeInv: d.type_doc||'Facture',
+          description: d.objet||'', coutEstime: 0,
+          coutReel: parseFloat((d.montant_ht||'').replace(/[^\d.,]/g,'').replace(',','.'))||0,
+          statut: d.statut||'Réalisé', priorite: 'Normal', sanctuarise: 'Non',
+          observations: [d.prestataire, d.numero, d.date].filter(Boolean).join(' · ')
+        });
+        App.save('investissements', all); stats.investissements++;
+
+      } else if (item.docType === 'habilitation') {
+        const all = App.load('rh') || [];
+        all.unshift({
+          id: App.uuid(), centre: centre||d.centre||'',
+          nom: d.nom_agent||'', poste: d.poste||'',
+          habilitation: d.habilitation||'',
+          dateObtention: this._toISO(d.dateObtention),
+          expiration: this._toISO(d.expiration),
+          observations: [d.organisme_formation, d.numero_certificat].filter(Boolean).join(' · ')
+        });
+        App.save('rh', all); stats.rh++;
+
+      } else if (item.docType === 'rapport_audit') {
+        const obs = Array.isArray(d.observations) ? d.observations : [];
+        const checks = document.querySelectorAll(`.pim-obs-check[data-idx="${idx}"]`);
+        const activeObs = []; checks.forEach(cb=>{ if(cb.checked) activeObs.push(parseInt(cb.dataset.oi)); });
+        const allObs = App.load('observations') || [];
+        obs.forEach((o,oi) => {
+          if (!activeObs.includes(oi)) return;
+          allObs.push({
+            id: App.uuid(), date: this._toISO(d.date)||App.today(),
+            centre: centre||d.centre||'', categorie: o.categorie||'Sécurité',
+            description: o.description||(o.action?'Action : '+o.action:''),
+            statut: 'Ouvert', gravite: o.gravite||'Mineure'
+          });
+          stats.observations++;
+        });
+        App.save('observations', allObs);
+      }
     }
 
+    this._closeModal();
+
+    const lines = [
+      stats.registre      ? `• ${stats.registre} contrôle(s) mis à jour dans le Registre` : '',
+      stats.synthese      ? `• ${stats.synthese} fiche(s) Synthèse mise(s) à jour` : '',
+      stats.contrats      ? `• ${stats.contrats} contrat(s) ajouté(s)` : '',
+      stats.investissements?`• ${stats.investissements} investissement(s)/facture(s) ajouté(s)` : '',
+      stats.rh            ? `• ${stats.rh} habilitation(s) ajoutée(s) dans RH` : '',
+      stats.observations  ? `• ${stats.observations} observation(s) créée(s)` : '',
+    ].filter(Boolean);
+
+    alert('✅ Import terminé !\n\n' + (lines.length ? lines.join('\n') : 'Aucune donnée importée.'));
+    if (typeof App.renderAll === 'function') App.renderAll();
+  },
+
+  // ── Helpers ───────────────────────────────────────────────
+  _fillRegistre(controles, centre) {
+    const all = App.load('registre') || {};
+    let rows = all[centre] || [];
+    if (!rows.length) { if (typeof App._initCentreRegistre==='function') App._initCentreRegistre(centre); rows=(App.load('registre')||{})[centre]||[]; }
     let updated = 0;
     controles.forEach(ctrl => {
       if (!ctrl.catId) return;
-
-      // Trouver la ligne correspondante dans le registre par catId
-      const row = rows.find(r => r.catId === ctrl.catId);
+      const row = rows.find(r=>r.catId===ctrl.catId);
       if (row) {
-        if (ctrl.prestataire) row.prestataire = ctrl.prestataire;
-        if (ctrl.contrat !== undefined) {
-          // Stocker info contrat dans observations si pertinent
-          if (ctrl.contrat && !row.observations) row.observations = 'Contrat actif';
-        }
-        if (ctrl.derniere_visite) {
-          row.dateRealisation = this._normalizeDate(ctrl.derniere_visite);
-          row.resultat = ctrl.resultat || 'Conforme';
-        }
+        if (ctrl.prestataire)      row.prestataire      = ctrl.prestataire;
+        if (ctrl.observations)     row.observations     = ctrl.observations;
+        if (ctrl.dateRealisation)  row.dateRealisation  = this._toISO(ctrl.dateRealisation);
+        if (ctrl.prochainControle) row.prochainControle = this._toISO(ctrl.prochainControle);
+        if (ctrl.resultat)         row.resultat         = ctrl.resultat;
         updated++;
-      } else {
-        console.log('[PDFImport] catId non trouvé dans registre:', ctrl.catId);
       }
     });
-
-    all[centre] = rows;
-    App.save('registre', all);
-    console.log(`[PDFImport] Registre : ${updated}/${controles.length} contrôles mis à jour pour ${centre}`);
+    all[centre] = rows; App.save('registre', all);
+    return updated;
   },
 
-  // ── Normaliser une date vers YYYY-MM-DD ─────────────────────
-  _normalizeDate(str) {
-    if (!str) return '';
-    str = String(str).trim();
-    // Format DD/MM/YYYY → YYYY-MM-DD
-    const m1 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (m1) return `${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
-    // Format YYYY-MM-DD → déjà bon
-    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
-    // Format D/M/YYYY
-    const m2 = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-    if (m2) {
-      const yr = m2[3].length === 2 ? '20' + m2[3] : m2[3];
-      return `${yr}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
-    }
-    return str;
+  _fillSynthese(d, centre) {
+    const all = App.load('syntheses') || {};
+    const e = all[centre] || {};
+    all[centre] = Object.assign({}, e, {
+      nom:                   d.nom_court          || e.nom,
+      code_site:             d.code_site          || e.code_site,
+      adresse:               d.adresse            || e.adresse,
+      cp:                    d.cp                 || e.cp,
+      ville:                 d.ville              || e.ville,
+      departement:           d.departement        || e.departement,
+      erp_categorie:         d.erp_cat            || e.erp_categorie,
+      erp_types:             Array.isArray(d.erp_types)?d.erp_types.join(' / '):(e.erp_types||''),
+      nb_batiments:          d.nb_batiments        || e.nb_batiments,
+      surface_totale:        d.surface_totale      || e.surface_totale,
+      type_chauffage:        d.type_chauffage      || e.type_chauffage,
+      puissance_kw:          d.puissance_kw        || e.puissance_kw,
+      alimentation_gaz:      d.alim_gaz            || e.alimentation_gaz,
+      alimentation_fioul:    d.alim_fioul          || e.alimentation_fioul,
+      alimentation_eau:      d.alim_eau            || e.alimentation_eau,
+      alimentation_incendie: d.alim_incendie       || e.alimentation_incendie,
+      directeur:             d.directeur           || e.directeur,
+      tel_directeur:         d.tel_directeur       || e.tel_directeur,
+      responsable_maintenance: d.responsable_maintenance || e.responsable_maintenance,
+      tel_rm:                d.tel_rm              || e.tel_rm,
+      date_commission:       this._toISO(d.date_commission)       || e.date_commission,
+      periodicite_commission:d.periodicite_commission              || e.periodicite_commission,
+      prochaine_commission:  this._toISO(d.prochaine_commission)  || e.prochaine_commission,
+    });
+    App.save('syntheses', all);
+  },
+
+  _closeModal() {
+    const m = document.getElementById('pdf-import-modal');
+    if (m) m.classList.add('hidden');
   }
 };
+
+
 
 // ══════════════════════════════════════════════════════════════
 // MODULE ASSISTANT MAINTENANCE IA
@@ -16174,8 +16729,8 @@ document.addEventListener('ucpa-session-started', requestNotifPermission);
 <script>
 /* MODULE IMPORT DONNEES ALPES SUD — 9 CENTRES | 11/03/2026 */
 const UCPAImport = {
-  PATCH: {"STATION DE SKI VALLOIRE": {"3.1": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Desautel", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Sr Dauphiné", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-01-26", "prochainControle": "2027-01-26", "organisme": "Desautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-11-12", "prochainControle": "2028-11-11", "organisme": "Bureau Veritas", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-08", "prochainControle": "2026-09-08", "organisme": "Bureau Veritas", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-01-12", "prochainControle": "2027-01-12", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Schindler", "observations": "Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2022-11-29", "prochainControle": "2027-11-28", "organisme": "Bureau Veritas", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-09-22", "prochainControle": "2026-09-22", "organisme": "Reccord", "observations": "Portes auto - Contrat", "resultat": "Favorable"}, "6.4": {"dateRealisation": "2025-03-19", "prochainControle": "2026-03-19", "organisme": "Bureau Veritas", "observations": "Compacteurs - Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Idex", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-07-23", "prochainControle": "2026-07-23", "organisme": "Idex", "observations": "Ramonage - Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "Savec", "observations": "Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-04-24", "prochainControle": "2026-04-24", "organisme": "Asepti Air", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-11-23", "prochainControle": "2026-11-23", "organisme": "Eurofin", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-04-22", "prochainControle": "2026-04-22", "organisme": "SAS Savoie Vidange", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL CENIS": {"3.1": {"dateRealisation": "2024-01-19", "prochainControle": "2024-12-12", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-02-22", "prochainControle": "2025-02-21", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-11-07", "prochainControle": "2025-11-07", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-10-13", "prochainControle": "2025-10-12", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-06-18", "prochainControle": "2025-06-18", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "UCPA", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2023-03-29", "prochainControle": "2024-03-28", "organisme": "SOCOTEC", "observations": "Q19 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-11-16", "prochainControle": "2025-11-16", "organisme": "SOCOTEC", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-10-16", "prochainControle": "2025-10-16", "organisme": "SOCOTEC", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-05-07", "prochainControle": "2025-05-07", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-28", "prochainControle": "2025-11-28", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2024-10-04", "prochainControle": "2025-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-04", "prochainControle": "2025-09-04", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-07-25", "prochainControle": "2025-07-25", "organisme": "", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL THORENS": {"3.1": {"dateRealisation": "2025-12-08", "prochainControle": "", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-11-24", "prochainControle": "", "organisme": "UCPA", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-10-31", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2024-11-12", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-10-09", "prochainControle": "", "organisme": "CHRONOFEU", "observations": "Colonne seche PEI", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-10-20", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-03", "prochainControle": "", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-12-10", "prochainControle": "", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-02-11", "prochainControle": "", "organisme": "OTIS", "observations": "4 ascenseurs - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2023-11-09", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Quinquennal 4 cabines - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-12-02", "prochainControle": "", "organisme": "PORTALP", "observations": "4 portes/barrieres - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-13", "prochainControle": "", "organisme": "VERITAS", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-18", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-06", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-10-14", "prochainControle": "", "organisme": "E2S (Ramonage Service)", "observations": "Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-29", "prochainControle": "", "organisme": "SAVEC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-07-03", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "12": {"dateRealisation": "2025-03-31", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": "Favorable"}}, "STATION DE SKI SERRE CHEVALIER": {"3.1": {"dateRealisation": "2025-06-03", "prochainControle": "2025-12-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-06-06", "prochainControle": "2025-12-05", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESSAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-12-08", "prochainControle": "2026-06-08", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-12-09", "prochainControle": "2028-12-08", "organisme": "BUREAU VERITAS", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESAUTEL", "observations": "Borne incendie - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-12-08", "prochainControle": "2026-12-08", "organisme": "DESSAUD", "observations": "Desenfumage mecanique - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-11", "prochainControle": "2026-09-11", "organisme": "BUREAU VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-04", "prochainControle": "2027-03-04", "organisme": "BUREAU VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-02-25", "prochainControle": "2026-03-27", "organisme": "UCPA", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-10-07", "prochainControle": "2025-11-21", "organisme": "PERDIGON", "observations": "Ascenseur - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-04-08", "prochainControle": "2025-10-07", "organisme": "PERDIGON", "observations": "Barriere - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-07-15", "prochainControle": "2026-07-15", "organisme": "SOCOTEC/BV", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-13", "prochainControle": "2026-06-13", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-02", "prochainControle": "2026-10-02", "organisme": "ALTECC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-06-10", "prochainControle": "2026-06-10", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "8.1": {"dateRealisation": "2023-09-15", "prochainControle": "2023-09-15", "organisme": "NEPSEN", "observations": "Performance energetique", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-01", "prochainControle": "2026-10-01", "organisme": "ALTECC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.2": {"dateRealisation": "2025-09-04", "prochainControle": "", "organisme": "ASEPTI AIR", "observations": "Nettoyage reseaux", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-02", "prochainControle": "2026-12-02", "organisme": "EUROFINS", "observations": "Contrat", "resultat": "Favorable"}, "15.2": {"dateRealisation": "2026-02-11", "prochainControle": "2027-02-11", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-08-01", "prochainControle": "2026-01-30", "organisme": "ORTEC", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI PRALOGNAN": {"3.1": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-12-17", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-11-08", "prochainControle": "", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-07-23", "prochainControle": "", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-12-10", "prochainControle": "", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-03-31", "prochainControle": "", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2024-06-17", "prochainControle": "", "organisme": "OTIS", "observations": "Ascenseur + Quinquennal SOCOTEC Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "ceyo", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-08-02", "prochainControle": "", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-26", "prochainControle": "", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "12": {"dateRealisation": "", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": ""}, "13": {"dateRealisation": "2024-04-03", "prochainControle": "", "organisme": "", "observations": "Radon", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "EUROFINS", "observations": "Contrat", "resultat": ""}, "15.2": {"dateRealisation": "2021-12-04", "prochainControle": "", "organisme": "E2S", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "16": {"dateRealisation": "2022-07-05", "prochainControle": "", "organisme": "GES", "observations": "A renouveler", "resultat": "Favorable"}, "17": {"dateRealisation": "2023-04-18", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz - Contrat", "resultat": "Favorable"}}, "STATION DE SKI LES ORRES": {"3.1": {"dateRealisation": "2024-12-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "DESSAUD", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-07-17", "prochainControle": "2026-07-17", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-09", "prochainControle": "2026-06-08", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-06-10", "prochainControle": "2025-06-10", "organisme": "dessautel", "observations": "RIA - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2024-07-02", "prochainControle": "2025-07-02", "organisme": "Dessautel", "observations": "Rideau d eau", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-11-29", "prochainControle": "2025-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-06-27", "prochainControle": "2025-06-27", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2024-06-27", "prochainControle": "2024-06-27", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-05-30", "prochainControle": "2025-05-30", "organisme": "dessaud", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2024-12-07", "prochainControle": "2025-06-07", "organisme": "PARDIGON", "observations": "", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-07-03", "prochainControle": "2025-07-03", "organisme": "SOCOTEC", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-11-12", "prochainControle": "2025-11-12", "organisme": "alltec", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-10-03", "prochainControle": "2025-10-03", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-09-19", "prochainControle": "2025-09-19", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "17": {"dateRealisation": "2021-05-11", "prochainControle": "2025-05-10", "organisme": "antargaz", "observations": "A renouveler", "resultat": "Favorable"}}, "VILLAGE SPORTIF LE VERDON": {"3.1": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2023-07-26", "prochainControle": "2024-07-25", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-04-19", "prochainControle": "2025-04-19", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-08-20", "prochainControle": "2025-08-20", "organisme": "DESAUTEL", "observations": "SSI", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-16", "prochainControle": "2026-06-15", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-08-22", "prochainControle": "2025-08-22", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-04-15", "prochainControle": "2025-04-15", "organisme": "", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-17", "prochainControle": "2025-09-17", "organisme": "BRP", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2021-11-01", "prochainControle": "2022-11-01", "organisme": "EUROFINS", "observations": "Contrat - A renouveler urgence", "resultat": "Favorable"}}, "VALMEINIER": {"3.1": {"dateRealisation": "2022-12-16", "prochainControle": "2023-06-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2024", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2022-12-16", "prochainControle": "2023-12-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2025", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "SICLI", "observations": "A renouveler", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2023-12-01", "prochainControle": "2024-11-30", "organisme": "CHUBB", "observations": "SSI - A renouveler", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-01-28", "prochainControle": "2025-01-27", "organisme": "BV", "observations": "SSI Triennale - A renouveler", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2023-01-05", "prochainControle": "2024-01-05", "organisme": "sicli", "observations": "RIA - A renouveler", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "sicli", "observations": "Desenfumage - A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Q18 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "BAES/BAEH - A renouveler", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2023-01-24", "prochainControle": "2024-01-24", "organisme": "BV", "observations": "Reseaux gaz - A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2023-01-17", "prochainControle": "2024-01-17", "organisme": "DALKIA", "observations": "A renouveler", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "SAVEC", "observations": "A renouveler", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2023-09-06", "prochainControle": "2024-09-05", "organisme": "CEYO", "observations": "A renouveler", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2023-11-29", "prochainControle": "2024-11-28", "organisme": "savec", "observations": "A renouveler", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2023-11-23", "prochainControle": "2024-11-22", "organisme": "bpr", "observations": "A renouveler", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "eurofin", "observations": "A renseigner", "resultat": ""}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "Dalkia", "observations": "A renseigner", "resultat": ""}, "16": {"dateRealisation": "", "prochainControle": "", "organisme": "", "observations": "Bac a graisse - A renseigner", "resultat": ""}}, "SAINT SORLIN D’ARVES": {"3.1": {"dateRealisation": "2026-01-14", "prochainControle": "2027-01-14", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-04-24", "prochainControle": "2028-04-23", "organisme": "BV", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "", "prochainControle": "", "organisme": "DESAUTEL", "observations": "DAS - RV a planifier", "resultat": ""}, "4.5": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-18", "prochainControle": "2026-11-18", "organisme": "SR DAUPHINE", "observations": "A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "", "prochainControle": "2027-11-28", "organisme": "BV", "observations": "Q18", "resultat": ""}, "5.2": {"dateRealisation": "2025-07-18", "prochainControle": "2026-07-18", "organisme": "BV", "observations": "Q19", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-01", "prochainControle": "2026-12-01", "organisme": "I2S", "observations": "Ascenseur/monte-charge", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-11-26", "prochainControle": "2025-11-26", "organisme": "BV", "observations": "A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-05", "prochainControle": "2026-12-05", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "Contrat envoye", "resultat": "Favorable"}, "7.4": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "8.2": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-12-19", "prochainControle": "2026-12-19", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-12", "prochainControle": "2026-06-10", "organisme": "EUROFINS", "observations": "Semestriel", "resultat": "Favorable"}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "16": {"dateRealisation": "2025-03-14", "prochainControle": "2026-03-14", "organisme": "GES", "observations": "", "resultat": "Favorable"}, "17": {"dateRealisation": "", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz 40 mois", "resultat": ""}}, "STATION DE SKI LES 2 ALPES": {"3.1": {"dateRealisation": "2026-01-21", "prochainControle": "2027-01-21", "organisme": "", "observations": "Formations – Extincteurs & évacuation", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-01-21", "prochainControle": "2027-01-21", "organisme": "", "observations": "Formations – Centrale incendie", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-26", "prochainControle": "2027-02-26", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-09-30", "prochainControle": "2026-09-30", "organisme": "", "observations": "SSI - Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2026-01-22", "prochainControle": "2029-01-22", "organisme": "", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-09-17", "prochainControle": "2026-09-17", "organisme": "", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-09-30", "prochainControle": "2026-09-30", "organisme": "", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Vérif. électrique Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Vérif. électrique Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-09-17", "prochainControle": "2026-09-17", "organisme": "", "observations": "BAES/BAEH/Ambiance - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-01-27", "prochainControle": "2027-01-27", "organisme": "", "observations": "Ascenseurs / Monte-charge - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2025-05-27", "prochainControle": "2030-05-27", "organisme": "", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-29", "prochainControle": "2026-10-29", "organisme": "", "observations": "Contrôle réseaux gaz", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-12-14", "prochainControle": "2025-12-14", "organisme": "", "observations": "Maintenance gaz/fioul – chaudières", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-04-29", "prochainControle": "2026-04-29", "organisme": "", "observations": "Appareils cuisson feux vifs", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-12-14", "prochainControle": "2025-12-14", "organisme": "", "observations": "Ramonage conduits chaufferies", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-10-08", "prochainControle": "2026-10-08", "organisme": "", "observations": "QAI – Dégraissage hottes cuisine", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-07-25", "prochainControle": "2026-07-25", "organisme": "", "observations": "Entretien bac à graisse", "resultat": "Favorable"}}, "SKI LES 2 ALPES GENEPI": {"4.2": {"dateRealisation": "2025-12-09", "prochainControle": "2026-12-09", "organisme": "", "observations": "SSI - Système Sécurité Incendie", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-27", "prochainControle": "", "organisme": "", "observations": "Extincteurs", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-09-22", "prochainControle": "", "organisme": "", "observations": "Désenfumage", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-09-18", "prochainControle": "", "organisme": "", "observations": "Éclairage de sécurité / BAES", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-14", "prochainControle": "", "organisme": "", "observations": "Installation électrique", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-12-13", "prochainControle": "2025-12-13", "organisme": "", "observations": "Entretien chaudière", "resultat": "Favorable"}}},
-  SYNTHESES: {"STATION DE SKI VALLOIRE": {"nom": "VALLOIRE", "code_site": "9332", "adresse": "1038 route du Galibier", "cp": "73450", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "2017", "nb_batiments": "2", "surface_totale": "4646", "type_chauffage": "Fioul", "puissance_kw": "280", "date_commission": "2024-10-04", "periodicite_commission": "3", "prochaine_commission": "2027-10-04", "erp_categorie": "4", "erp_types": "Rh / N / L / X", "directeur": "Benoit DUGRIVEL", "tel_directeur": "06 83 63 57 58", "responsable_maintenance": "Redouane MENAA", "tel_rm": "06 46 76 84 50", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Non", "alimentation_fioul": "Oui", "volume_fioul": "14", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "annee_mise_service": "2019", "pdl": "60004170000084"}, "STATION DE SKI VAL CENIS": {"nom": "VAL CENIS", "code_site": "9331", "adresse": "Rue des rochers", "cp": "73480", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1976", "nb_batiments": "4", "surface_totale": "3640", "type_chauffage": "Fioul", "puissance_kw": "564", "date_commission": "2022-01-13", "periodicite_commission": "3", "prochaine_commission": "2025-01-12", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Philippe MERCK", "tel_directeur": "06 80 93 76 91", "responsable_maintenance": "Bon Bruno", "tel_rm": "06 31 54 10 87", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Oui", "volume_fioul": "18", "alimentation_eau": "Oui"}, "STATION DE SKI VAL THORENS": {"nom": "VAL THORENS", "code_site": "9317", "adresse": "240 rue des Pistes", "cp": "73440", "ville": "Les Belleville", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1960/2012", "date_renovation": "2012", "nb_batiments": "2", "surface_totale": "7665", "type_chauffage": "Gaz", "puissance_kw": "940", "date_commission": "2025-03-03", "periodicite_commission": "3", "prochaine_commission": "2027-03-02", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Nelly GROSSE", "tel_directeur": "06 18 92 80 95", "responsable_maintenance": "Karim CHALLAL", "tel_rm": "06 65 80 92 99", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Oui", "pdl": "30001960293218", "annee_mise_service": "2024"}, "STATION DE SKI SERRE CHEVALIER": {"nom": "SERRE-CHEVALIER", "code_site": "9424", "adresse": "2 Rte de Bez", "cp": "05240", "departement": "Haute-Alpes", "region": "PACA", "nb_batiments": "1", "surface_totale": "4910", "type_chauffage": "Gaz", "puissance_kw": "860", "volume_gaz": "21", "date_commission": "2025-06-20", "periodicite_commission": "3", "prochaine_commission": "2028-06-19", "erp_categorie": "3", "erp_types": "RH O P", "directeur": "Emmanuel MILTGEN", "tel_directeur": "06 60 70 08 40", "responsable_maintenance": "Joey RAPIN", "tel_rm": "06 88 45 14 79", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Non"}, "STATION DE SKI PRALOGNAN": {"nom": "PRALOGNAN", "code_site": "9313", "adresse": "Plan amont - BP7", "cp": "73710", "ville": "Pralognan la vanoise", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "nb_batiments": "2", "surface_totale": "2300", "type_chauffage": "Gaz", "puissance_kw": "1042", "volume_fioul": "15m3 / 6m3", "prochaine_commission": "2024-07-16", "periodicite_commission": "3", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Renaud Berthrand", "tel_directeur": "06 30 31 38 41", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Oui", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "pdl": "50000399133208", "annee_mise_service": "2014", "siret": "77568204000602", "naf": "9319Z"}, "STATION DE SKI LES ORRES": {"nom": "LES ORRES", "code_site": "9441", "adresse": "Pramouton", "cp": "05200", "departement": "Haute-Alpes", "region": "Auvergne Rhone Alpes", "nb_batiments": "4", "surface_totale": "3663", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Jacques Buhr", "tel_directeur": "06 76 17 28 71", "responsable_maintenance": "Claude Rapin", "tel_rm": "06 76 88 35 15", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "VILLAGE SPORTIF LE VERDON": {"nom": "VERDON", "code_site": "9516", "adresse": "La Placette / Vignal", "cp": "04120", "departement": "Alpes-de-Haute-Provence", "region": "PACA", "nb_batiments": "1", "surface_totale": "316", "type_chauffage": "Gaz", "erp_categorie": "4", "erp_types": "O Rh", "directeur": "Stephanie Sauvegrain", "tel_directeur": "06 62 81 46 68", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "pdl": "25682489125299"}, "VALMEINIER": {"nom": "VALMEINIER", "code_site": "", "adresse": "Centre montagne de l Armera", "cp": "73450", "ville": "VALMEINIER", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "directeur": "Sonia LEGAI", "tel_directeur": "06 22 24 50 05", "responsable_maintenance": "Simon", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SAINT SORLIN D’ARVES": {"nom": "SAINT SORLIN D ARVES", "code_site": "9333", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "STATION DE SKI LES 2 ALPES": {"nom": "LES 2 ALPES", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SKI LES 2 ALPES GENEPI": {"nom": "GENEPI LES 2 ALPES", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}},
+  PATCH: {"STATION DE SKI VALLOIRE": {"3.1": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Desautel", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-12-11", "prochainControle": "2026-12-11", "organisme": "Sr Dauphiné", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-01-26", "prochainControle": "2027-01-26", "organisme": "Desautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-11-12", "prochainControle": "2028-11-11", "organisme": "Bureau Veritas", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-12", "prochainControle": "2026-11-12", "organisme": "Sr Dauphiné", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-08", "prochainControle": "2026-09-08", "organisme": "Bureau Veritas", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-01-12", "prochainControle": "2027-01-12", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Schindler", "observations": "Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2022-11-29", "prochainControle": "2027-11-28", "organisme": "Bureau Veritas", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-09-22", "prochainControle": "2026-09-22", "organisme": "Reccord", "observations": "Portes auto - Contrat", "resultat": "Favorable"}, "6.4": {"dateRealisation": "2025-03-19", "prochainControle": "2026-03-19", "organisme": "Bureau Veritas", "observations": "Compacteurs - Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-31", "prochainControle": "2026-12-31", "organisme": "Idex", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-07-23", "prochainControle": "2026-07-23", "organisme": "Idex", "observations": "Ramonage - Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "Savec", "observations": "Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-04-24", "prochainControle": "2026-04-24", "organisme": "Asepti Air", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-11-23", "prochainControle": "2026-11-23", "organisme": "Eurofin", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-04-22", "prochainControle": "2026-04-22", "organisme": "SAS Savoie Vidange", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL CENIS": {"3.1": {"dateRealisation": "2024-01-19", "prochainControle": "2027-01-19", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-02-22", "prochainControle": "2027-02-22", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-11-07", "prochainControle": "2026-11-07", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-06-18", "prochainControle": "2026-06-18", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-10-13", "prochainControle": "2028-10-13", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-06-18", "prochainControle": "2026-06-18", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-07-03", "prochainControle": "2026-07-03", "organisme": "UCPA", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-16", "prochainControle": "2026-11-16", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2023-03-29", "prochainControle": "2028-03-29", "organisme": "SOCOTEC", "observations": "Q19 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-11-16", "prochainControle": "2026-11-16", "organisme": "SOCOTEC", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-10-16", "prochainControle": "2026-10-16", "organisme": "SOCOTEC", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-05-07", "prochainControle": "2026-05-07", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-10-04", "prochainControle": "2026-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-28", "prochainControle": "2026-11-28", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2024-10-04", "prochainControle": "2026-10-04", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-04", "prochainControle": "2026-09-04", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-07-25", "prochainControle": "2026-07-25", "organisme": "", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI VAL THORENS": {"3.1": {"dateRealisation": "2025-12-08", "prochainControle": "2026-12-08", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-11-24", "prochainControle": "2026-11-24", "organisme": "UCPA", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-10-31", "prochainControle": "2026-10-31", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-10-20", "prochainControle": "2026-10-20", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2024-11-12", "prochainControle": "2027-11-12", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-10-20", "prochainControle": "2026-10-20", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-10-09", "prochainControle": "2026-10-09", "organisme": "CHRONOFEU", "observations": "Colonne seche PEI", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-10-20", "prochainControle": "2026-10-20", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-13", "prochainControle": "2026-10-13", "organisme": "VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-03", "prochainControle": "2031-03-03", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-12-10", "prochainControle": "2026-12-10", "organisme": "UCPA", "observations": "BAES/BAEH - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-02-11", "prochainControle": "2027-02-11", "organisme": "OTIS", "observations": "4 ascenseurs - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2023-11-09", "prochainControle": "2028-11-09", "organisme": "SOCOTEC", "observations": "Quinquennal 4 cabines - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-12-02", "prochainControle": "2026-06-02", "organisme": "PORTALP", "observations": "4 portes/barrieres - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-13", "prochainControle": "2026-10-13", "organisme": "VERITAS", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-18", "prochainControle": "2026-06-18", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-06", "prochainControle": "2026-10-06", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "E2S (Ramonage Service)", "observations": "Contrat", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-29", "prochainControle": "2026-10-29", "organisme": "SAVEC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-07-03", "prochainControle": "2026-07-03", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "12": {"dateRealisation": "2025-03-31", "prochainControle": "2026-03-31", "organisme": "MEDILYS", "observations": "Contrat", "resultat": "Favorable"}}, "STATION DE SKI SERRE CHEVALIER": {"3.1": {"dateRealisation": "2025-06-03", "prochainControle": "2026-06-03", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2025-06-06", "prochainControle": "2026-06-06", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESSAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-12-08", "prochainControle": "2026-06-08", "organisme": "DESSAUD", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-12-09", "prochainControle": "2028-12-08", "organisme": "BUREAU VERITAS", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2025-09-23", "prochainControle": "2026-09-23", "organisme": "DESAUTEL", "observations": "Borne incendie - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-12-08", "prochainControle": "2026-12-08", "organisme": "DESSAUD", "observations": "Desenfumage mecanique - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-09-11", "prochainControle": "2026-09-11", "organisme": "BUREAU VERITAS", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2026-03-04", "prochainControle": "2027-03-04", "organisme": "BUREAU VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2026-02-25", "prochainControle": "2026-03-27", "organisme": "UCPA", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-10-07", "prochainControle": "2026-10-07", "organisme": "PERDIGON", "observations": "Ascenseur - Contrat", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2025-04-08", "prochainControle": "2026-04-08", "organisme": "PERDIGON", "observations": "Barriere - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-07-15", "prochainControle": "2026-07-15", "organisme": "SOCOTEC/BV", "observations": "Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-06-13", "prochainControle": "2026-06-13", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-10-02", "prochainControle": "2026-10-02", "organisme": "ALTECC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2025-06-10", "prochainControle": "2026-06-10", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "8.1": {"dateRealisation": "2023-09-15", "prochainControle": "2026-09-15", "organisme": "NEPSEN", "observations": "Performance energetique", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2025-10-01", "prochainControle": "2026-10-01", "organisme": "ALTECC", "observations": "CF BOF + Fruit/Legume + Viande + Negative - Contrat", "resultat": "Favorable"}, "10.2": {"dateRealisation": "2025-09-04", "prochainControle": "2026-09-04", "organisme": "ASEPTI AIR", "observations": "Nettoyage reseaux", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-02", "prochainControle": "2026-12-02", "organisme": "EUROFINS", "observations": "Contrat", "resultat": "Favorable"}, "15.2": {"dateRealisation": "2026-02-11", "prochainControle": "2027-02-11", "organisme": "EMC2", "observations": "Contrat", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-08-01", "prochainControle": "2026-08-01", "organisme": "ORTEC", "observations": "", "resultat": "Favorable"}}, "STATION DE SKI PRALOGNAN": {"3.1": {"dateRealisation": "2024-12-17", "prochainControle": "2026-12-17", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-12-17", "prochainControle": "2026-12-17", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-07-23", "prochainControle": "2026-07-23", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-12-10", "prochainControle": "2026-12-10", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-11-08", "prochainControle": "2026-11-08", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2024-12-10", "prochainControle": "2026-12-10", "organisme": "SR DAUPHINE", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-07-23", "prochainControle": "2026-07-23", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-12-10", "prochainControle": "2026-12-10", "organisme": "SR DAUPHINE", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-11-26", "prochainControle": "2026-11-26", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-03-31", "prochainControle": "2026-03-31", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2024-06-17", "prochainControle": "2026-06-17", "organisme": "OTIS", "observations": "Ascenseur + Quinquennal SOCOTEC Contrat", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-11-26", "prochainControle": "2026-11-26", "organisme": "ceyo", "observations": "Maintenance fioul - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-08-02", "prochainControle": "2026-08-02", "organisme": "SAVEC", "observations": "Contrat", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-11-26", "prochainControle": "2026-11-26", "organisme": "E2S", "observations": "Contrat", "resultat": "Favorable"}, "12": {"dateRealisation": "", "prochainControle": "", "organisme": "MEDILYS", "observations": "Contrat", "resultat": ""}, "13": {"dateRealisation": "2024-04-03", "prochainControle": "2029-04-03", "organisme": "", "observations": "Radon", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "EUROFINS", "observations": "Contrat", "resultat": ""}, "15.2": {"dateRealisation": "2021-12-04", "prochainControle": "2026-12-04", "organisme": "E2S", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "16": {"dateRealisation": "2022-07-05", "prochainControle": "2026-07-05", "organisme": "GES", "observations": "A renouveler", "resultat": "Favorable"}, "17": {"dateRealisation": "2023-04-18", "prochainControle": "2027-04-18", "organisme": "PRIMAGAZ", "observations": "Citerne gaz - Contrat", "resultat": "Favorable"}}, "STATION DE SKI LES ORRES": {"3.1": {"dateRealisation": "2024-12-10", "prochainControle": "2026-12-10", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2024-11-29", "prochainControle": "2026-11-29", "organisme": "DESSAUD", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2025-07-17", "prochainControle": "2026-07-17", "organisme": "dessautel", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-11-29", "prochainControle": "2026-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-09", "prochainControle": "2026-06-08", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2024-06-10", "prochainControle": "2026-06-10", "organisme": "dessautel", "observations": "RIA - Contrat", "resultat": "Favorable"}, "4.6": {"dateRealisation": "2024-07-02", "prochainControle": "2026-07-02", "organisme": "Dessautel", "observations": "Rideau d eau", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2024-11-29", "prochainControle": "2026-11-29", "organisme": "dessaud", "observations": "Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-06-27", "prochainControle": "2026-06-27", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2024-06-27", "prochainControle": "2029-06-27", "organisme": "VERITAS", "observations": "Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2024-05-30", "prochainControle": "2026-05-30", "organisme": "dessaud", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.3": {"dateRealisation": "2024-12-07", "prochainControle": "2026-06-07", "organisme": "PARDIGON", "observations": "", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-07-03", "prochainControle": "2026-07-03", "organisme": "SOCOTEC", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-11-12", "prochainControle": "2026-11-12", "organisme": "alltec", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-10-03", "prochainControle": "2026-10-03", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "16": {"dateRealisation": "2024-09-19", "prochainControle": "2026-03-19", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "17": {"dateRealisation": "2021-05-11", "prochainControle": "2029-05-11", "organisme": "antargaz", "observations": "A renouveler", "resultat": "Favorable"}}, "VILLAGE SPORTIF LE VERDON": {"3.1": {"dateRealisation": "2023-07-26", "prochainControle": "2026-07-26", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2023-07-26", "prochainControle": "2026-07-26", "organisme": "DESAUTEL", "observations": "Contrat - A renouveler", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2024-04-19", "prochainControle": "2026-04-19", "organisme": "DESAUTEL", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2024-08-20", "prochainControle": "2026-08-20", "organisme": "DESAUTEL", "observations": "SSI", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2023-06-16", "prochainControle": "2026-06-15", "organisme": "SOCOTEC", "observations": "SSI Triennale - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2024-08-22", "prochainControle": "2026-08-22", "organisme": "SOCOTEC", "observations": "Q18 - Contrat", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2024-04-15", "prochainControle": "2026-04-15", "organisme": "", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2024-09-17", "prochainControle": "2026-09-17", "organisme": "BRP", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2021-11-01", "prochainControle": "2026-05-01", "organisme": "EUROFINS", "observations": "Contrat - A renouveler urgence", "resultat": "Favorable"}}, "VALMEINIER": {"3.1": {"dateRealisation": "2022-12-16", "prochainControle": "2026-12-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2024", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2022-12-16", "prochainControle": "2026-12-16", "organisme": "EUROFEU", "observations": "Prevu le 04/01/2025", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2023-01-05", "prochainControle": "2027-01-05", "organisme": "SICLI", "observations": "A renouveler", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2023-12-01", "prochainControle": "2026-12-01", "organisme": "CHUBB", "observations": "SSI - A renouveler", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2022-01-28", "prochainControle": "2028-01-28", "organisme": "BV", "observations": "SSI Triennale - A renouveler", "resultat": "Favorable"}, "4.5": {"dateRealisation": "2023-01-05", "prochainControle": "2027-01-05", "organisme": "sicli", "observations": "RIA - A renouveler", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2023-11-23", "prochainControle": "2026-11-23", "organisme": "sicli", "observations": "Desenfumage - A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2023-01-24", "prochainControle": "2027-01-24", "organisme": "BV", "observations": "Q18 - A renouveler", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2023-01-24", "prochainControle": "2027-01-24", "organisme": "BV", "observations": "BAES/BAEH - A renouveler", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2023-01-24", "prochainControle": "2027-01-24", "organisme": "BV", "observations": "Reseaux gaz - A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2023-01-17", "prochainControle": "2027-01-17", "organisme": "DALKIA", "observations": "A renouveler", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2023-11-29", "prochainControle": "2026-11-29", "organisme": "SAVEC", "observations": "A renouveler", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2023-09-06", "prochainControle": "2026-09-06", "organisme": "CEYO", "observations": "A renouveler", "resultat": "Favorable"}, "8.2": {"dateRealisation": "2023-11-29", "prochainControle": "2026-11-29", "organisme": "savec", "observations": "A renouveler", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2023-11-23", "prochainControle": "2026-11-23", "organisme": "bpr", "observations": "A renouveler", "resultat": "Favorable"}, "15.1": {"dateRealisation": "", "prochainControle": "", "organisme": "eurofin", "observations": "A renseigner", "resultat": ""}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "Dalkia", "observations": "A renseigner", "resultat": ""}, "16": {"dateRealisation": "", "prochainControle": "", "organisme": "", "observations": "Bac a graisse - A renseigner", "resultat": ""}}, "SAINT SORLIN D'ARVES": {"3.1": {"dateRealisation": "2026-01-14", "prochainControle": "2027-01-14", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2026-11-18", "prochainControle": "2027-11-18", "organisme": "SR DAUPHINE", "observations": "", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2025-04-24", "prochainControle": "2028-04-23", "organisme": "BV", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "", "prochainControle": "", "organisme": "DESAUTEL", "observations": "DAS - RV a planifier", "resultat": ""}, "4.5": {"dateRealisation": "2026-02-02", "prochainControle": "2027-02-02", "organisme": "DESAUTEL", "observations": "RIA", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-11-18", "prochainControle": "2026-11-18", "organisme": "SR DAUPHINE", "observations": "A renouveler", "resultat": "Favorable"}, "5.1": {"dateRealisation": "", "prochainControle": "2027-11-28", "organisme": "BV", "observations": "Q18", "resultat": ""}, "5.2": {"dateRealisation": "2025-07-18", "prochainControle": "2026-07-18", "organisme": "BV", "observations": "Q19", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-11-28", "prochainControle": "2026-11-28", "organisme": "INTERNE", "observations": "BAES/BAEH", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2025-12-01", "prochainControle": "2026-12-01", "organisme": "I2S", "observations": "Ascenseur/monte-charge", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2024-11-26", "prochainControle": "2026-11-26", "organisme": "BV", "observations": "A renouveler", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2025-12-05", "prochainControle": "2026-12-05", "organisme": "IDEX", "observations": "", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "Contrat envoye", "resultat": "Favorable"}, "7.4": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "8.2": {"dateRealisation": "2025-12-23", "prochainControle": "2026-12-23", "organisme": "SAVEC", "observations": "", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-12-19", "prochainControle": "2026-12-19", "organisme": "ASEPTI AIR", "observations": "", "resultat": "Favorable"}, "15.1": {"dateRealisation": "2025-12-12", "prochainControle": "2026-06-10", "organisme": "EUROFINS", "observations": "Semestriel", "resultat": "Favorable"}, "15.2": {"dateRealisation": "", "prochainControle": "", "organisme": "IDEX", "observations": "RV a planifier", "resultat": ""}, "16": {"dateRealisation": "2025-03-14", "prochainControle": "2026-03-14", "organisme": "GES", "observations": "", "resultat": "Favorable"}, "17": {"dateRealisation": "", "prochainControle": "", "organisme": "PRIMAGAZ", "observations": "Citerne gaz 40 mois", "resultat": ""}}, "STATION DE SKI LES 2 ALPES": {"3.1": {"dateRealisation": "2026-01-21", "prochainControle": "2027-01-21", "organisme": "", "observations": "Formations – Extincteurs & évacuation", "resultat": "Favorable"}, "3.2": {"dateRealisation": "2026-01-21", "prochainControle": "2027-01-21", "organisme": "", "observations": "Formations – Centrale incendie", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-26", "prochainControle": "2027-02-26", "organisme": "", "observations": "Contrat", "resultat": "Favorable"}, "4.2": {"dateRealisation": "2025-09-30", "prochainControle": "2026-09-30", "organisme": "", "observations": "SSI - Contrat", "resultat": "Favorable"}, "4.3": {"dateRealisation": "2026-01-22", "prochainControle": "2029-01-22", "organisme": "", "observations": "SSI Triennale", "resultat": "Favorable"}, "4.4": {"dateRealisation": "2025-09-17", "prochainControle": "2026-09-17", "organisme": "", "observations": "DAS - Contrat", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-09-30", "prochainControle": "2026-09-30", "organisme": "", "observations": "Désenfumage - Contrat", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Vérif. électrique Q18 - Contrat", "resultat": "Favorable"}, "5.2": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Vérif. électrique Q19 - Contrat", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-09-17", "prochainControle": "2026-09-17", "organisme": "", "observations": "BAES/BAEH/Ambiance - Contrat", "resultat": "Favorable"}, "6.1": {"dateRealisation": "2026-01-27", "prochainControle": "2027-01-27", "organisme": "", "observations": "Ascenseurs / Monte-charge - Contrat", "resultat": "Favorable"}, "6.2": {"dateRealisation": "2025-05-27", "prochainControle": "2030-05-27", "organisme": "", "observations": "Quinquennal VRE+CTQ - Contrat", "resultat": "Favorable"}, "7.1": {"dateRealisation": "2025-10-29", "prochainControle": "2026-10-29", "organisme": "", "observations": "Contrôle réseaux gaz", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-12-14", "prochainControle": "2026-12-14", "organisme": "", "observations": "Maintenance gaz/fioul – chaudières", "resultat": "Favorable"}, "7.3": {"dateRealisation": "2025-04-29", "prochainControle": "2026-04-29", "organisme": "", "observations": "Appareils cuisson feux vifs", "resultat": "Favorable"}, "7.4": {"dateRealisation": "2024-12-14", "prochainControle": "2026-12-14", "organisme": "", "observations": "Ramonage conduits chaufferies", "resultat": "Favorable"}, "10.1": {"dateRealisation": "2025-10-08", "prochainControle": "2026-10-08", "organisme": "", "observations": "QAI – Dégraissage hottes cuisine", "resultat": "Favorable"}, "16": {"dateRealisation": "2025-07-25", "prochainControle": "2026-07-25", "organisme": "", "observations": "Entretien bac à graisse", "resultat": "Favorable"}}, "SKI LES 2 ALPES GENEPI": {"4.2": {"dateRealisation": "2025-12-09", "prochainControle": "2026-12-09", "organisme": "", "observations": "SSI - Système Sécurité Incendie", "resultat": "Favorable"}, "4.1": {"dateRealisation": "2026-02-27", "prochainControle": "2027-02-27", "organisme": "", "observations": "Extincteurs", "resultat": "Favorable"}, "4.8": {"dateRealisation": "2025-09-22", "prochainControle": "2026-09-22", "organisme": "", "observations": "Désenfumage", "resultat": "Favorable"}, "5.3": {"dateRealisation": "2025-09-18", "prochainControle": "2026-09-18", "organisme": "", "observations": "Éclairage de sécurité / BAES", "resultat": "Favorable"}, "5.1": {"dateRealisation": "2025-10-14", "prochainControle": "2026-10-14", "organisme": "", "observations": "Installation électrique", "resultat": "Favorable"}, "7.2": {"dateRealisation": "2024-12-13", "prochainControle": "2026-12-13", "organisme": "", "observations": "Entretien chaudière", "resultat": "Favorable"}}},
+  SYNTHESES: {"STATION DE SKI VALLOIRE": {"nom": "VALLOIRE", "code_site": "9332", "adresse": "1038 route du Galibier", "cp": "73450", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "2017", "nb_batiments": "2", "surface_totale": "4646", "type_chauffage": "Fioul", "puissance_kw": "280", "date_commission": "2024-10-04", "periodicite_commission": "3", "prochaine_commission": "2027-10-04", "erp_categorie": "4", "erp_types": "Rh / N / L / X", "directeur": "Benoit DUGRIVEL", "tel_directeur": "06 83 63 57 58", "responsable_maintenance": "Redouane MENAA", "tel_rm": "06 46 76 84 50", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Non", "alimentation_fioul": "Oui", "volume_fioul": "14", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "annee_mise_service": "2019", "pdl": "60004170000084"}, "STATION DE SKI VAL CENIS": {"nom": "VAL CENIS", "code_site": "9331", "adresse": "Rue des rochers", "cp": "73480", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1976", "nb_batiments": "4", "surface_totale": "3640", "type_chauffage": "Fioul", "puissance_kw": "564", "date_commission": "2022-01-13", "periodicite_commission": "3", "prochaine_commission": "2025-01-12", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Philippe MERCK", "tel_directeur": "06 80 93 76 91", "responsable_maintenance": "Bon Bruno", "tel_rm": "06 31 54 10 87", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Oui", "volume_fioul": "18", "alimentation_eau": "Oui"}, "STATION DE SKI VAL THORENS": {"nom": "VAL THORENS", "code_site": "9317", "adresse": "240 rue des Pistes", "cp": "73440", "ville": "Les Belleville", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "date_construction": "1960/2012", "date_renovation": "2012", "nb_batiments": "2", "surface_totale": "7665", "type_chauffage": "Gaz", "puissance_kw": "940", "date_commission": "2025-03-03", "periodicite_commission": "3", "prochaine_commission": "2027-03-02", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Nelly GROSSE", "tel_directeur": "06 18 92 80 95", "responsable_maintenance": "Karim CHALLAL", "tel_rm": "06 65 80 92 99", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "volume_gaz": "2,7", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Oui", "pdl": "30001960293218", "annee_mise_service": "2024"}, "STATION DE SKI SERRE CHEVALIER": {"nom": "SERRE-CHEVALIER", "code_site": "9424", "adresse": "2 Rte de Bez", "cp": "05240", "departement": "Haute-Alpes", "region": "PACA", "nb_batiments": "1", "surface_totale": "4910", "type_chauffage": "Gaz", "puissance_kw": "860", "volume_gaz": "21", "date_commission": "2025-06-20", "periodicite_commission": "3", "prochaine_commission": "2028-06-19", "erp_categorie": "3", "erp_types": "RH O P", "directeur": "Emmanuel MILTGEN", "tel_directeur": "06 60 70 08 40", "responsable_maintenance": "Joey RAPIN", "tel_rm": "06 88 45 14 79", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "alimentation_incendie": "Non"}, "STATION DE SKI PRALOGNAN": {"nom": "PRALOGNAN", "code_site": "9313", "adresse": "Plan amont - BP7", "cp": "73710", "ville": "Pralognan la vanoise", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "nb_batiments": "2", "surface_totale": "2300", "type_chauffage": "Gaz", "puissance_kw": "1042", "volume_fioul": "15m3 / 6m3", "prochaine_commission": "2024-07-16", "periodicite_commission": "3", "erp_categorie": "3", "erp_types": "Rh / N / L", "directeur": "Renaud Berthrand", "tel_directeur": "06 30 31 38 41", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Oui", "alimentation_eau": "Oui", "alimentation_incendie": "Non", "pdl": "50000399133208", "annee_mise_service": "2014", "siret": "77568204000602", "naf": "9319Z"}, "STATION DE SKI LES ORRES": {"nom": "LES ORRES", "code_site": "9441", "adresse": "Pramouton", "cp": "05200", "departement": "Haute-Alpes", "region": "Auvergne Rhone Alpes", "nb_batiments": "4", "surface_totale": "3663", "erp_categorie": "4", "erp_types": "Rh", "directeur": "Jacques Buhr", "tel_directeur": "06 76 17 28 71", "responsable_maintenance": "Claude Rapin", "tel_rm": "06 76 88 35 15", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "VILLAGE SPORTIF LE VERDON": {"nom": "VERDON", "code_site": "9516", "adresse": "La Placette / Vignal", "cp": "04120", "departement": "Alpes-de-Haute-Provence", "region": "PACA", "nb_batiments": "1", "surface_totale": "316", "type_chauffage": "Gaz", "erp_categorie": "4", "erp_types": "O Rh", "directeur": "Stephanie Sauvegrain", "tel_directeur": "06 62 81 46 68", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS", "alimentation_gaz": "Oui", "alimentation_fioul": "Non", "alimentation_eau": "Oui", "pdl": "25682489125299"}, "VALMEINIER": {"nom": "VALMEINIER", "code_site": "", "adresse": "Centre montagne de l Armera", "cp": "73450", "ville": "VALMEINIER", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "directeur": "Sonia LEGAI", "tel_directeur": "06 22 24 50 05", "responsable_maintenance": "Simon", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SAINT SORLIN D'ARVES": {"nom": "SAINT SORLIN D ARVES", "code_site": "9333", "departement": "Savoie", "region": "Auvergne Rhone Alpes", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "STATION DE SKI LES 2 ALPES": {"nom": "LES 2 ALPES", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}, "SKI LES 2 ALPES GENEPI": {"nom": "GENEPI LES 2 ALPES", "responsable_regional": "Camille CARON", "directeur_region": "Herve DUGIT-GROS"}},
 
   run() {
     if (!confirm('Importer les donnees des 9 centres Alpes Sud ?\n\nLes champs vides seront remplis. Les donnees existantes sont conservees.')) return;
