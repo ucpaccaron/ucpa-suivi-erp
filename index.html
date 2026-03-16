@@ -1935,6 +1935,53 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 .ia-bubble-user { background:var(--accent);color:#fff;border-bottom-right-radius:3px; }
 .ia-side-btn { display:block;width:100%;background:none;border:none;text-align:left;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--muted2);font-family:'Barlow',sans-serif;transition:.1s; }
 .ia-side-btn:hover { background:var(--bg3);color:var(--accent); }
+
+/* ── INVESTISSEMENTS — onglets ───────────────────────────────── */
+.inv-tab {
+  background: none; border: none; cursor: pointer;
+  padding: 8px 18px; font-size: 12px; font-weight: 600;
+  color: var(--muted); border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all .18s;
+  font-family: 'Barlow', sans-serif;
+}
+.inv-tab:hover { color: var(--text); }
+.inv-tab-active { color: var(--accent) !important; border-bottom-color: var(--accent) !important; }
+
+
+/* ── NOTES & SUIVI CENTRES ───────────────────────────────────── */
+.cn-layout{display:grid;grid-template-columns:220px 1fr;gap:14px;height:calc(100vh - 140px);min-height:0}
+.cn-sidebar{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow-y:auto;display:flex;flex-direction:column}
+.cn-sidebar-head{padding:12px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.cn-centre-item{padding:9px 14px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-left:3px solid transparent;transition:all .14s}
+.cn-centre-item:hover{background:var(--bg3);color:var(--text)}
+.cn-centre-item.active{background:rgba(232,84,26,.08);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+.cn-centre-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-family:'DM Mono',monospace;font-weight:700}
+.cn-main{display:flex;flex-direction:column;gap:0;min-height:0;overflow:hidden}
+.cn-feed{flex:1;overflow-y:auto;padding:4px 2px 16px;display:flex;flex-direction:column;gap:10px}
+.cn-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;transition:box-shadow .15s;position:relative}
+.cn-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.cn-card.pinned{border-left:3px solid var(--amber)}
+.cn-card-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.cn-type-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.cn-card-meta{font-size:10px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cn-tag{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:2px 8px;font-size:10px;color:var(--muted);cursor:pointer;transition:all .12s}
+.cn-tag:hover,.cn-tag.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cn-card-text{font-size:13px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.cn-card-actions{display:none;position:absolute;top:10px;right:10px;gap:4px}
+.cn-card:hover .cn-card-actions{display:flex}
+.cn-compose{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.cn-compose textarea{width:100%;resize:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);font-family:'Barlow',sans-serif;line-height:1.5;outline:none;transition:border .15s}
+.cn-compose textarea:focus{border-color:var(--accent)}
+.cn-compose-bar{display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.cn-type-btn{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;transition:all .14s;display:flex;align-items:center;gap:4px}
+.cn-type-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cn-type-btn.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cn-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--muted);gap:10px}
+.cn-empty .icon{font-size:40px;opacity:.4}
+.cn-search{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:'Barlow',sans-serif;outline:none;width:200px}
+.cn-search:focus{border-color:var(--accent)}
+@media(max-width:700px){.cn-layout{grid-template-columns:1fr}.cn-sidebar{height:auto;max-height:200px}}
+
 </style>
 </head>
 <body>
@@ -2088,6 +2135,8 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
     <div class="nav-item" onclick="App.nav('sanitaire')" data-page="sanitaire"><span class="icon">💧</span> Carnet Sanitaire</div>
     <div class="nav-section">Investissements</div>
     <div class="nav-item" onclick="App.nav('investissements')" data-page="investissements"><span class="icon">💰</span> Suivi des Investissements</div>
+    <div class="nav-section">Suivi centres</div>
+    <div class="nav-item" onclick="App.nav('notes')" data-page="notes"><span class="icon">📝</span> Notes &amp; Suivi centres <span class="nav-badge" id="badge-notes" style="display:none">0</span></div>
     <div class="nav-section">Ressources</div>
     <div class="nav-item" onclick="App.nav('ged')" data-page="ged"><span class="icon">📁</span> GED Documents</div>
     <div class="nav-item" onclick="App.nav('rh')" data-page="rh"><span class="icon">👤</span> RH Habilitations <span class="nav-badge" id="badge-rh" style="display:none">0</span></div>
@@ -2188,6 +2237,59 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
         <div class="card">
           <div class="card-hdr"><span>📊</span><h3>Avancement par groupe</h3></div>
           <div class="card-body" id="group-progress" style="max-height:280px;overflow-y:auto"></div>
+        </div>
+      </div>
+
+      <!-- WIDGET NOTES RÉCENTES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;margin-bottom:0" id="dash-notes-row">
+
+        <!-- Fil notes récentes -->
+        <div class="card">
+          <div class="card-hdr">
+            <span>📝</span><h3>Notes & Suivi centres</h3>
+            <div class="ml flex" style="gap:6px;align-items:center">
+              <span id="dash-notes-count" style="font-size:11px;color:var(--muted)"></span>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="App.nav('notes')">Tout voir →</button>
+            </div>
+          </div>
+          <div id="dash-notes-feed" style="max-height:260px;overflow-y:auto;padding:0 4px 8px"></div>
+          <!-- Saisie rapide -->
+          <div style="border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;align-items:center">
+            <input id="dash-note-quick-text" type="text" placeholder="Note rapide pour un centre…"
+              style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);font-family:'Barlow',sans-serif;outline:none"
+              onkeydown="if(event.key==='Enter')DashNotes.quickAdd()">
+            <select id="dash-note-quick-centre" class="centre-selector" style="width:160px;font-size:11px" title="Centre concerné"></select>
+            <select id="dash-note-quick-type" class="centre-selector" style="width:110px;font-size:11px">
+              <option value="info">ℹ️ Info</option>
+              <option value="alerte">🚨 Alerte</option>
+              <option value="visite">🚶 Visite</option>
+              <option value="travaux">🔧 Travaux</option>
+              <option value="reunion">👥 Réunion</option>
+              <option value="relance">📞 Relance</option>
+              <option value="positif">✅ Positif</option>
+              <option value="incident">⚠️ Incident</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="DashNotes.quickAdd()">+</button>
+          </div>
+        </div>
+
+        <!-- Notes par centre -->
+        <div class="card">
+          <div class="card-hdr">
+            <span>📍</span><h3>Activité par centre</h3>
+            <div class="ml flex" style="gap:6px;align-items:center">
+              <select id="dash-notes-window" class="centre-selector" style="width:120px;font-size:11px"
+                onchange="DashNotes._renderCentres()">
+                <option value="7">7 derniers jours</option>
+                <option value="30">30 jours</option>
+                <option value="60">60 jours</option>
+                <option value="90">3 mois</option>
+                <option value="180">6 mois</option>
+                <option value="0" selected>Tout</option>
+              </select>
+            </div>
+          </div>
+          <div id="dash-notes-centres" style="max-height:310px;overflow-y:auto;padding:4px 0 8px"></div>
         </div>
       </div>
 
@@ -3155,49 +3257,91 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
     <!-- INVESTISSEMENTS -->
     <div id="page-investissements" class="page">
-      <div class="kpi-grid" id="inv-kpi-grid"></div>
-      <div class="card">
-        <div class="card-hdr">
-          <span>💰</span><h3>Suivi des Investissements GER</h3>
-          <div class="ml flex" style="gap:8px">
-            <select id="inv-annee-filter" class="centre-selector" style="width:100px" onchange="App.renderInvestissements()">
-              <option value="">Toutes années</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-            </select>
-            <select id="inv-cat-filter" class="centre-selector" style="width:160px" onchange="App.renderInvestissements()">
-              <option value="">Toutes catégories</option>
-              <option value="GER">GER</option>
-              <option value="IMMOBILIER">IMMOBILIER</option>
-              <option value="MOBILIER">MOBILIER</option>
-              <option value="TRANSITION ECOLOGIQUE">TRANSITION ÉCOLO</option>
-              <option value="INFORMATIQUE">INFORMATIQUE</option>
-              <option value="MARQUES DESTINATION">MARQUES DESTINATION</option>
-            </select>
-            <select id="inv-statut-filter" class="centre-selector" style="width:140px" onchange="App.renderInvestissements()">
-              <option value="">Tous statuts</option>
-              <option value="Pas commencé">Pas commencé</option>
-              <option value="En cours">En cours</option>
-              <option value="Terminer">Terminé</option>
-              <option value="Projet">Projet</option>
-              <option value="Report">Report</option>
-              <option value="Devis signé">Devis signé</option>
-            </select>
-            <button class="btn btn-primary btn-sm" onclick="App.openInvModal()">+ Investissement</button>
-            <button class="btn btn-secondary btn-sm" onclick="App.exportInvExcel()">📊 Export Excel</button>
-            <button class="btn btn-secondary btn-sm" onclick="App.exportInvPDF()">📄 Export PDF</button>
-            <label class="btn btn-ghost btn-sm" style="cursor:pointer" onclick="document.getElementById('inv-excel-input').click()">📥 Import Excel</label>
-            <input type="file" id="inv-excel-input" accept=".xlsx,.xls,.csv" onchange="App.handleInvImport(event)" style="display:none">
+
+      <!-- ONGLETS : Liste / Dashboard -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:14px">
+        <button id="inv-tab-list"  class="inv-tab inv-tab-active" onclick="InvModule.switchTab('list')">📋 Liste des projets</button>
+        <button id="inv-tab-dash"  class="inv-tab"                onclick="InvModule.switchTab('dash')">📊 Dashboard budget</button>
+      </div>
+
+      <!-- ─── VUE LISTE ─── -->
+      <div id="inv-view-list">
+        <div class="kpi-grid" id="inv-kpi-grid"></div>
+        <div class="card">
+          <div class="card-hdr" style="flex-wrap:wrap;gap:6px">
+            <span>💰</span><h3>Suivi des Investissements</h3>
+            <div class="ml flex" style="gap:6px;flex-wrap:wrap;align-items:center">
+              <select id="inv-annee-filter" class="centre-selector" style="width:100px" onchange="App.renderInvestissements()">
+                <option value="">Toutes années</option>
+                <option value="2025">2025</option><option value="2026">2026</option>
+                <option value="2027">2027</option><option value="2028">2028</option>
+                <option value="2029">2029</option><option value="2030">2030</option>
+              </select>
+              <select id="inv-cat-filter" class="centre-selector" style="width:160px" onchange="App.renderInvestissements()">
+                <option value="">Toutes catégories</option>
+                <option>GER</option><option>IMMOBILIER</option><option>MOBILIER</option>
+                <option>TRANSITION ECOLOGIQUE</option><option>MARQUES DESTINATION</option>
+              </select>
+              <select id="inv-statut-filter" class="centre-selector" style="width:140px" onchange="App.renderInvestissements()">
+                <option value="">Tous statuts</option>
+                <option>Pas commencé</option><option>Projet</option>
+                <option>Devis signé</option><option>En cours</option>
+                <option>Terminer</option><option>Report</option><option>Gel</option>
+              </select>
+              <select id="inv-prio-filter" class="centre-selector" style="width:110px" onchange="App.renderInvestissements()">
+                <option value="">Toutes priorités</option>
+                <option value="1">⭐ Priorité 1</option>
+                <option value="2">Priorité 2</option>
+                <option value="3">Priorité 3</option>
+              </select>
+              <input id="inv-search" type="text" placeholder="🔍 Rechercher…" class="centre-selector"
+                style="width:160px" oninput="App.renderInvestissements()">
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">
+              <!-- Sélection en masse -->
+              <button id="inv-bulk-bar-btn" class="btn btn-ghost btn-sm" onclick="InvModule.toggleBulkMode()" style="font-size:11px">☑ Sélection</button>
+              <button id="inv-bulk-del-btn" class="btn btn-sm" onclick="InvModule.bulkDelete()"
+                style="display:none;background:#dc2626;color:#fff;border:none;font-size:11px">🗑 Supprimer sélection</button>
+              <button class="btn btn-primary btn-sm" onclick="App.openInvModal()">+ Projet</button>
+              <button class="btn btn-secondary btn-sm" onclick="App.exportInvExcel()">📊 Excel</button>
+              <button class="btn btn-secondary btn-sm" onclick="App.exportInvPDF()">📄 PDF</button>
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer" onclick="document.getElementById('inv-excel-input').click()">📥 Importer</label>
+              <input type="file" id="inv-excel-input" accept=".xlsx,.xls,.csv" onchange="App.handleInvImport(event)" style="display:none">
+            </div>
           </div>
+          <div id="inv-table-wrap" style="overflow:auto;max-height:60vh"></div>
         </div>
-        <div style="overflow:auto;max-height:65vh" id="inv-table-wrap"></div>
+      </div>
+
+      <!-- ─── VUE DASHBOARD ─── -->
+      <div id="inv-view-dash" style="display:none">
+        <div id="inv-dash-content"></div>
+      </div>
+
+      <!-- ─── FICHE DÉTAIL PROJET ─── -->
+      <div id="inv-fiche-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)"
+        onclick="if(event.target===this)InvModule.closeFiche()"></div>
+      <div id="inv-fiche-panel" style="display:none;position:fixed;top:0;right:0;bottom:0;width:min(640px,100vw);
+        background:var(--bg2);border-left:1px solid var(--border);z-index:601;
+        display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.3);transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1)">
+        <div style="display:flex;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border);gap:12px">
+          <span id="inv-fiche-badge" style="font-size:20px">💰</span>
+          <div style="flex:1;min-width:0">
+            <div id="inv-fiche-title" style="font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+            <div id="inv-fiche-sub"   style="font-size:11px;color:var(--muted)"></div>
+          </div>
+          <button onclick="InvModule.closeFiche()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);padding:4px">✕</button>
+        </div>
+        <div id="inv-fiche-body" style="flex:1;overflow-y:auto;padding:20px"></div>
       </div>
     </div>
 
     <!-- TACHES -->
+
+    <!-- NOTES & SUIVI CENTRES -->
+    <div id="page-notes" class="page">
+      <div id="notes-root"></div>
+    </div>
 
     <!-- GED DOCUMENTS -->
     <div id="page-ged" class="page">
@@ -5039,6 +5183,7 @@ const App = {
     if (!this.load('prestataires')) this.save('prestataires', []);
     if (!this.load('matrix')) this.save('matrix', {});
     if (!this.load('investissements')) this.save('investissements', []);
+    if (!this.load('centre_notes')) this.save('centre_notes', []);
     if (!this.load('syntheses')) this.save('syntheses', {});
     if (!this.load('ged')) this.save('ged', {});
 
@@ -5260,6 +5405,7 @@ const App = {
       case 'rh': this.renderRH(); break;
       case 'contrats': this.renderContrats(); break;
       case 'investissements': this.renderInvestissements(); break;
+      case 'notes':  CentreNotes.render(); break;
       case 'ged':    GED.render(); break;
       case 'notice': Notice.render(); break;
       case 'backup': Backup.render(); break;
@@ -5272,6 +5418,7 @@ const App = {
   renderAll() {
     this.renderConformanceBadge();
     this.updateBadges();
+    if (this._currentPage === 'dashboard' && typeof DashNotes !== 'undefined') DashNotes.render();
   },
 
   // ── HELPERS ──
@@ -5358,6 +5505,7 @@ const App = {
   },
 
   updateBadges() {
+    CentreNotes._updateBadge();
     // Registre: expired
     const rows = this.centre==='ALL'
       ? CENTRES.flatMap(c => this.getRegistreForCentre(c))
@@ -5382,6 +5530,7 @@ const App = {
 
   // ── DASHBOARD ──
   renderDashboard() {
+    if (typeof DashNotes !== 'undefined') setTimeout(() => DashNotes.render(), 50);
     const allRows = this.centre==='ALL'
       ? CENTRES.flatMap(c => this.getRegistreForCentre(c))
       : this.getRegistreForCentre(this.centre);
@@ -6430,18 +6579,30 @@ const App = {
       // ── Calcul automatique de la date du prochain contrôle ──
       // Déclenché quand on saisit la date de réalisation OU quand on change la périodicité
       if (field === 'dateRealisation' || field === 'periodicite') {
-        const row         = reg[centre][idx];
-        const dateRef     = row.dateRealisation;
-        const periodicite = row.periodicite;
-        const nextCalc    = calcProchainControle(dateRef, periodicite);
+        const row     = reg[centre][idx];
+        const dateRef = row.dateRealisation;
+
+        // Fallback : si periodicite absente sur la row, la chercher dans CONTROLES_TEMPLATE par catId
+        let periodicite = row.periodicite;
+        if (!periodicite && row.catId && typeof CONTROLES_TEMPLATE !== 'undefined') {
+          const tpl = CONTROLES_TEMPLATE.find(t => t.catId === row.catId);
+          if (tpl && tpl.periodicite) {
+            periodicite = tpl.periodicite;
+            row.periodicite = periodicite; // corriger en place pour les prochains accès
+          }
+        }
+
+        const nextCalc = calcProchainControle(dateRef, periodicite);
         if (nextCalc) {
           row.prochainControle = nextCalc;
-          // Mettre à jour le champ dans le DOM sans re-render complet
-          const allInputs = document.querySelectorAll(`input[onchange*="'${centre}',${idx},'prochainControle'"]`);
-          allInputs.forEach(el => {
-            el.value = nextCalc;
-            el.style.background = 'rgba(29,185,84,0.15)';
-            setTimeout(() => { el.style.background = ''; }, 1800);
+          // Mettre à jour le champ prochainControle dans le DOM (flash vert)
+          document.querySelectorAll('input[type="date"]').forEach(el => {
+            const oc = el.getAttribute('onchange') || '';
+            if (oc.includes(`'prochainControle'`) && oc.includes(String(idx)) && oc.includes(centre.replace(/'/g, "\\'"))) {
+              el.value = nextCalc;
+              el.style.background = 'rgba(29,185,84,0.18)';
+              setTimeout(() => { el.style.background = ''; }, 2000);
+            }
           });
         }
       }
@@ -6852,7 +7013,13 @@ const App = {
       if (orgName)  reg[c][idx].organisme        = orgName;
       // Calcul automatique prochain contrôle si pas saisi manuellement
       if (date && !next) {
-        const autoNext = calcProchainControle(date, reg[c][idx].periodicite);
+        // Fallback periodicite depuis CONTROLES_TEMPLATE si absente sur la row
+        let perio = reg[c][idx].periodicite;
+        if (!perio && reg[c][idx].catId && typeof CONTROLES_TEMPLATE !== 'undefined') {
+          const tpl = CONTROLES_TEMPLATE.find(t => t.catId === reg[c][idx].catId);
+          if (tpl && tpl.periodicite) { perio = tpl.periodicite; reg[c][idx].periodicite = perio; }
+        }
+        const autoNext = calcProchainControle(date, perio);
         if (autoNext) reg[c][idx].prochainControle = autoNext;
       }
       if (next)     reg[c][idx].prochainControle = next;
@@ -8884,68 +9051,97 @@ Enregistrer quand même ?`)) return;
 
   // ── INVESTISSEMENTS ──
   renderInvestissements() {
-    const invs = this.load('investissements') || [];
-    const anneeF = document.getElementById('inv-annee-filter')?.value || '';
-    const catF = document.getElementById('inv-cat-filter')?.value || '';
-    const statutF = document.getElementById('inv-statut-filter')?.value || '';
+    const invs     = this.load('investissements') || [];
+    const anneeF   = document.getElementById('inv-annee-filter')?.value  || '';
+    const catF     = document.getElementById('inv-cat-filter')?.value     || '';
+    const statutF  = document.getElementById('inv-statut-filter')?.value  || '';
+    const prioF    = document.getElementById('inv-prio-filter')?.value    || '';
+    const searchF  = (document.getElementById('inv-search')?.value || '').toLowerCase();
+
     const filtered = invs.filter(inv => {
       if (this.centre !== 'ALL' && inv.centre && inv.centre !== this.centre) return false;
-      if (anneeF && inv.annee !== anneeF) return false;
-      if (catF && inv.categorie !== catF) return false;
-      if (statutF && inv.statut !== statutF) return false;
+      if (anneeF   && String(inv.annee)     !== anneeF)   return false;
+      if (catF     && inv.categorie         !== catF)     return false;
+      if (statutF  && inv.statut            !== statutF)  return false;
+      if (prioF    && String(inv.priorite)  !== prioF)    return false;
+      if (searchF  && !(
+        (inv.description||'').toLowerCase().includes(searchF) ||
+        (inv.centre||'').toLowerCase().includes(searchF) ||
+        (inv.typeInv||'').toLowerCase().includes(searchF) ||
+        (inv.observations||'').toLowerCase().includes(searchF)
+      )) return false;
       return true;
     });
 
     // KPIs
-    const totalEst = filtered.reduce((s,i) => s + (parseFloat(i.coutEstime)||0), 0);
+    const totalEst  = filtered.reduce((s,i) => s + (parseFloat(i.coutEstime)||0), 0);
     const totalReel = filtered.reduce((s,i) => s + (parseFloat(i.coutReel)||0), 0);
-    const termines = filtered.filter(i=>i.statut==='Terminer').length;
-    const enCours = filtered.filter(i=>i.statut==='En cours').length;
-    const sanctu = filtered.filter(i=>i.sanctuarise==='OUI').length;
+    const termines  = filtered.filter(i=>i.statut==='Terminer').length;
+    const enCours   = filtered.filter(i=>i.statut==='En cours').length;
+    const sanctu    = filtered.filter(i=>(i.sanctuarise||'').toUpperCase()==='OUI').length;
+    const ecart     = totalReel - totalEst;
 
     const kpiGrid = document.getElementById('inv-kpi-grid');
     if (kpiGrid) {
-      const fmt = v => v >= 1000000 ? (v/1000000).toFixed(2)+'M€' : v >= 1000 ? (v/1000).toFixed(0)+'k€' : v+'€';
+      const fmt = v => v>=1000000?(v/1000000).toFixed(2)+'M€':v>=1000?(v/1000).toFixed(0)+'k€':v.toLocaleString('fr-FR')+'€';
       kpiGrid.innerHTML = `
-        <div class="kpi"><div class="kpi-label">Budget estimé</div><div class="kpi-val" style="font-size:24px;color:var(--blue)">${fmt(totalEst)}</div><div class="kpi-sub">${filtered.length} investissements</div></div>
-        <div class="kpi"><div class="kpi-label">Coût réel</div><div class="kpi-val" style="font-size:24px;color:${totalReel>totalEst?'var(--red)':'var(--green)'}">${fmt(totalReel)}</div><div class="kpi-sub">Engagement actuel</div></div>
+        <div class="kpi"><div class="kpi-label">Budget estimé</div><div class="kpi-val" style="color:var(--blue)">${fmt(totalEst)}</div><div class="kpi-sub">${filtered.length} projets</div></div>
+        <div class="kpi"><div class="kpi-label">Coût réel</div><div class="kpi-val" style="color:${totalReel>totalEst?'var(--red)':'var(--green)'}">${fmt(totalReel)}</div><div class="kpi-sub">engagé</div></div>
+        <div class="kpi ${ecart>0?'ko':ecart<0?'ok':''}"><div class="kpi-label">Écart</div><div class="kpi-val" style="font-size:18px">${ecart>=0?'+':''}${fmt(Math.abs(ecart))}</div><div class="kpi-sub">${ecart>0?'Dépassement':'Économie'}</div></div>
         <div class="kpi ok"><div class="kpi-label">Terminés</div><div class="kpi-val">${termines}</div><div class="kpi-sub">sur ${filtered.length}</div></div>
-        <div class="kpi warn"><div class="kpi-label">En cours</div><div class="kpi-val">${enCours}</div><div class="kpi-sub">projets actifs</div></div>
-        <div class="kpi"><div class="kpi-label">Sanctuarisés</div><div class="kpi-val" style="color:var(--accent)">${sanctu}</div><div class="kpi-sub">OUI</div></div>
+        <div class="kpi warn"><div class="kpi-label">En cours</div><div class="kpi-val">${enCours}</div><div class="kpi-sub">actifs</div></div>
+        <div class="kpi"><div class="kpi-label">Sanctuarisés</div><div class="kpi-val" style="color:var(--accent)">${sanctu}</div><div class="kpi-sub">projets</div></div>
       `;
     }
 
     const wrap = document.getElementById('inv-table-wrap');
     if (!wrap) return;
+    const bulkMode = InvModule._bulkMode;
 
-    const statusColors = {'Terminer':'ok','En cours':'warn','Pas commencé':'na','Projet':'na','Report':'ko','Devis signé':'warn'};
+    const INV_STATUT_COLOR = {
+      'Terminer':'ok','En cours':'warn','Devis signé':'warn',
+      'Pas commencé':'na','Projet':'na','Report':'ko','Gel':'ko'
+    };
+    const INV_PRIO = {'1':'⭐','2':'◆','3':'·'};
+
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state" style="padding:48px"><div class="icon">💰</div><div>Aucun investissement — importez un Excel ou ajoutez manuellement</div></div>`;
+      return;
+    }
+
     let html = `<table><thead><tr>
-      <th>Année</th><th>Centre</th><th>Catégorie</th><th>Type</th><th>Description</th>
-      <th>Budget estimé</th><th>Coût réel</th><th>Sanctu.</th><th>Statut</th><th>Priorité</th><th>Observations</th><th></th>
+      ${bulkMode?'<th style="width:32px"><input type="checkbox" id="inv-cb-all" onchange="InvModule.toggleAll(this.checked)"></th>':''}
+      <th>An.</th><th>Centre</th><th>Catégorie</th><th>Type</th><th>Description</th>
+      <th style="text-align:right">Budget estimé</th><th style="text-align:right">Coût réel</th>
+      <th>Sanctu.</th><th>Statut</th><th>P.</th><th></th>
     </tr></thead><tbody>`;
 
-    if (filtered.length === 0) {
-      html += `<tr><td colspan="12"><div class="empty-state"><div class="icon">💰</div><div>Aucun investissement — Importez un fichier Excel ou ajoutez manuellement</div></div></td></tr>`;
-    } else {
-      filtered.forEach((inv, idx) => {
-        const sc = statusColors[inv.statut] || 'na';
-        const over = parseFloat(inv.coutReel||0) > parseFloat(inv.coutEstime||0) && parseFloat(inv.coutEstime||0) > 0;
-        html += `<tr>
-          <td style="font-family:'DM Mono';font-size:11px">${inv.annee||'—'}</td>
-          <td style="font-size:11px;color:var(--muted);max-width:100px">${(inv.centre||'—').replace('VILLAGE SPORTIF ','VS ')}</td>
-          <td><span class="pill pill-na" style="font-size:10px">${inv.categorie||'—'}</span></td>
-          <td style="font-size:11px">${inv.typeInv||'—'}</td>
-          <td style="max-width:200px;font-size:12px">${inv.description||'—'}</td>
-          <td style="font-family:'DM Mono';font-size:12px;text-align:right">${inv.coutEstime?Number(inv.coutEstime).toLocaleString('fr-FR')+'€':'—'}</td>
-          <td style="font-family:'DM Mono';font-size:12px;text-align:right;color:${over?'var(--red)':'var(--text)'}">${inv.coutReel?Number(inv.coutReel).toLocaleString('fr-FR')+'€':'—'}</td>
-          <td style="text-align:center">${inv.sanctuarise==='OUI'?'<span class="pill pill-ok" style="font-size:10px">OUI</span>':'<span style="color:var(--muted);font-size:11px">—</span>'}</td>
-          <td><span class="pill pill-${sc}" style="font-size:10px">${inv.statut||'—'}</span></td>
-          <td style="font-size:11px">${inv.priorite||'—'}</td>
-          <td style="font-size:11px;color:var(--muted);max-width:150px">${inv.observations||'—'}</td>
-          <td><button class="btn btn-ghost btn-sm" onclick="App.deleteInvestissement(${invs.indexOf(inv)})">🗑</button></td>
-        </tr>`;
-      });
-    }
+    filtered.forEach((inv) => {
+      const realIdx = invs.indexOf(inv);
+      const sc  = INV_STATUT_COLOR[inv.statut] || 'na';
+      const over = parseFloat(inv.coutReel||0) > parseFloat(inv.coutEstime||0) && parseFloat(inv.coutEstime||0) > 0;
+      const hasCom = (inv.commentaires||[]).length > 0;
+      const isSelected = InvModule._selected.has(realIdx);
+      html += `<tr style="${isSelected?'background:rgba(232,84,26,.08)':''}">
+        ${bulkMode?`<td><input type="checkbox" class="inv-cb" data-idx="${realIdx}" ${isSelected?'checked':''} onchange="InvModule.toggleSelect(${realIdx},this.checked)"></td>`:''}
+        <td style="font-family:'DM Mono';font-size:11px;white-space:nowrap">${inv.annee||'—'}</td>
+        <td style="font-size:11px;color:var(--muted);max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${inv.centre||''}">${(inv.centre||'—').replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ')}</td>
+        <td><span class="pill pill-na" style="font-size:10px">${inv.categorie||'—'}</span></td>
+        <td style="font-size:11px;max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${inv.typeInv||'—'}</td>
+        <td style="max-width:220px;font-size:12px;cursor:pointer;color:var(--accent)" onclick="InvModule.openFiche(${realIdx})" title="Ouvrir la fiche">
+          ${inv.description||'—'} ${hasCom?`<span style="font-size:10px;color:var(--muted)">💬${inv.commentaires.length}</span>`:''}
+        </td>
+        <td style="font-family:'DM Mono';font-size:12px;text-align:right;white-space:nowrap">${inv.coutEstime?Number(inv.coutEstime).toLocaleString('fr-FR')+'€':'—'}</td>
+        <td style="font-family:'DM Mono';font-size:12px;text-align:right;white-space:nowrap;color:${over?'var(--red)':'var(--text)'}">${inv.coutReel?Number(inv.coutReel).toLocaleString('fr-FR')+'€':'—'}</td>
+        <td style="text-align:center">${(inv.sanctuarise||'').toUpperCase()==='OUI'?'<span class="pill pill-ok" style="font-size:10px">OUI</span>':'<span style="color:var(--muted)">—</span>'}</td>
+        <td><span class="pill pill-${sc}" style="font-size:10px">${inv.statut||'—'}</span></td>
+        <td style="text-align:center;font-size:13px">${INV_PRIO[String(inv.priorite)]||String(inv.priorite)||'—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="InvModule.openFiche(${realIdx})" title="Fiche détail">📋</button>
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="App.deleteInvestissement(${realIdx})" title="Supprimer">🗑</button>
+        </td>
+      </tr>`;
+    });
     html += '</tbody></table>';
     wrap.innerHTML = html;
   },
@@ -8991,38 +9187,74 @@ Enregistrer quand même ?`)) return;
     const file = event.target.files[0];
     if (!file) return;
     if (!window.XLSX) { alert('SheetJS non disponible'); return; }
+
+    // Mapping noms courts Excel → noms complets ERP
+    const CENTRE_MAP = {
+      'PRALOGNAN':'STATION DE SKI PRALOGNAN','VALLOIRE':'STATION DE SKI VALLOIRE',
+      'VAL CENIS':'STATION DE SKI VAL CENIS','VAL THORENS':'STATION DE SKI VAL THORENS',
+      'SERRE CHEVALER':'STATION DE SKI SERRE CHEVALIER','SERRE CHEVALIER':'STATION DE SKI SERRE CHEVALIER',
+      'LES ORRES':'STATION DE SKI LES ORRES','DEUX ALPES':'STATION DE SKI LES 2 ALPES',
+      '2 ALPES':'STATION DE SKI LES 2 ALPES','LES 2 ALPES':'STATION DE SKI LES 2 ALPES',
+      'LE VERDON':'VILLAGE SPORTIF LE VERDON','VERDON':'VILLAGE SPORTIF LE VERDON',
+      'SAINT SORLIN':'SAINT SORLIN D\'ARVES','VALMEINIER':'VALMEINIER',
+      'EMBRUN':'EMBRUN','ORPIERRE':'ORPIERRE',
+    };
+
+    const toNum = v => {
+      if (v === null || v === undefined || v === '') return 0;
+      if (typeof v === 'number') return v;
+      const s = String(v).replace(/\s/g,'').replace(',','.').replace(/[^0-9.-]/g,'');
+      return parseFloat(s) || 0;
+    };
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const wb = XLSX.read(e.target.result, {type:'binary', cellDates:true});
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
-        const invs = this.load('investissements') || [];
+        // raw:false pour avoir les nombres comme nombres
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
+        const invs = []; // remplace toujours au lieu d'accumuler si confirm
+        const existing = this.load('investissements') || [];
+
         let count = 0;
         rows.forEach(row => {
-          // Try to map common column names
+          const centreRaw = String(row['Centre']||row['CENTRE']||row['centre']||'').trim().toUpperCase();
+          const centreMapped = CENTRE_MAP[centreRaw] || CENTRE_MAP[centreRaw.replace(/\.$/,'')] || centreRaw;
+
+          const get = (...keys) => { for(const k of keys){ if(row[k]!==undefined && row[k]!=='') return row[k]; } return ''; };
+
           const inv = {
-            id: this.uuid(),
-            annee: String(row['Année']||row['ANNEE']||row['annee']||row['Exercice']||''),
-            centre: String(row['Centre']||row['CENTRE']||row['centre']||row['Établissement']||''),
-            categorie: String(row['Catégorie']||row['CATEGORIE']||row['Type budget']||row['CATEGORIE BUDGET']||'GER'),
-            typeInv: String(row['Type']||row['TYPE']||row['Lot']||row['LOT']||row['Type investissement']||''),
-            description: String(row['Description']||row['DESCRIPTION']||row['Libellé']||row['LIBELLE']||row['Objet']||''),
-            coutEstime: parseFloat(String(row['Budget estimé']||row['BUDGET ESTIME']||row['Montant estimé']||row['Cout estimé']||row['MONTANT ESTIME']||'0').replace(/\s/g,'').replace(',','.'))||0,
-            coutReel: parseFloat(String(row['Coût réel']||row['COUT REEL']||row['Montant réel']||row['Dépense réelle']||row['MONTANT REEL']||'0').replace(/\s/g,'').replace(',','.'))||0,
-            statut: String(row['Statut']||row['STATUT']||row['Avancement']||'Pas commencé'),
-            priorite: String(row['Priorité']||row['PRIORITE']||row['Urgence']||''),
-            sanctuarise: String(row['Sanctuarisé']||row['SANCTUARISE']||row['Sanctu']||''),
-            observations: String(row['Observations']||row['OBSERVATIONS']||row['Commentaires']||'')
+            id:           this.uuid(),
+            annee:        String(get('Année','ANNEE','annee','Exercice')||'').trim(),
+            centre:       centreMapped,
+            categorie:    String(get('Catégorie','CATEGORIE','Type budget')||'GER').trim(),
+            typeInv:      String(get('Type investissement','Type','TYPE','Lot')||'').trim(),
+            description:  String(get('Description','DESCRIPTION','Libellé','Objet')||'').trim(),
+            coutEstime:   toNum(get('Budget estimé (€)','Budget estimé','BUDGET ESTIME','Montant estimé','Cout estimé')),
+            coutReel:     toNum(get('Coût réel (€)','Coût réel','COUT REEL','Montant réel','Dépense réelle')),
+            statut:       String(get('Statut','STATUT','Avancement')||'Pas commencé').trim(),
+            priorite:     String(get('Priorité','PRIORITE','Urgence')||'').trim(),
+            sanctuarise:  String(get('Sanctuarisé','SANCTUARISE','Sanctu')||'').trim(),
+            observations: String(get('Observations','OBSERVATIONS','Commentaires')||'').trim(),
+            commentaires: [],
+            dateCreation: new Date().toISOString(),
           };
           if (inv.description || inv.coutEstime > 0) { invs.push(inv); count++; }
         });
-        this.save('investissements', invs);
-        alert(`${count} investissements importés.`);
+
+        const mode = existing.length > 0
+          ? confirm(`${count} projets trouvés dans le fichier.\n\nOK = Remplacer toutes les données existantes\nAnnuler = Ajouter aux données existantes`)
+          : true;
+
+        const final = mode ? invs : [...existing, ...invs];
+        this.save('investissements', final);
+        alert(`✅ ${count} projets importés (total: ${final.length})\nBudget total: ${invs.reduce((s,i)=>s+i.coutEstime,0).toLocaleString('fr-FR')} €`);
         event.target.value = '';
         this.renderInvestissements();
       } catch(err) {
         alert('Erreur lors de la lecture du fichier: ' + err.message);
+        console.error(err);
       }
     };
     reader.readAsBinaryString(file);
@@ -9611,7 +9843,7 @@ Enregistrer quand même ?`)) return;
       document.body.appendChild(toast);
     }
     const labels = {registre:'Registre',pmr:'PMR',observations:'Observations',rh:'RH',
-      sanitaire:'Sanitaire',investissements:'Investissements',syntheses:'Synthèse',ged:'GED',matrix:'Matrice'};
+      sanitaire:'Sanitaire',investissements:'Investissements',syntheses:'Synthèse',ged:'GED',matrix:'Matrice',centre_notes:'Notes & Suivi'};
     const label = labels[key] || key;
     const time = updatedAt ? new Date(updatedAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '';
     toast.textContent = `🔄 ${label} mis à jour${time?' à '+time:''}`;
@@ -10178,19 +10410,15 @@ Enregistrer quand même ?`)) return;
       if (row.groupe === groupe) {
         row.dateRealisation = date;
         row.resultat        = statut;
-        // Calculer prochaine date selon périodicité
-        if (row.periodicite) {
-          const d = new Date(date);
-          const p = row.periodicite.toLowerCase();
-          if (p.includes('annuel')) d.setFullYear(d.getFullYear()+1);
-          else if (p.includes('trimest')) d.setMonth(d.getMonth()+3);
-          else if (p.includes('semest')) d.setMonth(d.getMonth()+6);
-          else if (p.includes('mensuel')) d.setMonth(d.getMonth()+1);
-          else if (p.includes('biennal') || p.includes('2 ans')) d.setFullYear(d.getFullYear()+2);
-          else if (p.includes('triennal') || p.includes('3 ans')) d.setFullYear(d.getFullYear()+3);
-          else if (p.includes('quinquen') || p.includes('5 ans')) d.setFullYear(d.getFullYear()+5);
-          row.prochainControle = d.toISOString().split('T')[0];
+        // Récupérer périodicité — fallback CONTROLES_TEMPLATE si absente sur la row
+        let perio = row.periodicite;
+        if (!perio && row.catId && typeof CONTROLES_TEMPLATE !== 'undefined') {
+          const tpl = CONTROLES_TEMPLATE.find(t => t.catId === row.catId);
+          if (tpl && tpl.periodicite) { perio = tpl.periodicite; row.periodicite = perio; }
         }
+        // Calculer prochaine date via la fonction centrale
+        const nextCalc = calcProchainControle(date, perio);
+        if (nextCalc) row.prochainControle = nextCalc;
         // Historique
         if (!row.historique) row.historique = [];
         row.historique.unshift({date, statut, user: sessionStorage.getItem('ucpa_session') ? JSON.parse(sessionStorage.getItem('ucpa_session')).label : '—', source:'saisie_rapide'});
@@ -16491,6 +16719,962 @@ const DashIA = {
     this._save(tab);
     this._renderHistory(tab);
   }
+};
+
+
+
+// ══════════════════════════════════════════════════════════════
+// MODULE NOTES & SUIVI CENTRES
+// ══════════════════════════════════════════════════════════════
+const CentreNotes = {
+  _centre: 'ALL',   // centre actif ('ALL' = fil global)
+  _filter: '',      // filtre texte
+  _typeFilter: '',  // filtre par type
+  _tagFilter: '',   // filtre par tag
+
+  // Types d'entrées
+  TYPES: {
+    'info':     { icon:'ℹ️',  label:'Information',  color:'#0284c7', bg:'#0284c720' },
+    'visite':   { icon:'🚶',  label:'Visite',        color:'#7c3aed', bg:'#7c3aed20' },
+    'alerte':   { icon:'🚨',  label:'Alerte',        color:'#dc2626', bg:'#dc262620' },
+    'travaux':  { icon:'🔧',  label:'Travaux',       color:'#d97706', bg:'#d9770620' },
+    'reunion':  { icon:'👥',  label:'Réunion',       color:'#059669', bg:'#05966920' },
+    'relance':  { icon:'📞',  label:'Relance',       color:'#e8541a', bg:'#e8541a20' },
+    'positif':  { icon:'✅',  label:'Point positif', color:'#059669', bg:'#05966920' },
+    'incident': { icon:'⚠️',  label:'Incident',      color:'#dc2626', bg:'#dc262620' },
+  },
+
+  // Tags prédéfinis
+  TAGS_PREDEF: ['sécurité','maintenance','budget','personnel','travaux','urgence','suivi','commission','RH','conformité'],
+
+  _load()  { return App.load('centre_notes') || []; },
+  _save(d) { App.save('centre_notes', d); this._updateBadge(); },
+
+  _updateBadge() {
+    const notes = this._load();
+    const today = new Date(); today.setHours(0,0,0,0);
+    const recent = notes.filter(n => {
+      const d = new Date(n.date); d.setHours(0,0,0,0);
+      return (today - d) / 86400000 <= 7;
+    }).length;
+    const badge = document.getElementById('badge-notes');
+    if (badge) { badge.textContent = recent; badge.style.display = recent ? '' : 'none'; }
+  },
+
+  render() {
+    const root = document.getElementById('notes-root');
+    if (!root) return;
+
+    // Construire liste centres depuis REGIONS groupés
+    const notes = this._load();
+
+    // Compter notes par centre
+    const countByCentre = {};
+    notes.forEach(n => { countByCentre[n.centre] = (countByCentre[n.centre]||0)+1; });
+
+    // Sidebar groupée par région
+    const allItem = `
+      <div class="cn-centre-item ${this._centre==='ALL'?'active':''}" onclick="CentreNotes.selectCentre('ALL')"
+        style="border-bottom:1px solid var(--border);margin-bottom:4px;padding-bottom:10px">
+        <span style="flex:1;font-weight:600">🌐 Tous les centres</span>
+        <span class="cn-centre-badge" style="${this._centre==='ALL'?'':'background:var(--bg3);color:var(--muted);'}">${notes.length} notes</span>
+      </div>`;
+
+    // Grouper CENTRES[] (déjà filtrés par région/rôle) par région
+    const session = JSON.parse(sessionStorage.getItem('ucpa_session')||'{}');
+    const isAdmin = session.role === 'admin';
+
+    // Construire les groupes : admin → toutes régions, sinon → 1 seule région (CENTRES = sa région)
+    let regionBlocks = '';
+    if (isAdmin) {
+      // Admin : afficher toutes les régions avec leurs centres
+      regionBlocks = Object.entries(REGIONS).map(([key, region]) => {
+        const centreCount = region.centres.reduce((s,c)=>(s+(countByCentre[c]||0)),0);
+        const centreItems = region.centres.map(c => this._centreItem(c, countByCentre[c]||0)).join('');
+        return this._regionBlock(key, region, centreCount, centreItems);
+      }).join('');
+    } else {
+      // Utilisateur région : regrouper CENTRES[] sous 1 seul bloc région
+      const regionKey  = session.region || '';
+      const regionObj  = REGIONS[regionKey];
+      if (regionObj) {
+        // 1 seul groupe — sa région
+        const centreCount = CENTRES.reduce((s,c)=>(s+(countByCentre[c]||0)),0);
+        const centreItems = CENTRES.map(c => this._centreItem(c, countByCentre[c]||0)).join('');
+        regionBlocks = this._regionBlock(regionKey, regionObj, centreCount, centreItems);
+      } else {
+        // Fallback : liste plate si région inconnue
+        regionBlocks = CENTRES.map(c => this._centreItem(c, countByCentre[c]||0)).join('');
+      }
+    }
+
+    root.innerHTML = `
+      <div class="cn-layout">
+        <!-- Sidebar -->
+        <div class="cn-sidebar">
+          <div class="cn-sidebar-head">📍 Centres</div>
+          ${allItem}
+          ${regionBlocks}
+        </div>
+
+        <!-- Main -->
+        <div class="cn-main">
+          <!-- Barre de tools -->
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+            <h3 style="font-size:14px;font-weight:700;margin:0;flex:1">${this._centre==='ALL'?'Fil global — tous centres':this._centre.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','')}</h3>
+            <input class="cn-search" placeholder="🔍 Rechercher…" value="${this._filter}" oninput="CentreNotes._filter=this.value;CentreNotes._renderFeed()">
+            ${Object.entries(this.TYPES).map(([k,t])=>`<span class="cn-tag ${this._typeFilter===k?'active':''}" onclick="CentreNotes.toggleTypeFilter('${k}')">${t.icon} ${t.label}</span>`).join('')}
+            <button class="btn btn-ghost btn-sm" onclick="CentreNotes.exportNotes()" title="Exporter CSV">📊</button>
+          </div>
+
+          <!-- Composeur -->
+          <div class="cn-compose" id="cn-compose">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <span style="font-size:12px;font-weight:600;color:var(--text)">Nouvelle note</span>
+              ${this._centre==='ALL'?`<select id="cn-new-centre" class="centre-selector" style="width:200px;font-size:11px">
+                ${CENTRES.map(c=>`<option value="${c}">${c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ')}</option>`).join('')}
+              </select>`:''}
+            </div>
+            <textarea id="cn-new-text" rows="3" placeholder="Rédigez votre note, observation ou point de suivi…"></textarea>
+            <div class="cn-compose-bar">
+              <span style="font-size:11px;color:var(--muted)">Type :</span>
+              ${Object.entries(this.TYPES).map(([k,t])=>`<button class="cn-type-btn" id="cn-type-${k}" onclick="CentreNotes.selectType('${k}')">${t.icon} ${t.label}</button>`).join('')}
+              <div style="margin-left:auto;display:flex;gap:6px">
+                <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer">
+                  <input type="checkbox" id="cn-new-pin"> 📌 Épingler
+                </label>
+                <button class="btn btn-primary btn-sm" onclick="CentreNotes.addNote()">Ajouter</button>
+              </div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--muted)">Tags :</span>
+              ${this.TAGS_PREDEF.map(t=>`<span class="cn-tag" id="cntag-${t}" onclick="CentreNotes.toggleNewTag('${t}')">${t}</span>`).join('')}
+              <input id="cn-custom-tag" placeholder="+ tag libre" style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:2px 10px;font-size:11px;color:var(--text);outline:none;width:100px"
+                onkeydown="if(event.key==='Enter')CentreNotes.addCustomTag()">
+            </div>
+          </div>
+
+          <!-- Fil de notes -->
+          <div class="cn-feed" id="cn-feed"></div>
+        </div>
+      </div>`;
+
+    this._selectedType = '';
+    this._newTags = new Set();
+    this._renderFeed();
+    this._updateBadge();
+  },
+
+  _selectedType: '',
+  _newTags: new Set(),
+  _collapsedRegions: new Set(),
+
+  _centreItem(c, nb) {
+    const label    = c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ');
+    const isActive = this._centre === c;
+    return `<div class="cn-centre-item ${isActive?'active':''}"
+        onclick="CentreNotes.selectCentre('${c.replace(/'/g,"\\'")}')"
+        style="padding-left:22px;font-size:11px">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+      ${nb>0?`<span class="cn-centre-badge" style="${isActive?'':'background:var(--bg3);color:var(--muted)'}">  ${nb}</span>`:''}
+    </div>`;
+  },
+
+  _regionBlock(key, region, centreCount, centreItems) {
+    const collapsed = this._collapsedRegions.has(key);
+    return `
+      <div class="cn-region-header" onclick="CentreNotes.toggleRegion('${key}')" style="
+        padding:6px 14px 5px;font-size:10px;font-weight:700;text-transform:uppercase;
+        letter-spacing:1.5px;color:var(--muted);cursor:pointer;
+        display:flex;align-items:center;gap:6px;user-select:none;
+        border-top:1px solid var(--border);margin-top:2px;background:var(--bg3)">
+        <span>${region.icon} ${region.label}</span>
+        ${centreCount>0?`<span style="font-size:9px;background:var(--accent);color:#fff;padding:1px 5px;border-radius:8px;font-family:'DM Mono'">${centreCount}</span>`:''}
+        <span id="cn-region-arrow-${key}" style="margin-left:auto;font-size:10px;transition:transform .15s">${collapsed?'▶':'▼'}</span>
+      </div>
+      <div id="cn-region-${key}" style="display:${collapsed?'none':'block'}">
+        ${centreItems}
+      </div>`;
+  },
+
+  toggleRegion(key) {
+    if (this._collapsedRegions.has(key)) this._collapsedRegions.delete(key);
+    else this._collapsedRegions.add(key);
+    const block = document.getElementById('cn-region-'+key);
+    const arrow = document.getElementById('cn-region-arrow-'+key);
+    if (block) block.style.display = block.style.display==='none'?'block':'none';
+    if (arrow) arrow.style.transform = this._collapsedRegions.has(key)?'rotate(-90deg)':'';
+  },
+
+  selectType(type) {
+    this._selectedType = this._selectedType === type ? '' : type;
+    document.querySelectorAll('.cn-type-btn').forEach(b => b.classList.remove('selected'));
+    if (this._selectedType) {
+      const btn = document.getElementById(`cn-type-${type}`);
+      if (btn) btn.classList.add('selected');
+    }
+  },
+
+  toggleNewTag(tag) {
+    const el = document.getElementById(`cntag-${tag}`);
+    if (this._newTags.has(tag)) { this._newTags.delete(tag); if(el) el.classList.remove('active'); }
+    else                        { this._newTags.add(tag);    if(el) el.classList.add('active'); }
+  },
+
+  addCustomTag() {
+    const inp = document.getElementById('cn-custom-tag');
+    const tag = (inp?.value||'').trim();
+    if (!tag) return;
+    this._newTags.add(tag);
+    inp.value = '';
+    // Afficher visuellement
+    const bar = inp.parentElement;
+    const span = document.createElement('span');
+    span.className = 'cn-tag active';
+    span.textContent = tag;
+    span.onclick = () => { this._newTags.delete(tag); span.remove(); };
+    bar.insertBefore(span, inp);
+  },
+
+  selectCentre(c) {
+    this._centre = c;
+    this.render();
+  },
+
+  toggleTypeFilter(type) {
+    this._typeFilter = this._typeFilter === type ? '' : type;
+    this._renderFeed();
+  },
+
+  addNote() {
+    const txt = (document.getElementById('cn-new-text')?.value||'').trim();
+    if (!txt) { alert('Rédigez une note avant de l\'ajouter.'); return; }
+
+    const centre = this._centre === 'ALL'
+      ? (document.getElementById('cn-new-centre')?.value || '')
+      : this._centre;
+    if (!centre) { alert('Sélectionnez un centre.'); return; }
+
+    const session = JSON.parse(sessionStorage.getItem('ucpa_session')||'{}');
+    const notes = this._load();
+    notes.unshift({
+      id:      App.uuid(),
+      centre,
+      texte:   txt,
+      type:    this._selectedType || 'info',
+      tags:    [...this._newTags],
+      pinned:  document.getElementById('cn-new-pin')?.checked || false,
+      auteur:  session.label || session.role || 'Moi',
+      date:    new Date().toISOString(),
+      modifie: null,
+      historique: [],
+    });
+    this._save(notes);
+
+    // Reset composeur
+    const ta = document.getElementById('cn-new-text');
+    if (ta) ta.value = '';
+    const pin = document.getElementById('cn-new-pin');
+    if (pin) pin.checked = false;
+    this._selectedType = '';
+    this._newTags = new Set();
+    document.querySelectorAll('.cn-type-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('[id^=cntag-]').forEach(b => b.classList.remove('active'));
+
+    this._renderFeed();
+  },
+
+  _renderFeed() {
+    const feed = document.getElementById('cn-feed');
+    if (!feed) return;
+    let notes = this._load();
+
+    // Filtres
+    if (this._centre !== 'ALL') notes = notes.filter(n => n.centre === this._centre);
+    if (this._typeFilter) notes = notes.filter(n => n.type === this._typeFilter);
+    if (this._tagFilter)  notes = notes.filter(n => (n.tags||[]).includes(this._tagFilter));
+    if (this._filter) {
+      const q = this._filter.toLowerCase();
+      notes = notes.filter(n =>
+        (n.texte||'').toLowerCase().includes(q) ||
+        (n.centre||'').toLowerCase().includes(q) ||
+        (n.auteur||'').toLowerCase().includes(q) ||
+        (n.tags||[]).some(t=>t.toLowerCase().includes(q))
+      );
+    }
+
+    // Épinglés en premier
+    notes = [
+      ...notes.filter(n=>n.pinned),
+      ...notes.filter(n=>!n.pinned)
+    ];
+
+    if (!notes.length) {
+      feed.innerHTML = `<div class="cn-empty"><div class="icon">📝</div><div>Aucune note${this._centre!=='ALL'?' pour ce centre':''}</div><div style="font-size:12px">Rédigez la première note ci-dessus</div></div>`;
+      return;
+    }
+
+    const allNotes = this._load(); // pour récupérer idx réel
+    feed.innerHTML = notes.map(note => {
+      const T    = this.TYPES[note.type] || this.TYPES['info'];
+      const idx  = allNotes.findIndex(n => n.id === note.id);
+      const d    = new Date(note.date);
+      const now  = new Date();
+      const diff = (now - d) / 60000; // minutes
+      const age  = diff < 60 ? Math.round(diff)+'min'
+                 : diff < 1440 ? Math.round(diff/60)+'h'
+                 : diff < 10080 ? Math.round(diff/1440)+'j'
+                 : d.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+
+      const centreName = note.centre
+        ? note.centre.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ')
+        : '';
+
+      return `<div class="cn-card ${note.pinned?'pinned':''}">
+        <div class="cn-card-actions">
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px" onclick="CentreNotes.togglePin(${idx})" title="${note.pinned?'Désépingler':'Épingler'}">${note.pinned?'📌':'📍'}</button>
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px" onclick="CentreNotes.editNote(${idx})" title="Modifier">✏️</button>
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--red)" onclick="CentreNotes.deleteNote(${idx})" title="Supprimer">🗑</button>
+        </div>
+
+        <div class="cn-card-head">
+          <div class="cn-type-dot" style="background:${T.bg};color:${T.color}">${T.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:12px;font-weight:700;color:${T.color}">${T.label}</span>
+              ${this._centre==='ALL' ? `<span style="font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1px 8px;color:var(--muted)">📍 ${centreName}</span>` : ''}
+              ${note.pinned ? '<span style="font-size:10px;color:var(--amber)">📌 Épinglé</span>' : ''}
+            </div>
+            <div class="cn-card-meta">
+              <span>${note.auteur||'—'}</span>
+              <span>·</span>
+              <span title="${d.toLocaleString('fr-FR')}">${age}</span>
+              ${note.modifie ? `<span>· modifié ${new Date(note.modifie).toLocaleDateString('fr-FR')}</span>` : ''}
+            </div>
+          </div>
+        </div>
+
+        <div class="cn-card-text">${this._escHtml(note.texte||'')}</div>
+
+        ${(note.tags||[]).length ? `<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+          ${note.tags.map(t=>`<span class="cn-tag" onclick="CentreNotes._tagFilter='${t}';CentreNotes._renderFeed()">${t}</span>`).join('')}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+  },
+
+  _escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  },
+
+  togglePin(idx) {
+    const notes = this._load();
+    if (!notes[idx]) return;
+    notes[idx].pinned = !notes[idx].pinned;
+    this._save(notes);
+    this._renderFeed();
+  },
+
+  deleteNote(idx) {
+    if (!confirm('Supprimer cette note ?')) return;
+    const notes = this._load();
+    notes.splice(idx, 1);
+    this._save(notes);
+    this._renderFeed();
+  },
+
+  editNote(idx) {
+    const notes = this._load();
+    const note  = notes[idx];
+    if (!note) return;
+    const T = this.TYPES[note.type] || this.TYPES['info'];
+    // Ouvrir un petit modal inline
+    const newText = prompt(`${T.icon} Modifier la note :`, note.texte);
+    if (newText === null) return;
+    if (!newText.trim()) { alert('La note ne peut pas être vide.'); return; }
+    if (!note.historique) note.historique = [];
+    note.historique.unshift({ texte: note.texte, date: note.date });
+    note.texte   = newText.trim();
+    note.modifie = new Date().toISOString();
+    this._save(notes);
+    this._renderFeed();
+  },
+
+  exportNotes() {
+    if (!window.XLSX) { alert('SheetJS non disponible'); return; }
+    const notes = this._load();
+    const rows  = notes.map(n => [
+      n.centre||'', (this.TYPES[n.type]||{label:n.type}).label||n.type,
+      n.auteur||'', n.date ? new Date(n.date).toLocaleString('fr-FR') : '',
+      n.pinned?'OUI':'', (n.tags||[]).join(', '), n.texte||''
+    ]);
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Centre','Type','Auteur','Date','Épinglé','Tags','Note'],
+      ...rows
+    ]);
+    ws['!cols'] = [{wch:30},{wch:16},{wch:16},{wch:20},{wch:8},{wch:24},{wch:60}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Notes centres');
+    XLSX.writeFile(wb, `UCPA_Notes_Centres_${App.today()}.xlsx`);
+  },
+};
+
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD NOTES — widget compact
+// ══════════════════════════════════════════════════════════════
+const DashNotes = {
+
+  render() {
+    this._renderFeed();
+    this._renderCentres();
+    this._populateCentreSelect();
+  },
+
+  _populateCentreSelect() {
+    const sel = document.getElementById('dash-note-quick-centre');
+    if (!sel || sel.options.length > 1) return;
+    const allCentres = Object.values(REGIONS).flatMap(r => r.centres);
+    // Grouper CENTRES[] par région visible (admin = tout, région = la sienne)
+    const sess = JSON.parse(sessionStorage.getItem('ucpa_session')||'{}');
+    const isAdm = sess.role === 'admin';
+    if (isAdm) {
+      sel.innerHTML = Object.entries(REGIONS).map(([,r]) =>
+        `<optgroup label="${r.icon} ${r.label}">${r.centres.map(c=>
+          `<option value="${c}">${c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ')}</option>`
+        ).join('')}</optgroup>`
+      ).join('');
+    } else {
+      const rKey = sess.region;
+      const rObj = REGIONS[rKey];
+      sel.innerHTML = rObj
+        ? `<optgroup label="${rObj.icon} ${rObj.label}">${CENTRES.map(c=>
+            `<option value="${c}">${c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ')}</option>`
+          ).join('')}</optgroup>`
+        : CENTRES.map(c=>`<option value="${c}">${c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ')}</option>`).join('');
+    }
+  },
+
+  _renderFeed() {
+    const feed  = document.getElementById('dash-notes-feed');
+    const count = document.getElementById('dash-notes-count');
+    if (!feed) return;
+
+    const notes = (App.load('centre_notes') || [])
+      .sort((a,b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 12);
+
+    if (count) count.textContent = `${notes.length} récentes`;
+
+    if (!notes.length) {
+      feed.innerHTML = `<div style="padding:20px 14px;text-align:center;color:var(--muted);font-size:12px">Aucune note — ajoutez-en une ci-dessous</div>`;
+      return;
+    }
+
+    const TYPES = CentreNotes.TYPES;
+    const now   = new Date();
+
+    feed.innerHTML = notes.map((n, i) => {
+      const T    = TYPES[n.type] || TYPES['info'];
+      const d    = new Date(n.date);
+      const diff = (now - d) / 60000;
+      const age  = diff < 60  ? Math.round(diff)+'min'
+                 : diff < 1440 ? Math.round(diff/60)+'h'
+                 : diff < 10080 ? Math.round(diff/1440)+'j'
+                 : d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      const centre = (n.centre||'').replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ');
+      const allNotes = App.load('centre_notes') || [];
+      const realIdx  = allNotes.findIndex(x => x.id === n.id);
+
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s"
+          onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''"
+          onclick="App.nav('notes')">
+        <div style="width:26px;height:26px;border-radius:7px;background:${T.bg};color:${T.color};display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px">${T.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+            <span style="font-size:11px;font-weight:600;color:${T.color}">${T.label}</span>
+            <span style="font-size:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:0 6px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px" title="${n.centre||''}">${centre}</span>
+            ${n.pinned ? '<span style="font-size:10px">📌</span>' : ''}
+          </div>
+          <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(n.texte||'').replace(/</g,'&lt;')}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${n.auteur||'—'} · ${age}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px;flex-shrink:0;opacity:.5"
+          onclick="event.stopPropagation();CentreNotes.deleteNote(${realIdx});DashNotes.render()">✕</button>
+      </div>`;
+    }).join('');
+  },
+
+  _renderCentres() {
+    const el = document.getElementById('dash-notes-centres');
+    if (!el) return;
+
+    const notes  = App.load('centre_notes') || [];
+    const now    = new Date();
+    const days   = parseInt(document.getElementById('dash-notes-window')?.value || '0');
+    const recent = days > 0
+      ? notes.filter(n => (now - new Date(n.date)) <= days * 86400000)
+      : notes;
+
+    // Compter par centre
+    const byCentre = {};
+    recent.forEach(n => {
+      const c = n.centre || '—';
+      if (!byCentre[c]) byCentre[c] = { total:0, byType:{}, last:null };
+      byCentre[c].total++;
+      byCentre[c].byType[n.type] = (byCentre[c].byType[n.type]||0)+1;
+      if (!byCentre[c].last || new Date(n.date) > new Date(byCentre[c].last)) byCentre[c].last = n.date;
+    });
+
+    const sorted = Object.entries(byCentre).sort((a,b)=>b[1].total-a[1].total).slice(0,8);
+
+    if (!sorted.length) {
+      const label = days > 0 ? `sur les ${days} derniers jours` : 'enregistrée';
+      el.innerHTML = `<div style="padding:20px 14px;text-align:center;color:var(--muted);font-size:12px">Aucune note ${label}</div>`;
+      return;
+    }
+
+    const TYPES = CentreNotes.TYPES;
+    const maxTotal = Math.max(...sorted.map(([,v])=>v.total), 1);
+
+    el.innerHTML = sorted.map(([centre, v]) => {
+      const name = centre.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ');
+      const lastD = v.last ? new Date(v.last) : null;
+      const lastAge = lastD ? Math.round((now - lastD)/86400000) : null;
+      const typeIcons = Object.entries(v.byType)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,4)
+        .map(([t,n]) => `<span title="${(TYPES[t]||{label:t}).label}: ${n}" style="font-size:13px;cursor:default">${(TYPES[t]||{icon:'·'}).icon}</span>`)
+        .join('');
+
+      return `<div style="padding:9px 16px;border-bottom:1px solid var(--border);cursor:pointer"
+          onclick="CentreNotes.selectCentre('${centre.replace(/'/g,"\\'")}');App.nav('notes')"
+          onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <span style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
+          <span style="font-size:11px;font-family:'DM Mono';color:var(--accent);font-weight:700">${v.total}</span>
+          <span style="font-size:10px;color:var(--muted)">${lastAge===0?'auj.':lastAge===1?'hier':lastAge+'j'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden">
+            <div style="height:5px;background:var(--accent);border-radius:3px;width:${Math.round(v.total/maxTotal*100)}%;opacity:.7"></div>
+          </div>
+          <span style="display:flex;gap:3px">${typeIcons}</span>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  quickAdd() {
+    const txt    = (document.getElementById('dash-note-quick-text')?.value||'').trim();
+    const centre = document.getElementById('dash-note-quick-centre')?.value||'';
+    const type   = document.getElementById('dash-note-quick-type')?.value||'info';
+    if (!txt)    { document.getElementById('dash-note-quick-text')?.focus(); return; }
+    if (!centre) { alert('Sélectionnez un centre.'); return; }
+
+    const session = JSON.parse(sessionStorage.getItem('ucpa_session')||'{}');
+    const notes   = App.load('centre_notes') || [];
+    notes.unshift({
+      id:      App.uuid(),
+      centre,
+      texte:   txt,
+      type,
+      tags:    [],
+      pinned:  false,
+      auteur:  session.label || session.role || 'Moi',
+      date:    new Date().toISOString(),
+      modifie: null,
+      historique: [],
+    });
+    App.save('centre_notes', notes);
+    document.getElementById('dash-note-quick-text').value = '';
+    this.render();
+    CentreNotes._updateBadge();
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// MODULE INVESTISSEMENTS — Fiche détail + Dashboard + Bulk
+// ══════════════════════════════════════════════════════════════
+const InvModule = {
+  _bulkMode: false,
+  _selected: new Set(),
+
+  switchTab(tab) {
+    document.getElementById('inv-view-list').style.display = tab==='list' ? '' : 'none';
+    document.getElementById('inv-view-dash').style.display = tab==='dash' ? '' : 'none';
+    document.getElementById('inv-tab-list').classList.toggle('inv-tab-active', tab==='list');
+    document.getElementById('inv-tab-dash').classList.toggle('inv-tab-active', tab==='dash');
+    if (tab==='dash') this.renderDash();
+    else App.renderInvestissements();
+  },
+
+  // ── BULK ──────────────────────────────────────────────────────
+  toggleBulkMode() {
+    this._bulkMode = !this._bulkMode;
+    this._selected.clear();
+    const btn = document.getElementById('inv-bulk-bar-btn');
+    const del = document.getElementById('inv-bulk-del-btn');
+    if (btn) btn.style.background = this._bulkMode ? 'var(--accent)' : '';
+    if (btn) btn.style.color      = this._bulkMode ? '#fff' : '';
+    if (del) del.style.display    = this._bulkMode ? '' : 'none';
+    App.renderInvestissements();
+  },
+  toggleSelect(idx, checked) {
+    if (checked) this._selected.add(idx); else this._selected.delete(idx);
+    const del = document.getElementById('inv-bulk-del-btn');
+    if (del) del.textContent = `🗑 Supprimer (${this._selected.size})`;
+  },
+  toggleAll(checked) {
+    document.querySelectorAll('.inv-cb').forEach(cb => {
+      const idx = parseInt(cb.dataset.idx);
+      cb.checked = checked;
+      if (checked) this._selected.add(idx); else this._selected.delete(idx);
+    });
+    const del = document.getElementById('inv-bulk-del-btn');
+    if (del) del.textContent = `🗑 Supprimer (${this._selected.size})`;
+  },
+  bulkDelete() {
+    if (!this._selected.size) { alert('Sélectionnez des projets à supprimer.'); return; }
+    if (!confirm(`Supprimer ${this._selected.size} projet(s) sélectionné(s) ?\nCette action est irréversible.`)) return;
+    const invs = App.load('investissements') || [];
+    const sorted = [...this._selected].sort((a,b)=>b-a); // desc pour éviter décalage index
+    sorted.forEach(i => invs.splice(i,1));
+    App.save('investissements', invs);
+    this._selected.clear();
+    this._bulkMode = false;
+    const del = document.getElementById('inv-bulk-del-btn');
+    if (del) del.style.display = 'none';
+    const btn = document.getElementById('inv-bulk-bar-btn');
+    if (btn) { btn.style.background=''; btn.style.color=''; }
+    App.renderInvestissements();
+    alert(`✅ ${sorted.length} projet(s) supprimé(s).`);
+  },
+
+  // ── FICHE DÉTAIL ──────────────────────────────────────────────
+  _ficheIdx: null,
+
+  openFiche(idx) {
+    const invs = App.load('investissements') || [];
+    const inv  = invs[idx];
+    if (!inv) return;
+    this._ficheIdx = idx;
+
+    const STATUT_COLOR = {
+      'Terminer':'#059669','En cours':'#d97706','Devis signé':'#0284c7',
+      'Pas commencé':'#6b7280','Projet':'#7c3aed','Report':'#dc2626','Gel':'#374151'
+    };
+    const fmt = v => v>=1000000?(v/1000000).toFixed(2)+'M€':v>=1000?(v/1000).toFixed(0)+'k€':Number(v).toLocaleString('fr-FR')+'€';
+    const ecart = (parseFloat(inv.coutReel)||0) - (parseFloat(inv.coutEstime)||0);
+    const sc = STATUT_COLOR[inv.statut] || '#6b7280';
+
+    // Badge icône par catégorie
+    const BADGE = {'GER':'🔧','MOBILIER':'🪑','IMMOBILIER':'🏗️','TRANSITION ECOLOGIQUE':'🌱','MARQUES DESTINATION':'🎯'};
+    document.getElementById('inv-fiche-badge').textContent  = BADGE[inv.categorie] || '💰';
+    document.getElementById('inv-fiche-title').textContent  = inv.description || '—';
+    document.getElementById('inv-fiche-sub').textContent    = [inv.centre, inv.categorie, inv.typeInv, inv.annee].filter(Boolean).join(' · ');
+
+    document.getElementById('inv-fiche-body').innerHTML = `
+      <!-- Statut + montants -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <span style="background:${sc}22;color:${sc};border:1px solid ${sc}44;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">${inv.statut||'—'}</span>
+        ${(inv.sanctuarise||'').toUpperCase()==='OUI'?'<span style="background:#05966920;color:#059669;border:1px solid #05966940;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🔒 Sanctuarisé</span>':''}
+        ${inv.priorite?`<span style="background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-size:12px">Priorité ${inv.priorite}</span>`:''}
+      </div>
+
+      <!-- Montants -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px">
+        <div style="background:var(--bg3);border-radius:10px;padding:12px 14px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Budget estimé</div>
+          <div style="font-size:20px;font-weight:800;font-family:'DM Mono';color:var(--blue);margin-top:4px">${inv.coutEstime?fmt(parseFloat(inv.coutEstime)):'—'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px 14px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Coût réel</div>
+          <div style="font-size:20px;font-weight:800;font-family:'DM Mono';color:${parseFloat(inv.coutReel||0)>parseFloat(inv.coutEstime||0)?'var(--red)':'var(--green)'};margin-top:4px">${inv.coutReel?fmt(parseFloat(inv.coutReel)):'—'}</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:10px;padding:12px 14px">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Écart</div>
+          <div style="font-size:20px;font-weight:800;font-family:'DM Mono';color:${ecart>0?'var(--red)':ecart<0?'var(--green)':'var(--muted)'};margin-top:4px">${ecart!==0?(ecart>0?'+':'')+fmt(Math.abs(ecart)):'—'}</div>
+        </div>
+      </div>
+
+      <!-- Champs éditables -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Statut</label>
+          <select class="editable-cell" style="width:100%;margin-top:4px" onchange="InvModule.updateField(${idx},'statut',this.value)">
+            ${['Pas commencé','Projet','Devis signé','En cours','Terminer','Report','Gel'].map(s=>`<option ${inv.statut===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Priorité</label>
+          <select class="editable-cell" style="width:100%;margin-top:4px" onchange="InvModule.updateField(${idx},'priorite',this.value)">
+            <option value="">—</option>
+            ${['1','2','3'].map(p=>`<option ${String(inv.priorite)===p?'selected':''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Budget estimé (€)</label>
+          <input type="number" class="editable-cell" style="width:100%;margin-top:4px" value="${inv.coutEstime||''}"
+            onchange="InvModule.updateField(${idx},'coutEstime',parseFloat(this.value)||0)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Coût réel (€)</label>
+          <input type="number" class="editable-cell" style="width:100%;margin-top:4px" value="${inv.coutReel||''}"
+            onchange="InvModule.updateField(${idx},'coutReel',parseFloat(this.value)||0)">
+        </div>
+        <div style="grid-column:span 2">
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Description</label>
+          <input type="text" class="editable-cell" style="width:100%;margin-top:4px" value="${(inv.description||'').replace(/"/g,'&quot;')}"
+            onchange="InvModule.updateField(${idx},'description',this.value)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Lien document</label>
+          <input type="url" class="editable-cell" style="width:100%;margin-top:4px" value="${inv.lien||''}" placeholder="https://…"
+            onchange="InvModule.updateField(${idx},'lien',this.value)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Sanctuarisé</label>
+          <select class="editable-cell" style="width:100%;margin-top:4px" onchange="InvModule.updateField(${idx},'sanctuarise',this.value)">
+            <option value="" ${!inv.sanctuarise?'selected':''}>—</option>
+            <option value="OUI" ${(inv.sanctuarise||'').toUpperCase()==='OUI'?'selected':''}>OUI</option>
+            <option value="NON" ${(inv.sanctuarise||'').toUpperCase()==='NON'?'selected':''}>NON</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Observations existantes -->
+      ${inv.observations?`<div style="margin-bottom:20px"><label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Observations initiales</label><div style="margin-top:6px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted)">${inv.observations}</div></div>`:''}
+
+      <!-- Fil de commentaires -->
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;margin-bottom:12px;color:var(--text)">💬 Suivi & commentaires</div>
+        <div id="inv-fiche-comments" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px">
+          ${this._renderComments(inv.commentaires||[])}
+        </div>
+      </div>
+
+      <!-- Saisie nouveau commentaire -->
+      <div style="display:flex;gap:8px;align-items:flex-end">
+        <textarea id="inv-fiche-new-comment" placeholder="Ajouter un commentaire de suivi…" rows="2"
+          style="flex:1;resize:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text);font-family:'Barlow',sans-serif"></textarea>
+        <button class="btn btn-primary btn-sm" onclick="InvModule.addComment(${idx})">Ajouter</button>
+      </div>
+
+      <!-- Bouton supprimer -->
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+        <button class="btn btn-sm" style="background:#dc262615;color:#dc2626;border:1px solid #dc262640" onclick="App.deleteInvestissement(${idx});InvModule.closeFiche()">🗑 Supprimer ce projet</button>
+      </div>
+    `;
+
+    document.getElementById('inv-fiche-overlay').style.display = 'block';
+    const panel = document.getElementById('inv-fiche-panel');
+    panel.style.display = 'flex';
+    requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; });
+  },
+
+  _renderComments(comments) {
+    if (!comments.length) return '<div style="font-size:12px;color:var(--muted);font-style:italic">Aucun commentaire pour l\'instant</div>';
+    return comments.map(c => `
+      <div style="background:var(--bg3);border-radius:8px;padding:8px 12px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px">
+          ${c.auteur||'Moi'} · ${c.date ? new Date(c.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : ''}
+        </div>
+        <div style="font-size:12px">${c.texte||''}</div>
+      </div>
+    `).reverse().join('');
+  },
+
+  addComment(idx) {
+    const txt = (document.getElementById('inv-fiche-new-comment')?.value || '').trim();
+    if (!txt) return;
+    const invs = App.load('investissements') || [];
+    if (!invs[idx]) return;
+    if (!invs[idx].commentaires) invs[idx].commentaires = [];
+    const session = JSON.parse(sessionStorage.getItem('ucpa_session')||'{}');
+    invs[idx].commentaires.push({ texte: txt, date: new Date().toISOString(), auteur: session.label||session.role||'Moi' });
+    App.save('investissements', invs);
+    document.getElementById('inv-fiche-new-comment').value = '';
+    document.getElementById('inv-fiche-comments').innerHTML = this._renderComments(invs[idx].commentaires);
+    App.renderInvestissements();
+  },
+
+  updateField(idx, field, val) {
+    const invs = App.load('investissements') || [];
+    if (!invs[idx]) return;
+    invs[idx][field] = val;
+    App.save('investissements', invs);
+    // Rafraîchir titre + sous-titre dans le panel
+    const inv = invs[idx];
+    const el = document.getElementById('inv-fiche-title');
+    if (el && field==='description') el.textContent = val;
+    App.renderInvestissements();
+  },
+
+  closeFiche() {
+    const panel = document.getElementById('inv-fiche-panel');
+    if (panel) {
+      panel.style.transform = 'translateX(100%)';
+      setTimeout(() => { panel.style.display = 'none'; }, 280);
+    }
+    const ov = document.getElementById('inv-fiche-overlay');
+    if (ov) ov.style.display = 'none';
+    this._ficheIdx = null;
+  },
+
+  // ── DASHBOARD ─────────────────────────────────────────────────
+  renderDash() {
+    const invs = App.load('investissements') || [];
+    if (!invs.length) {
+      document.getElementById('inv-dash-content').innerHTML = `<div class="empty-state" style="padding:60px"><div class="icon">📊</div><div>Importez un fichier Excel pour voir le dashboard</div></div>`;
+      return;
+    }
+
+    const fmt  = v => v>=1000000?(v/1000000).toFixed(2)+'M€':v>=1000?(v/1000).toFixed(0)+'k€':Number(v).toLocaleString('fr-FR')+'€';
+    const pct  = (a,b) => b>0?Math.round(a/b*100):0;
+
+    // Agrégat par axe
+    const byAnnee  = {}; const byCat   = {}; const byCentre = {};
+    const byStatut = {}; const byType  = {};
+    invs.forEach(inv => {
+      const est = parseFloat(inv.coutEstime)||0;
+      const ree = parseFloat(inv.coutReel)||0;
+      const agg = (obj, key) => {
+        if (!key) return;
+        if (!obj[key]) obj[key]={est:0,ree:0,nb:0};
+        obj[key].est+=est; obj[key].ree+=ree; obj[key].nb++;
+      };
+      agg(byAnnee,  String(inv.annee||''));
+      agg(byCat,    inv.categorie||'Autre');
+      agg(byCentre, (inv.centre||'').replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS '));
+      agg(byStatut, inv.statut||'—');
+      agg(byType,   inv.typeInv||'—');
+    });
+
+    const totalEst  = invs.reduce((s,i)=>s+(parseFloat(i.coutEstime)||0),0);
+    const totalReel = invs.reduce((s,i)=>s+(parseFloat(i.coutReel)||0),0);
+
+    const STATUT_COLOR = {'Terminer':'#059669','En cours':'#d97706','Devis signé':'#0284c7','Pas commencé':'#6b7280','Projet':'#7c3aed','Report':'#dc2626','Gel':'#374151'};
+    const CAT_COLOR    = {'GER':'#e8541a','MOBILIER':'#0284c7','IMMOBILIER':'#7c3aed','TRANSITION ECOLOGIQUE':'#059669','MARQUES DESTINATION':'#d97706'};
+
+    const barChart = (data, colorFn, sortByEst=true) => {
+      const entries = Object.entries(data).filter(([k])=>k&&k!=='—').sort((a,b)=>b[1].est-a[1].est);
+      if (!entries.length) return '<div style="color:var(--muted);font-size:12px">Aucune donnée</div>';
+      const maxEst = Math.max(...entries.map(([,v])=>v.est),1);
+      return entries.map(([label,v])=>`
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:11px;font-weight:600;color:var(--text)">${label}</span>
+            <span style="font-size:11px;font-family:'DM Mono';color:var(--muted)">${fmt(v.est)} · ${v.nb} proj.</span>
+          </div>
+          <div style="height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;position:relative">
+            <div style="position:absolute;inset:0;width:${pct(v.est,maxEst)}%;background:${colorFn(label)};border-radius:5px;opacity:.7"></div>
+            ${v.ree>0?`<div style="position:absolute;inset:0;width:${pct(v.ree,maxEst)}%;background:${colorFn(label)};border-radius:5px"></div>`:''}
+          </div>
+          ${v.ree>0?`<div style="font-size:10px;color:var(--muted);margin-top:2px">Réel: ${fmt(v.ree)} (${pct(v.ree,v.est)}%)</div>`:''}
+        </div>
+      `).join('');
+    };
+
+    const donut = (data, colorFn) => {
+      const entries = Object.entries(data).filter(([k])=>k&&k!=='—').sort((a,b)=>b[1].nb-a[1].nb);
+      const total = entries.reduce((s,[,v])=>s+v.nb,0);
+      let cum = 0;
+      const segments = entries.map(([label,v])=>{
+        const p = v.nb/total;
+        const start = cum; cum+=p;
+        return {label, nb:v.nb, est:v.est, p, start, color:colorFn(label)};
+      });
+      // SVG donut
+      const cx=80,cy=80,r=60,ir=38;
+      const seg = segments.map(s=>{
+        const a1=s.start*2*Math.PI-Math.PI/2, a2=(s.start+s.p)*2*Math.PI-Math.PI/2;
+        const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+        const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
+        const xi1=cx+ir*Math.cos(a1),yi1=cy+ir*Math.sin(a1);
+        const xi2=cx+ir*Math.cos(a2),yi2=cy+ir*Math.sin(a2);
+        const lg = s.p>0.5?1:0;
+        return `<path d="M${xi1},${yi1} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} L${xi2},${yi2} A${ir},${ir} 0 ${lg},0 ${xi1},${yi1}Z" fill="${s.color}" opacity=".85" title="${s.label}"/>`;
+      }).join('');
+      const legend = segments.map(s=>`
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+          <div style="width:10px;height:10px;border-radius:2px;background:${s.color};flex-shrink:0"></div>
+          <span style="font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.label}</span>
+          <span style="font-size:11px;font-family:'DM Mono';color:var(--muted)">${s.nb} (${Math.round(s.p*100)}%)</span>
+        </div>`).join('');
+      return `<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <svg viewBox="0 0 160 160" width="130" height="130">
+          ${seg}
+          <text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="14" font-weight="bold" fill="var(--text)">${total}</text>
+          <text x="${cx}" y="${cy+10}" text-anchor="middle" font-size="9" fill="var(--muted)">projets</text>
+        </svg>
+        <div style="flex:1;min-width:120px">${legend}</div>
+      </div>`;
+    };
+
+    // Tableau synthèse par centre
+    const centreTable = Object.entries(byCentre).sort((a,b)=>b[1].est-a[1].est).map(([label,v])=>`
+      <tr>
+        <td style="font-size:11px;white-space:nowrap">${label}</td>
+        <td style="text-align:right;font-family:'DM Mono';font-size:11px">${fmt(v.est)}</td>
+        <td style="text-align:right;font-family:'DM Mono';font-size:11px;color:${v.ree>0?'var(--green)':'var(--muted)'}">${v.ree>0?fmt(v.ree):'—'}</td>
+        <td style="text-align:right;font-size:11px">${v.nb}</td>
+        <td><div style="height:8px;background:var(--bg3);border-radius:4px;min-width:60px"><div style="height:8px;background:var(--accent);border-radius:4px;width:${pct(v.est,totalEst)}%"></div></div></td>
+      </tr>`).join('');
+
+    document.getElementById('inv-dash-content').innerHTML = `
+      <!-- KPIs globaux -->
+      <div class="kpi-grid" style="margin-bottom:20px">
+        <div class="kpi"><div class="kpi-label">Budget total estimé</div><div class="kpi-val" style="color:var(--blue)">${fmt(totalEst)}</div><div class="kpi-sub">${invs.length} projets</div></div>
+        <div class="kpi"><div class="kpi-label">Coût réel total</div><div class="kpi-val" style="color:var(--green)">${fmt(totalReel)}</div><div class="kpi-sub">${pct(totalReel,totalEst)}% du budget</div></div>
+        <div class="kpi ok"><div class="kpi-label">Terminés</div><div class="kpi-val">${byStatut['Terminer']?.nb||0}</div><div class="kpi-sub">${pct(byStatut['Terminer']?.nb||0,invs.length)}%</div></div>
+        <div class="kpi warn"><div class="kpi-label">En cours</div><div class="kpi-val">${byStatut['En cours']?.nb||0}</div></div>
+        <div class="kpi ko"><div class="kpi-label">Report / Gel</div><div class="kpi-val">${(byStatut['Report']?.nb||0)+(byStatut['Gel']?.nb||0)}</div></div>
+        <div class="kpi"><div class="kpi-label">Projets prio 1</div><div class="kpi-val" style="color:var(--accent)">${invs.filter(i=>String(i.priorite)==='1').length}</div></div>
+      </div>
+
+      <!-- Grille 2 colonnes -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <!-- Budget par catégorie -->
+        <div class="card">
+          <div class="card-hdr"><span>📦</span><h3>Budget par catégorie</h3></div>
+          <div class="card-body">${barChart(byCat, k=>CAT_COLOR[k]||'#888')}</div>
+        </div>
+        <!-- Répartition par statut -->
+        <div class="card">
+          <div class="card-hdr"><span>📊</span><h3>Répartition par statut</h3></div>
+          <div class="card-body">${donut(byStatut, k=>STATUT_COLOR[k]||'#888')}</div>
+        </div>
+        <!-- Budget par année -->
+        <div class="card">
+          <div class="card-hdr"><span>📅</span><h3>Budget par année</h3></div>
+          <div class="card-body">${barChart(byAnnee, ()=>'var(--accent)')}</div>
+        </div>
+        <!-- Répartition par type travaux -->
+        <div class="card">
+          <div class="card-hdr"><span>🔨</span><h3>Type de travaux</h3></div>
+          <div class="card-body">${donut(byType, (_,i)=>['#e8541a','#0284c7','#7c3aed','#059669','#d97706','#374151','#dc2626','#0369a1','#6b7280','#065f46','#92400e','#1e1b4b'][Object.keys(byType).indexOf(_)%12]||'#888')}</div>
+        </div>
+      </div>
+
+      <!-- Tableau par centre -->
+      <div class="card">
+        <div class="card-hdr"><span>🏔</span><h3>Synthèse par centre</h3></div>
+        <div class="card-body" style="overflow:auto">
+          <table>
+            <thead><tr><th>Centre</th><th style="text-align:right">Budget estimé</th><th style="text-align:right">Coût réel</th><th style="text-align:right">Projets</th><th>Part budget</th></tr></thead>
+            <tbody>${centreTable}</tbody>
+            <tfoot><tr style="font-weight:700;border-top:2px solid var(--border)">
+              <td>TOTAL</td>
+              <td style="text-align:right;font-family:'DM Mono'">${fmt(totalEst)}</td>
+              <td style="text-align:right;font-family:'DM Mono'">${fmt(totalReel)}</td>
+              <td style="text-align:right">${invs.length}</td><td></td>
+            </tr></tfoot>
+          </table>
+        </div>
+      </div>
+    `;
+  },
 };
 
 // ══════════════════════════════════════════════════════════════
