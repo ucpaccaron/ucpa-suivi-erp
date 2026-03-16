@@ -86,7 +86,7 @@
     // Mode 100% local — aucun import Firebase → aucune erreur CDN
     window._firebaseReady = false;
     window._sessionId = Math.random().toString(36).slice(2, 10);
-    console.info('[UCPA ERP] Mode local — configurer Firebase pour la synchronisation multi-sites');
+    (typeof console.info==="function"?console.info:console.log)('[UCPA ERP] Mode local — configurer Firebase pour la synchronisation multi-sites');
     window.dispatchEvent(new Event('firebase-ready'));
   } else {
     // Imports dynamiques uniquement si la config est valide
@@ -143,7 +143,7 @@
         const cfgSnap = await getDoc(doc(db, 'ucpa_erp', 'config_anthropic'));
         if (cfgSnap.exists() && cfgSnap.data().value && cfgSnap.data().value.apiKey) {
           window._anthropicKey = cfgSnap.data().value.apiKey;
-          console.info('[UCPA ERP] Clé API Anthropic chargée depuis Firestore');
+          (typeof console.info==="function"?console.info:console.log)('[UCPA ERP] Clé API Anthropic chargée depuis Firestore');
         }
       } catch(e) { /* silencieux — fallback sur ANTHROPIC_API_KEY */ }
       window.dispatchEvent(new Event('firebase-ready'));
@@ -3295,6 +3295,11 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
                 <option value="2">Priorité 2</option>
                 <option value="3">Priorité 3</option>
               </select>
+              <select id="inv-sanctu-filter" class="centre-selector" style="width:155px;${document.getElementById('inv-sanctu-filter')?.value?'border-color:var(--accent);font-weight:700':''}" onchange="App.renderInvestissements()">
+                <option value="">🔒 Tous les projets</option>
+                <option value="OUI">🔒 Sanctuarisés seul.</option>
+                <option value="NON">⬜ Non sanctuarisés</option>
+              </select>
               <input id="inv-search" type="text" placeholder="🔍 Rechercher…" class="centre-selector"
                 style="width:160px" oninput="App.renderInvestissements()">
             </div>
@@ -5092,7 +5097,7 @@ const App = {
 
     all[centre] = rows;
     this.save(key, all);
-    console.info(`[UCPA ERP] Registre initialisé pour ${centre} — ${rows.length} contrôles`);
+    (typeof console.info==="function"?console.info:console.log)(`[UCPA ERP] Registre initialisé pour ${centre} — ${rows.length} contrôles`);
   },
 
   // ── Config clé API Anthropic (stockée dans Firestore) ──────
@@ -5375,6 +5380,7 @@ const App = {
   // ── NAVIGATION ──
   nav(page) {
     this.page = page;
+    this._currentPage = page;
     // Fermer le menu sidebar sur mobile
     this.closeSidebar();
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -5413,11 +5419,19 @@ const App = {
       if (!reg[val] || reg[val].length === 0) this._initCentreRegistre(val);
     }
     this.renderAll();
-    // Si on sélectionne un centre précis → afficher son dashboard dédié
-    if (val !== 'ALL') {
-      this.nav('centre-dashboard');
+    // Mettre à jour le sous-titre de page
+    const centre = val === 'ALL' ? 'Tous les centres' : val.replace('VILLAGE SPORTIF ','');
+    const sub = document.getElementById('page-sub');
+    if (sub) sub.textContent = ' · ' + centre;
+    // Re-render la page courante avec les données du nouveau centre
+    const cur = this._currentPage || this.page || 'dashboard';
+    // Pages qui ont besoin d'un render complet (pas juste renderPage)
+    const fullNavPages = ['centre-dashboard'];
+    if (fullNavPages.includes(cur)) {
+      // Rester sur dashboard global si on revient à ALL
+      this.nav(val === 'ALL' ? 'dashboard' : 'dashboard');
     } else {
-      this.nav('dashboard');
+      this.renderPage(cur);
     }
   },
 
@@ -5461,7 +5475,20 @@ const App = {
   renderAll() {
     this.renderConformanceBadge();
     this.updateBadges();
-    if (this._currentPage === 'dashboard' && typeof DashNotes !== 'undefined') DashNotes.render();
+    if (typeof DashNotes !== 'undefined') {
+      if (this._currentPage === 'dashboard') DashNotes.render();
+    }
+    // Synchroniser le sélecteur centre
+    const sel = document.getElementById('centre-select');
+    if (sel && sel.value !== this.centre) sel.value = this.centre;
+    // Re-render la page courante si elle dépend du centre
+    const cur = this._currentPage || this.page;
+    const centreAwarePages = ['registre','dashboard','calendrier','synthese','matrix',
+      'commission','observations','pmr','duerp','prestataires','equipements','rondes',
+      'sanitaire','rh','contrats','investissements','notes'];
+    if (cur && centreAwarePages.includes(cur)) {
+      this.renderPage(cur);
+    }
   },
 
   // ── HELPERS ──
@@ -5497,6 +5524,51 @@ const App = {
     if (!d) return '—';
     const dt = new Date(d);
     return isNaN(dt) ? d : dt.toLocaleDateString('fr-FR');
+  },
+
+  // ── Ouvre un lien en normalisant les URLs Drive / Google Docs ────────────
+  openLink(url) {
+    if (!url || !url.trim()) return;
+    let u = url.trim();
+
+    // Ajouter https:// si protocole manquant
+    if (!/^https?:\/\//i.test(u) && !u.startsWith('mailto:')) {
+      u = 'https://' + u;
+    }
+
+    // Liens Google Drive — convertir les variantes en lien /view direct
+    // drive.google.com/file/d/ID/edit  → .../view
+    // drive.google.com/file/d/ID/preview → .../view
+    // drive.google.com/uc?id=ID → .../file/d/ID/view
+    // drive.google.com/open?id=ID → .../file/d/ID/view
+    try {
+      const parsed = new URL(u);
+      if (parsed.hostname === 'drive.google.com') {
+        // Cas uc?id= ou open?id=
+        const ucId = parsed.searchParams.get('id');
+        if (ucId) {
+          u = `https://drive.google.com/file/d/${ucId}/view`;
+        } else {
+          // Remplacer /edit, /preview, /copy par /view
+          u = u.replace(/\/(edit|preview|copy)(\?.*)?$/, '/view');
+          // Nettoyer les paramètres superflus (garder juste l'URL propre)
+          const m = u.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+          if (m) u = `https://drive.google.com/file/d/${m[1]}/view`;
+        }
+      }
+      // Google Docs, Sheets, Slides — ouvrir en lecture si /edit
+      if (['docs.google.com','sheets.google.com','slides.google.com'].includes(parsed.hostname)) {
+        u = u.replace(/\/edit(\?.*)?$/, '/view');
+      }
+    } catch(e) { /* URL malformée — on tente quand même */ }
+
+    window.open(u, '_blank', 'noopener,noreferrer');
+  },
+
+  // ── Rendu d'un bouton lien ────────────────────────────────────────────────
+  linkBtn(url, label='📄', cls='btn btn-ghost btn-sm', style='padding:2px 6px;font-size:11px') {
+    if (!url || !url.trim()) return '<span style="color:var(--muted);font-size:10px">—</span>';
+    return `<button class="${cls}" style="${style}" onclick="App.openLink('${url.replace(/'/g,"\'")}')" title="Ouvrir le document">${label}</button>`;
   },
   today() { return new Date().toISOString().split('T')[0]; },
   uuid() { return Math.random().toString(36).substr(2,9); },
@@ -6451,8 +6523,8 @@ const App = {
           <td>
             <div style="display:flex;align-items:center;gap:4px">
               <input class="editable-cell" type="url" value="${r.lien||''}" placeholder="Lien / Drive"
-                onchange="App.updateRegistreField('${c}',${idx},'lien',this.value)" style="width:100px;font-size:10px" title="Lien vers document PDF, Google Drive…">
-              ${r.lien?`<a href="${r.lien}" target="_blank" style="font-size:14px;line-height:1" title="Ouvrir">📄</a>`:''}
+                onchange="App.updateRegistreField('${c}',${idx},'lien',this.value)" onblur="if(this.value&&!/^https?:\/\//i.test(this.value))this.value='https://'+this.value" style="width:100px;font-size:10px" title="Lien vers document PDF, Google Drive…">
+              ${r.lien?`<button onclick="App.openLink('${r.lien}')" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1" title="Ouvrir le document">📄</button>`:''}
             </div>
           </td>
           <td style="white-space:nowrap">${daysLabel}</td>
@@ -6576,7 +6648,7 @@ const App = {
                     <input type="url" class="reg-card-input"
                       value="${r.lien || ''}" placeholder="https://drive.google.com/…"
                       onchange="App.updateRegistreField('${c}',${rowIdx},'lien',this.value)">
-                    ${r.lien ? `<a href="${r.lien}" target="_blank" title="Ouvrir le document">📄</a>` : ''}
+                    ${r.lien ? `<button onclick="App.openLink('${r.lien}')" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0" title="Ouvrir">📄</button>` : ''}
                   </div>
                 </div>
 
@@ -7290,7 +7362,7 @@ const App = {
           const retard = p.statut !== 'Levée' && p.dateEcheance && this.isExpired(p.dateEcheance);
           const prioCls = p.priorite==='Majeure'?'ko':p.priorite==='Importante'?'warn':'na';
           const statCls = p.statut==='Levée'?'ok':p.statut==='Partiellement levée'?'warn':p.statut==='En cours'?'warn':retard?'ko':'na';
-          const lienBtn = p.lien?`<a href="${p.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>';
+          const lienBtn = p.lien?`<button onclick="App.openLink('{p.lien}')"  class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</button>`:'<span style="color:var(--muted);font-size:10px">—</span>';
           return `<tr style="${retard?'background:rgba(232,54,26,0.04)':''}">
             <td style="font-family:'DM Mono';font-size:10px;white-space:nowrap">${this.fmtDate(p.dateVisite)||'—'}</td>
             <td style="font-size:11px;color:var(--muted)">${(p.centre||'—').replace('VILLAGE SPORTIF ','VS ')}</td>
@@ -7328,7 +7400,7 @@ const App = {
         <tbody>
         ${filtered.map((v,i)=>{
           const pres = (data.prescriptions||[]).filter(p=>p.numPV===v.numPV&&v.numPV).length;
-          const lienBtn = v.lien?`<a href="${v.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'—';
+          const lienBtn = v.lien?`<button onclick="App.openLink('{v.lien}')"  class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</button>`:'—';
           return `<tr>
             <td style="font-family:'DM Mono';font-size:10px">${this.fmtDate(v.date)}</td>
             <td style="font-size:11px;color:var(--muted)">${(v.centre||'—').replace('VILLAGE SPORTIF ','VS ')}</td>
@@ -7566,7 +7638,7 @@ const App = {
             <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(f.details||'').replace(/"/g,'&quot;')}">${f.details||f.description||'—'}</td>
             <td style="font-family:'DM Mono';font-size:10px;color:${retard?'var(--red)':'var(--muted)'};white-space:nowrap">${this.fmtDate(f.dateEcheance)||'—'}</td>
             <td><span class="pill pill-${pillCls}" style="font-size:10px">${label}</span></td>
-            <td>${f.lien?`<a href="${f.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir document">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>'}</td>
+            <td>${f.lien?`<button onclick="App.openLink('{f.lien}')"  class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir document">📄</button>`:'<span style="color:var(--muted);font-size:10px">—</span>'}</td>
             <td style="display:flex;gap:4px">
               <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="App.editFinding(${findings.indexOf(f)})">✏️</button>
               <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="App.deleteItem('observations',${findings.indexOf(f)})">🗑</button>
@@ -7777,7 +7849,7 @@ const App = {
           <div class="ecs-history-badges" style="margin-top:6px">
             ${isGamme?'<span class="ecs-anom-badge ok">✓ Gamme validée</span>':''}
             ${score}
-            ${r.lien?`<a href="${r.lien}" target="_blank" class="ecs-anom-badge" style="background:var(--accent)22;color:var(--accent);text-decoration:none">📄 Doc</a>`:''}
+            ${r.lien?`<button onclick="App.openLink('{r.lien}')"  class="ecs-anom-badge" style="background:var(--accent)22;color:var(--accent);text-decoration:none" title="Ouvrir">📄 Doc</button>`:''}
           </div>
           ${r.observations && !isGamme?`<div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.4;border-top:1px solid var(--border);padding-top:4px">${(r.observations||'').slice(0,120)}${(r.observations||'').length>120?'…':''}</div>`:''}
         </div>`;
@@ -7842,7 +7914,7 @@ const App = {
         <td style="font-family:'DM Mono';font-size:11px">${this.fmtDate(item.debut)||'—'}</td>
         <td style="font-family:'DM Mono';font-size:11px;color:${expired?'var(--red)':soon?'var(--amber)':'var(--text)'}">${this.fmtDate(item.fin)||'—'}</td>
         <td><span class="pill pill-${statCls}" style="font-size:10px">${statLbl}</span></td>
-        <td>${item.lien?`<a href="${item.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'<span style="color:var(--muted);font-size:10px">—</span>'}</td>
+        <td>${item.lien?`<button onclick="App.openLink('{item.lien}')"  class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</button>`:'<span style="color:var(--muted);font-size:10px">—</span>'}</td>
         <td style="white-space:nowrap;display:flex;gap:3px">
           ${noDoc?`<button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px;color:var(--muted)" onclick="App._markContratNonDispo(${realIdx})" title="Marquer comme non disponible">📂</button>`:''}
           <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="App.deleteItem('contrats',${realIdx})">🗑</button>
@@ -7870,7 +7942,7 @@ const App = {
     if (header) return '<th>Prestataire</th><th>Objet</th><th>Centre</th><th>Début</th><th>Fin</th><th>Statut</th><th>Doc</th><th></th>';
     const expired = this.isExpired(item.fin);
     const soon = this.isSoonExpiring(item.fin, 90);
-    const lienBtn = item.lien ? `<a href="${item.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px" title="Ouvrir document">📄</a>` : '<span style="color:var(--muted);font-size:10px">—</span>';
+    const lienBtn = item.lien ? `<button onclick="App.openLink('{item.lien}')"  class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px" title="Ouvrir document">📄</button>` : '<span style="color:var(--muted);font-size:10px">—</span>';
     return `<tr>
       <td style="font-weight:600">${item.prestataire||'—'}</td>
       <td>${item.objet||'—'}</td>
@@ -8277,7 +8349,7 @@ const App = {
         const exp  = this.isExpired(h.expiration);
         const soon = this.isSoonExpiring(h.expiration, 30);
         const cls  = exp ? 'ko' : soon ? 'warn' : 'ok';
-        const lien = h.lien ? ` <a href="${h.lien}" target="_blank" style="font-size:9px;color:var(--accent)">📎</a>` : '';
+        const lien = h.lien ? ` <button onclick="App.openLink('{h.lien}')"  style="font-size:9px;color:var(--accent)" title="Ouvrir">📎</button>` : '';
         return `<span class="pill pill-${cls}" style="font-size:10px;margin:1px">${h.type} ${this.fmtDate(h.expiration)}${lien}</span>`;
       }).join('');
 
@@ -9101,6 +9173,7 @@ Enregistrer quand même ?`)) return;
     const catF     = document.getElementById('inv-cat-filter')?.value     || '';
     const statutF  = document.getElementById('inv-statut-filter')?.value  || '';
     const prioF    = document.getElementById('inv-prio-filter')?.value    || '';
+    const sanctuF  = document.getElementById('inv-sanctu-filter')?.value  || '';
     const searchF  = (document.getElementById('inv-search')?.value || '').toLowerCase();
 
     const filtered = invs.filter(inv => {
@@ -9109,6 +9182,7 @@ Enregistrer quand même ?`)) return;
       if (catF     && inv.categorie         !== catF)     return false;
       if (statutF  && inv.statut            !== statutF)  return false;
       if (prioF    && String(inv.priorite)  !== prioF)    return false;
+      if (sanctuF  && (inv.sanctuarise||'').toUpperCase() !== sanctuF) return false;
       if (searchF  && !(
         (inv.description||'').toLowerCase().includes(searchF) ||
         (inv.centre||'').toLowerCase().includes(searchF) ||
@@ -9178,8 +9252,26 @@ Enregistrer quand même ?`)) return;
         </td>
         <td style="font-family:'DM Mono';font-size:12px;text-align:right;white-space:nowrap">${inv.coutEstime?Number(inv.coutEstime).toLocaleString('fr-FR')+'€':'—'}</td>
         <td style="font-family:'DM Mono';font-size:12px;text-align:right;white-space:nowrap;color:${over?'var(--red)':'var(--text)'}">${inv.coutReel?Number(inv.coutReel).toLocaleString('fr-FR')+'€':'—'}</td>
-        <td style="text-align:center">${(inv.sanctuarise||'').toUpperCase()==='OUI'?'<span class="pill pill-ok" style="font-size:10px">OUI</span>':'<span style="color:var(--muted)">—</span>'}</td>
-        <td><span class="pill pill-${sc}" style="font-size:10px">${inv.statut||'—'}</span></td>
+        <td style="text-align:center">
+          <button onclick="InvModule.toggleSanctu(${realIdx})" title="Cliquer pour basculer"
+            style="background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:6px;
+            background:${(inv.sanctuarise||'').toUpperCase()==='OUI'?'rgba(5,150,105,.12)':'transparent'};
+            color:${(inv.sanctuarise||'').toUpperCase()==='OUI'?'var(--green)':'var(--muted)'};
+            font-size:13px;transition:all .15s"
+            title="${(inv.sanctuarise||'').toUpperCase()==='OUI'?'Cliquer pour retirer la sanctuarisation':'Cliquer pour sanctuariser'}">
+            ${(inv.sanctuarise||'').toUpperCase()==='OUI'?'🔒':'⬜'}
+          </button>
+        </td>
+        <td style="min-width:120px">
+          <select class="editable-cell" style="width:100%;font-size:11px;padding:2px 6px;border-radius:6px;
+            background:${sc==='ok'?'rgba(5,150,105,.12)':sc==='warn'?'rgba(217,119,6,.12)':sc==='ko'?'rgba(220,38,38,.12)':'var(--bg3)'};
+            color:${sc==='ok'?'var(--green)':sc==='warn'?'var(--amber)':sc==='ko'?'var(--red)':'var(--muted)'};
+            border:1px solid ${sc==='ok'?'rgba(5,150,105,.3)':sc==='warn'?'rgba(217,119,6,.3)':sc==='ko'?'rgba(220,38,38,.3)':'var(--border)'};
+            font-weight:600;cursor:pointer"
+            onchange="InvModule.updateField(${realIdx},'statut',this.value)">
+            ${['Pas commencé','Projet','Devis signé','En cours','Terminer','Report','Gel'].map(s=>`<option value="${s}" ${inv.statut===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </td>
         <td style="text-align:center;font-size:13px">${INV_PRIO[String(inv.priorite)]||String(inv.priorite)||'—'}</td>
         <td style="white-space:nowrap">
           <button class="btn btn-ghost btn-sm" style="padding:2px 6px" onclick="InvModule.openFiche(${realIdx})" title="Fiche détail">📋</button>
@@ -9859,11 +9951,12 @@ Enregistrer quand même ?`)) return;
             rondes:'rondes', contrats:'contrats', prevention:'prevention',
             permisfeu:'permisfeu', commission:'commission', duerp:'duerp'
           };
-          if (pageMap[k] && pageMap[k] === this.page) {
-            setTimeout(() => this.renderPage(this.page), 100);
+          const curPage = this._currentPage || this.page;
+          if (pageMap[k] && pageMap[k] === curPage) {
+            setTimeout(() => this.renderPage(curPage), 100);
           }
           // Toujours mettre à jour le dashboard
-          if (this.page === 'dashboard') this.renderDashboard();
+          if (curPage === 'dashboard') this.renderDashboard();
         } catch(e) {}
       });
       if (unsub) this._realtimeUnsubs.push(unsub);
@@ -12055,684 +12148,30 @@ const Notice = {
       <p class="notice-p">Dans la liste Investissements, cliquez sur <span class="notice-kbd">☑ Sélection</span>, cochez les projets à supprimer (ou "Tout sélectionner"), puis <span class="notice-kbd">🗑 Supprimer sélection</span>.</p>`,
   },
 
-  render() { this.init(); },
+  renderNav() {
+    const body = document.getElementById('notice-nav-body');
+    if (!body) return;
+    body.innerHTML = this.CHAPTERS.map(ch =>
+      `<div class="notice-nav-item ${ch.id === this._active ? 'active' : ''}"
+        onclick="Notice.openChapter('${ch.id}')">
+        <span style="margin-right:8px">${ch.icon}</span>${ch.label}
+      </div>`
+    ).join('');
+  },
 
-  showTab(tab) {
-    this._tab = tab;
-    ['risques','actions','historique'].forEach(t => {
-      const btn = document.getElementById('duerp-tab-'+t);
-      if (btn) {
-        btn.className = t===tab ? 'gamme-tab active' : 'gamme-tab';
-      }
+  openChapter(id) {
+    this._active = id;
+    const ch = this.CHAPTERS.find(c => c.id === id);
+    if (!ch) return;
+
+    document.getElementById('notice-chapter-icon').textContent  = ch.icon;
+    document.getElementById('notice-chapter-title').textContent = ch.title;
+    document.getElementById('notice-body').innerHTML = this.CONTENT[id] || '<p class="notice-p">Contenu à venir…</p>';
+
+    document.querySelectorAll('.notice-nav-item').forEach(el => {
+      el.classList.toggle('active', el.textContent.includes(ch.label));
     });
-    const el = document.getElementById('duerp-content');
-    if (!el) return;
-    if (tab==='risques')    this.renderRisques(el);
-    else if (tab==='actions') this.renderActions(el);
-    else                    this.renderHistorique(el);
-  },
-
-  getCentreFilt() {
-    const sel = document.getElementById('duerp-filtre-centre');
-    return (sel && sel.value) ? sel.value : (App.centre==='ALL' ? '' : App.centre);
-  },
-
-  // ── KPIs ──
-  renderKPI() {
-    const el = document.getElementById('duerp-kpi-strip');
-    if (!el) return;
-    const d   = this.getData();
-    const cf  = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
-    const ris = (d.risques||[]).filter(cf);
-    const act = (d.actions||[]).filter(cf);
-    const critiques   = ris.filter(r=>this.cotation(r)>=12).length;
-    const importants  = ris.filter(r=>{const s=this.cotation(r);return s>=9&&s<12;}).length;
-    const moderes     = ris.filter(r=>{const s=this.cotation(r);return s>=4&&s<9;}).length;
-    const actOuvertes = act.filter(a=>a.statut!=='Réalisée').length;
-    const actRetard   = act.filter(a=>a.statut!=='Réalisée'&&a.echeance&&App.isExpired(a.echeance)).length;
-    const taux        = ris.length ? Math.round(ris.filter(r=>r.mesures&&r.mesures.length>0).length/ris.length*100) : 0;
-    el.innerHTML = `
-      <div class="kpi ${critiques>0?'danger':'ok'}">
-        <div class="kpi-label">🔴 Critiques</div>
-        <div class="kpi-val">${critiques}</div>
-        <div class="kpi-sub">Priorité immédiate</div>
-      </div>
-      <div class="kpi ${importants>0?'warn':'ok'}">
-        <div class="kpi-label">🟡 Importants</div>
-        <div class="kpi-val">${importants}</div>
-        <div class="kpi-sub">À planifier</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">🔵 Modérés</div>
-        <div class="kpi-val">${moderes}</div>
-        <div class="kpi-sub">Surveillance</div>
-      </div>
-      <div class="kpi ${actRetard>0?'danger':actOuvertes>0?'warn':'ok'}">
-        <div class="kpi-label">Actions ouvertes</div>
-        <div class="kpi-val">${actOuvertes}</div>
-        <div class="kpi-sub">${actRetard>0?'🔥 '+actRetard+' en retard':'à réaliser'}</div>
-      </div>
-      <div class="kpi ${taux>=80?'ok':taux>=50?'warn':'danger'}">
-        <div class="kpi-label">Risques maîtrisés</div>
-        <div class="kpi-val">${taux}%</div>
-        <div class="kpi-sub">${ris.length} risques évalués</div>
-      </div>`;
-  },
-
-  // ── VUE RISQUES ──
-  renderRisques(el) {
-    const d   = this.getData();
-    const cf  = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
-    const ris = (d.risques||[]).filter(cf).sort((a,b)=>this.cotation(b)-this.cotation(a));
-
-    if (!ris.length) {
-      el.innerHTML = `
-        <div class="empty-state" style="padding:48px 24px">
-          <div class="icon">🛡️</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Aucun risque évalué</div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Commencez par ajouter une unité de travail et ses risques associés.</div>
-          <button class="btn btn-primary" onclick="DUERP.openRisqueModal()">+ Ajouter un risque</button>
-        </div>`;
-      return;
-    }
-
-    // Grouper par unité de travail
-    const byUnite = {};
-    ris.forEach(r => {
-      const u = r.unite || 'Sans unité';
-      if (!byUnite[u]) byUnite[u] = [];
-      byUnite[u].push(r);
-    });
-
-    let html = '';
-    Object.entries(byUnite).forEach(([unite, items]) => {
-      const critCount = items.filter(r=>this.cotation(r)>=12).length;
-      html += `
-        <div style="border-bottom:2px solid var(--border)">
-          <div style="padding:10px 16px;background:var(--bg3);display:flex;align-items:center;gap:10px;cursor:pointer"
-            onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
-            <span style="font-weight:800;font-size:13px">🏭 ${unite}</span>
-            <span style="font-size:11px;color:var(--muted)">${items.length} risque(s)</span>
-            ${critCount>0?`<span class="pill pill-ko" style="font-size:10px">⚠ ${critCount} critique(s)</span>`:''}
-            <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:10px;padding:2px 8px"
-              onclick="event.stopPropagation();DUERP.openRisqueModal('${unite.replace(/'/g,'\\x27')}')">+ Risque</button>
-          </div>
-          <div>
-            <table style="font-size:12px;width:100%">
-              <thead><tr style="background:var(--bg3)">
-                <th style="padding:6px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px">Danger / Situation</th>
-                <th style="padding:6px 8px;width:100px">Famille</th>
-                <th style="padding:6px 8px;width:50px;text-align:center">Prob.</th>
-                <th style="padding:6px 8px;width:50px;text-align:center">Grav.</th>
-                <th style="padding:6px 8px;width:70px;text-align:center">Cote</th>
-                <th style="padding:6px 8px;width:80px;text-align:center">Niveau</th>
-                <th style="padding:6px 12px">Mesures existantes</th>
-                <th style="padding:6px 8px;width:50px"></th>
-              </tr></thead>
-              <tbody>
-              ${items.map((r,i)=>{
-                const score = this.cotation(r);
-                const niv   = this.niveau(score);
-                const ridx  = (d.risques||[]).indexOf(r);
-                return `<tr style="border-bottom:1px solid var(--border);${score>=12?'background:rgba(220,38,38,.04)':score>=9?'background:rgba(217,119,6,.04)':''}">
-                  <td style="padding:8px 12px;font-weight:600">${r.danger||'—'}
-                    ${r.situation?`<div style="font-size:10px;color:var(--muted);font-weight:400;margin-top:2px">${r.situation}</div>`:''}
-                    ${r.centre&&!this.getCentreFilt()?`<div style="font-size:10px;color:var(--accent);margin-top:2px">📍 ${(r.centre||'').replace('VILLAGE SPORTIF ','VS ')}</div>`:''}
-                  </td>
-                  <td style="padding:8px;font-size:10px;color:var(--muted)">${r.famille||'—'}</td>
-                  <td style="padding:8px;text-align:center">
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--bg3);font-weight:800;font-size:13px">${r.probabilite||'—'}</span>
-                  </td>
-                  <td style="padding:8px;text-align:center">
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--bg3);font-weight:800;font-size:13px">${r.gravite||'—'}</span>
-                  </td>
-                  <td style="padding:8px;text-align:center">
-                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:${niv.color}22;color:${niv.color};font-weight:900;font-size:16px">${score}</span>
-                  </td>
-                  <td style="padding:8px;text-align:center">
-                    <span class="pill pill-${niv.cls}" style="font-size:10px">${niv.label}</span>
-                  </td>
-                  <td style="padding:8px 12px;font-size:11px;color:var(--muted)">${r.mesures||'—'}
-                    ${r.lien?`<br><a href="${r.lien}" target="_blank" style="font-size:10px;color:var(--accent)">📄 Document</a>`:''}
-                  </td>
-                  <td style="padding:8px;white-space:nowrap">
-                    <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.editRisque(${ridx})" title="Modifier">✏️</button>
-                    <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.addAction(${ridx})" title="Ajouter action">➕</button>
-                    <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.deleteRisque(${ridx})" title="Supprimer">🗑</button>
-                  </td>
-                </tr>`;
-              }).join('')}
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-    });
-
-    // Légende cotation
-    html += `
-      <div style="padding:12px 16px;display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--bg3)">
-        <span style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;align-self:center">Cotation P×G :</span>
-        ${this.NIVEAUX.map(n=>`<span style="font-size:10px;padding:3px 10px;border-radius:12px;background:${n.color}22;color:${n.color};font-weight:700">${n.label} : ${n.min}–${n.max}</span>`).join('')}
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:11px" onclick="DUERP.openRisqueModal()">+ Nouveau risque</button>
-      </div>`;
-
-    el.innerHTML = html;
-  },
-
-  // ── VUE PLAN D'ACTIONS ──
-  renderActions(el) {
-    const d   = this.getData();
-    const cf  = a => !this.getCentreFilt() || a.centre===this.getCentreFilt();
-    const act = (d.actions||[]).filter(cf).sort((a,b)=>{
-      // Tri : en retard > ouvert > réalisé, puis par date
-      const score = x => x.statut==='Réalisée'?2:App.isExpired(x.echeance)?0:1;
-      return score(a)-score(b) || (a.echeance||'').localeCompare(b.echeance||'');
-    });
-
-    let html = `
-      <div style="padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)">
-        <select id="duerp-act-filtre" class="centre-selector" style="width:160px;font-size:11px" onchange="DUERP.renderActions(document.getElementById('duerp-content'))">
-          <option value="">Tous statuts</option>
-          <option>À réaliser</option><option>En cours</option><option>Réalisée</option>
-        </select>
-        <span style="font-size:11px;color:var(--muted)">${act.length} action(s)</span>
-        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="DUERP.openActionModal()">+ Action</button>
-      </div>`;
-
-    const filtreStat = (document.getElementById('duerp-act-filtre')||{}).value||'';
-    const shown = filtreStat ? act.filter(a=>a.statut===filtreStat) : act;
-
-    if (!shown.length) {
-      html += `<div class="empty-state" style="padding:40px"><div class="icon">✅</div><div>Aucune action corrective — cliquez "+ Action" pour commencer</div></div>`;
-      el.innerHTML = html; return;
-    }
-
-    html += `<div style="overflow-x:auto"><table style="font-size:12px;width:100%">
-      <thead><tr style="background:var(--bg3)">
-        <th style="padding:8px 12px;text-align:left">Action corrective</th>
-        <th style="padding:8px;width:120px">Risque associé</th>
-        <th style="padding:8px;width:110px">Responsable</th>
-        <th style="padding:8px;width:90px">Échéance</th>
-        <th style="padding:8px;width:80px">Priorité</th>
-        <th style="padding:8px;width:90px">Statut</th>
-        <th style="padding:8px;width:40px">Doc</th>
-        <th style="padding:8px;width:60px"></th>
-      </tr></thead>
-      <tbody>
-      ${shown.map((a,i)=>{
-        const retard  = a.statut!=='Réalisée' && a.echeance && App.isExpired(a.echeance);
-        const prioCls = a.priorite==='Haute'?'ko':a.priorite==='Moyenne'?'warn':'ok';
-        const statCls = a.statut==='Réalisée'?'ok':a.statut==='En cours'?'warn':retard?'ko':'';
-        const aidx    = (d.actions||[]).indexOf(a);
-        const lienBtn = a.lien?`<a href="${a.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'—';
-        return `<tr style="border-bottom:1px solid var(--border);${retard?'background:rgba(220,38,38,.04)':''}">
-          <td style="padding:8px 12px;font-weight:600">${a.action||'—'}
-            ${a.centre&&!this.getCentreFilt()?`<div style="font-size:10px;color:var(--accent)">📍 ${(a.centre||'').replace('VILLAGE SPORTIF ','VS ')}</div>`:''}
-          </td>
-          <td style="padding:8px;font-size:10px;color:var(--muted)">${a.risqueRef||'—'}</td>
-          <td style="padding:8px;font-size:11px">${a.responsable||'—'}</td>
-          <td style="padding:8px;font-family:'DM Mono',monospace;font-size:11px;color:${retard?'var(--red)':'var(--text)'}">
-            ${App.fmtDate(a.echeance)||'—'}${retard?' 🔥':''}
-          </td>
-          <td style="padding:8px"><span class="pill pill-${prioCls}" style="font-size:10px">${a.priorite||'—'}</span></td>
-          <td style="padding:8px">
-            <select class="editable-cell" style="font-size:10px;padding:2px 4px"
-              onchange="DUERP.updateActionStatut(${aidx},this.value)">
-              <option ${a.statut==='À réaliser'?'selected':''}>À réaliser</option>
-              <option ${a.statut==='En cours'?'selected':''}>En cours</option>
-              <option ${a.statut==='Réalisée'?'selected':''}>Réalisée</option>
-            </select>
-          </td>
-          <td style="padding:8px">${lienBtn}</td>
-          <td style="padding:8px;white-space:nowrap">
-            <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="DUERP.editAction(${aidx})">✏️</button>
-            <button class="btn btn-ghost btn-sm" style="padding:2px 4px;font-size:10px" onclick="DUERP.deleteAction(${aidx})">🗑</button>
-          </td>
-        </tr>`;
-      }).join('')}
-      </tbody>
-    </table></div>`;
-
-    el.innerHTML = html;
-  },
-
-  // ── VUE HISTORIQUE DES VERSIONS ──
-  renderHistorique(el) {
-    const d = this.getData();
-    const versions = (d.versions||[]).slice().reverse();
-    if (!versions.length) {
-      el.innerHTML = `<div class="empty-state" style="padding:40px"><div class="icon">🕐</div>
-        <div>Aucune version archivée</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:8px">Chaque "Valider & Archiver" crée une snapshot horodatée</div>
-        <button class="btn btn-primary" style="margin-top:16px" onclick="DUERP.archiver()">📸 Archiver la version actuelle</button>
-      </div>`;
-      return;
-    }
-    el.innerHTML = `
-      <div style="padding:12px 16px;text-align:right;border-bottom:1px solid var(--border)">
-        <button class="btn btn-primary btn-sm" onclick="DUERP.archiver()">📸 Archiver version actuelle</button>
-      </div>
-      <div style="max-height:500px;overflow-y:auto">
-        ${versions.map((v,i)=>`
-        <div style="display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);align-items:flex-start">
-          <div style="font-size:24px;width:32px;text-align:center;flex-shrink:0">📋</div>
-          <div style="flex:1">
-            <div style="font-weight:700;font-size:13px">Version du ${new Date(v.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px">
-              ${v.nbRisques} risques · ${v.nbActions} actions · ${v.nbCritiques} critiques
-              ${v.auteur?` · par ${v.auteur}`:''}
-            </div>
-            ${v.commentaire?`<div style="font-size:11px;margin-top:4px;font-style:italic">"${v.commentaire}"</div>`:''}
-          </div>
-          <button class="btn btn-ghost btn-sm" style="font-size:10px" onclick="DUERP.exportVersionPDF(${versions.length-1-i})">📄 PDF</button>
-        </div>`).join('')}
-      </div>`;
-  },
-
-  // ── MODALS ──
-  openRisqueModal(preUnite) {
-    const unites = this.UNITES_DEFAULT;
-    const sel = document.getElementById('duerp-filtre-centre');
-    const centreCurrent = (sel&&sel.value) ? sel.value : (App.centre!=='ALL'?App.centre:'');
-    App.openModal('Nouveau Risque', `
-      <div class="form-grid">
-        <div class="form-group"><label>Unité de travail</label>
-          <input type="text" id="m-unite" list="dl-unites" value="${preUnite||''}" placeholder="Ex: Cuisine, Activités outdoor…">
-          <datalist id="dl-unites">${unites.map(u=>`<option value="${u}">`).join('')}</datalist>
-        </div>
-        <div class="form-group"><label>Centre</label>
-          <select id="m-centre">${App.centreOptions(centreCurrent)}</select>
-        </div>
-        <div class="form-group full" style="grid-column:span 2">
-          <label>Danger / Situation dangereuse</label>
-          <input type="text" id="m-danger" placeholder="Ex: Manipulation de produits chimiques de nettoyage">
-        </div>
-        <div class="form-group"><label>Famille de risque</label>
-          <select id="m-famille">${this.FAMILLES.map(f=>`<option>${f}</option>`).join('')}</select>
-        </div>
-        <div class="form-group"><label>Situation de travail</label>
-          <input type="text" id="m-situation" placeholder="Ex: Lors de la désinfection des sanitaires">
-        </div>
-        <div class="form-group"><label>Probabilité (1 à 5)</label>
-          <select id="m-probabilite">
-            <option value="1">1 — Improbable</option>
-            <option value="2">2 — Peu probable</option>
-            <option value="3" selected>3 — Probable</option>
-            <option value="4">4 — Très probable</option>
-            <option value="5">5 — Quasi certain</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Gravité (1 à 5)</label>
-          <select id="m-gravite">
-            <option value="1">1 — Négligeable</option>
-            <option value="2">2 — Mineure</option>
-            <option value="3" selected>3 — Sérieuse</option>
-            <option value="4">4 — Grave</option>
-            <option value="5">5 — Très grave / Mortelle</option>
-          </select>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>Mesures de prévention existantes</label>
-          <textarea id="m-mesures" rows="2" placeholder="EPI, procédure, formation, affichage…"></textarea>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document (fiche produit, procédure…)</label>
-          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
-        </div>
-      </div>`, 'duerp-risque');
-  },
-
-  editRisque(idx) {
-    const d = this.getData();
-    const r = (d.risques||[])[idx];
-    if (!r) return;
-    this._editRisqueIdx = idx;
-    App.openModal('Modifier le Risque', `
-      <div class="form-grid">
-        <div class="form-group"><label>Unité de travail</label>
-          <input type="text" id="m-unite" list="dl-unites2" value="${r.unite||''}">
-          <datalist id="dl-unites2">${this.UNITES_DEFAULT.map(u=>`<option value="${u}">`).join('')}</datalist>
-        </div>
-        <div class="form-group"><label>Centre</label>
-          <select id="m-centre">${App.centreOptions(r.centre||'')}</select>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>Danger / Situation</label>
-          <input type="text" id="m-danger" value="${r.danger||''}">
-        </div>
-        <div class="form-group"><label>Famille</label>
-          <select id="m-famille">${this.FAMILLES.map(f=>`<option${f===r.famille?' selected':''}>${f}</option>`).join('')}</select>
-        </div>
-        <div class="form-group"><label>Situation</label>
-          <input type="text" id="m-situation" value="${r.situation||''}">
-        </div>
-        <div class="form-group"><label>Probabilité</label>
-          <select id="m-probabilite">
-            ${[1,2,3,4,5].map(n=>`<option value="${n}"${n==r.probabilite?' selected':''}>${n}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group"><label>Gravité</label>
-          <select id="m-gravite">
-            ${[1,2,3,4,5].map(n=>`<option value="${n}"${n==r.gravite?' selected':''}>${n}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>Mesures existantes</label>
-          <textarea id="m-mesures" rows="2">${r.mesures||''}</textarea>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document</label>
-          <input type="url" id="m-lien" value="${r.lien||''}">
-        </div>
-      </div>`, 'duerp-risque-edit');
-  },
-
-  openActionModal(risqueRef) {
-    const sel = document.getElementById('duerp-filtre-centre');
-    const centreCurrent = (sel&&sel.value) ? sel.value : (App.centre!=='ALL'?App.centre:'');
-    App.openModal('Nouvelle Action Corrective', `
-      <div class="form-grid">
-        <div class="form-group full" style="grid-column:span 2"><label>Action corrective à mener</label>
-          <textarea id="m-action" rows="2" placeholder="Ex: Fournir des gants résistants aux produits chimiques, Former le personnel…"></textarea>
-        </div>
-        <div class="form-group"><label>Risque associé</label>
-          <input type="text" id="m-risque-ref" value="${risqueRef||''}" placeholder="Réf. du risque ou danger concerné">
-        </div>
-        <div class="form-group"><label>Centre</label>
-          <select id="m-centre">${App.centreOptions(centreCurrent)}</select>
-        </div>
-        <div class="form-group"><label>Responsable</label>
-          <input type="text" id="m-responsable" placeholder="Nom / Fonction">
-        </div>
-        <div class="form-group"><label>Échéance</label>
-          <input type="date" id="m-echeance">
-        </div>
-        <div class="form-group"><label>Priorité</label>
-          <select id="m-priorite">
-            <option value="Haute">🔴 Haute</option>
-            <option value="Moyenne" selected>🟡 Moyenne</option>
-            <option value="Basse">🟢 Basse</option>
-          </select>
-        </div>
-        <div class="form-group"><label>Statut</label>
-          <select id="m-statut">
-            <option>À réaliser</option><option>En cours</option><option>Réalisée</option>
-          </select>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document / preuve</label>
-          <input type="url" id="m-lien" placeholder="https://drive.google.com/...">
-        </div>
-      </div>`, 'duerp-action');
-  },
-
-  editAction(idx) {
-    const d = this.getData();
-    const a = (d.actions||[])[idx];
-    if (!a) return;
-    this._editActionIdx = idx;
-    App.openModal('Modifier l\'Action', `
-      <div class="form-grid">
-        <div class="form-group full" style="grid-column:span 2"><label>Action</label>
-          <textarea id="m-action" rows="2">${a.action||''}</textarea>
-        </div>
-        <div class="form-group"><label>Responsable</label>
-          <input type="text" id="m-responsable" value="${a.responsable||''}">
-        </div>
-        <div class="form-group"><label>Échéance</label>
-          <input type="date" id="m-echeance" value="${a.echeance||''}">
-        </div>
-        <div class="form-group"><label>Priorité</label>
-          <select id="m-priorite">
-            ${['Haute','Moyenne','Basse'].map(p=>`<option${p===a.priorite?' selected':''}>${p}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group"><label>Statut</label>
-          <select id="m-statut">
-            ${['À réaliser','En cours','Réalisée'].map(s=>`<option${s===a.statut?' selected':''}>${s}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group full" style="grid-column:span 2"><label>📎 Lien document</label>
-          <input type="url" id="m-lien" value="${a.lien||''}">
-        </div>
-      </div>`, 'duerp-action-edit');
-  },
-
-  addAction(risqueIdx) {
-    const d = this.getData();
-    const r = (d.risques||[])[risqueIdx];
-    this.openActionModal(r ? (r.danger||'').slice(0,40) : '');
-    this.showTab('actions');
-  },
-
-  // ── Mutations données ──
-  deleteRisque(idx) {
-    if (!confirm('Supprimer ce risque ?')) return;
-    const d = this.getData();
-    d.risques.splice(idx, 1);
-    this.saveData(d);
-    this.renderKPI();
-    this.renderRisques(document.getElementById('duerp-content'));
-  },
-
-  deleteAction(idx) {
-    if (!confirm('Supprimer cette action ?')) return;
-    const d = this.getData();
-    d.actions.splice(idx, 1);
-    this.saveData(d);
-    this.renderKPI();
-    this.renderActions(document.getElementById('duerp-content'));
-  },
-
-  updateActionStatut(idx, val) {
-    const d = this.getData();
-    if (d.actions && d.actions[idx]) {
-      d.actions[idx].statut = val;
-      this.saveData(d);
-      this.renderKPI();
-    }
-  },
-
-  // ── Archivage ──
-  archiver() {
-    const d = this.getData();
-    const cf = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
-    const ris = (d.risques||[]).filter(cf);
-    const act = (d.actions||[]).filter(cf);
-    const comment = prompt('Commentaire de version (optionnel) :','');
-    if (!d.versions) d.versions = [];
-    d.versions.push({
-      date:        new Date().toISOString(),
-      auteur:      (window.Auth && Auth._currentUser) ? Auth._currentUser : 'utilisateur',
-      commentaire: comment||'',
-      nbRisques:   ris.length,
-      nbActions:   act.length,
-      nbCritiques: ris.filter(r=>this.cotation(r)>=12).length,
-      snapshot:    {risques: JSON.parse(JSON.stringify(ris)), actions: JSON.parse(JSON.stringify(act))}
-    });
-    this.saveData(d);
-    this.renderHistorique(document.getElementById('duerp-content'));
-    alert('✅ Version archivée avec succès');
-  },
-
-  // ── Export PDF ──
-  exportPDF() {
-    if (!window.jspdf) { alert('jsPDF non disponible'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc  = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
-    const d    = this.getData();
-    const cf   = r => !this.getCentreFilt() || r.centre===this.getCentreFilt();
-    const ris  = (d.risques||[]).filter(cf).sort((a,b)=>this.cotation(b)-this.cotation(a));
-    const today= new Date().toLocaleDateString('fr-FR');
-    const centreName = this.getCentreFilt() || 'Tous centres';
-
-    // Header
-    doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
-    doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
-    doc.text(`UCPA — DUERP · ${centreName}`, 14, 11);
-    doc.setFontSize(8); doc.text(today, 250, 11);
-
-    // Sous-titre
-    doc.setTextColor(60,60,60); doc.setFontSize(9); doc.setFont('helvetica','italic');
-    doc.text('Document Unique d\'Évaluation des Risques Professionnels', 14, 22);
-
-    // Table
-    let y = 30;
-    const cols = [{label:'Unité de travail',w:40},{label:'Danger',w:65},{label:'Famille',w:30},
-                  {label:'P',w:8},{label:'G',w:8},{label:'P×G',w:10},{label:'Niveau',w:22},{label:'Mesures',w:104}];
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(80,80,80);
-    let x=14; cols.forEach(c=>{doc.text(c.label,x+1,y);x+=c.w;}); y+=5;
-
-    doc.setFont('helvetica','normal');
-    ris.forEach(r => {
-      if (y > 190) { doc.addPage(); y = 20; }
-      const score = this.cotation(r);
-      const niv   = this.niveau(score);
-      const row   = [r.unite,r.danger,r.famille,r.probabilite,r.gravite,score,niv.label,(r.mesures||'').slice(0,80)];
-      // Fond coloré si critique
-      if (score >= 12) { doc.setFillColor(220,38,38,0.08); doc.rect(14,y-3,269,6,'F'); }
-      else if (score >= 9) { doc.setFillColor(217,119,6,0.08); doc.rect(14,y-3,269,6,'F'); }
-      x=14;
-      row.forEach((v,i)=>{
-        const hex = i===6?niv.color:'#333333';
-        const r2=parseInt(hex.slice(1,3),16)||50, g2=parseInt(hex.slice(3,5),16)||50, b2=parseInt(hex.slice(5,7),16)||50;
-        if(i===6) doc.setTextColor(r2,g2,b2); else doc.setTextColor(50,50,50);
-        doc.text(String(v||'—').slice(0,Math.floor(cols[i].w/1.8)), x+1, y);
-        x+=cols[i].w;
-      });
-      y+=7;
-    });
-
-    // Légende
-    y+=5;
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
-    doc.text("Grille de cotation (Probabilité × Gravité) :", 14, y); y+=5;
-    this.NIVEAUX.forEach(n => {
-      const r2=parseInt(n.color.slice(1,3),16), g2=parseInt(n.color.slice(3,5),16), b2=parseInt(n.color.slice(5,7),16);
-      doc.setTextColor(r2,g2,b2); doc.setFont("helvetica",'normal');
-      doc.text(`${n.label} : ${n.min}–${n.max}     `, 14+this.NIVEAUX.indexOf(n)*45, y);
-    });
-
-    doc.save(`UCPA_DUERP_${centreName.replace(/\s/g,'_')}_${today.replace(/\//g,'-')}.pdf`);
-  },
-
-  exportVersionPDF(vIdx) {
-    const d = this.getData();
-    const v = (d.versions||[])[vIdx];
-    if (!v) return;
-    alert(`Export PDF de la version du ${new Date(v.date).toLocaleDateString('fr-FR')} — ${v.nbRisques} risques, ${v.nbCritiques} critiques`);
-    // Même logique que exportPDF mais avec v.snapshot.risques
-  },
-  exportPDF() {
-    if (!window.jspdf) { alert('jsPDF non disponible'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc  = new jsPDF();
-    const d    = this.getData();
-    const cf   = r => !this.getCentreFilt() || r.centre === this.getCentreFilt() || !r.centre;
-    const ris  = (d.risques||[]).filter(cf);
-    const act  = (d.actions||[]).filter(cf);
-    const centre = App.centre === 'ALL' ? 'Tous les centres' : App.centre;
-    const ts   = new Date().toLocaleString('fr-FR');
-    let y = App.pdfHeader(doc, "DUERP — Document Unique d’Évaluation des Risques Professionnels");
-    doc.setFontSize(9); doc.setTextColor(80,80,80);
-    doc.text(`Centre : ${centre} · Généré le : ${ts} · R.4121-1 du Code du travail`, 14, y); y += 10;
-
-    // ── KPIs ─────────────────────────────────────────
-    const critiques  = ris.filter(r => this.cotation(r) >= 12).length;
-    const importants = ris.filter(r => { const c = this.cotation(r); return c >= 9 && c < 12; }).length;
-    const actOuvertes = act.filter(a => a.statut !== 'Réalisée').length;
-    doc.setFillColor(248,250,252); doc.rect(14, y, 182, 14, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(0,0,0);
-    doc.text(`Risques : ${ris.length} total — ${critiques} critiques — ${importants} importants`, 16, y+6);
-    doc.text(`Actions : ${act.length} total — ${actOuvertes} ouvertes`, 16, y+12);
-    y += 18;
-
-    // ── Tableau risques ──────────────────────────────
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(232,84,26);
-    doc.text('RISQUES PAR UNITÉ DE TRAVAIL', 14, y); y += 7;
-
-    const byUnite = {};
-    ris.forEach(r => {
-      const u = r.unite || 'Sans unité';
-      if (!byUnite[u]) byUnite[u] = [];
-      byUnite[u].push(r);
-    });
-
-    const COL = [14, 62, 82, 96, 110, 124, 145];
-    const HDR = ['Danger / Risque','Famille','P','G','Crit.','Niveau','Mesures'];
-    const WIDTHS = [48, 20, 14, 14, 14, 21, 55];
-
-    Object.entries(byUnite).forEach(([unite, items]) => {
-      if (y > 255) { doc.addPage(); y = 20; }
-      doc.setFillColor(30,30,40); doc.rect(14, y-4, 182, 8, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
-      doc.text(unite.substring(0,50), 16, y+0.5); y += 8; doc.setTextColor(0,0,0);
-
-      // Header colonnes
-      doc.setFillColor(240,242,245); doc.rect(14, y-3, 182, 7, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(60,60,60);
-      HDR.forEach((h,i) => doc.text(h, COL[i], y+1));
-      y += 7;
-
-      items.forEach(r => {
-        if (y > 265) { doc.addPage(); y = 20; }
-        const cot = this.cotation(r);
-        const niv = this.niveau(cot);
-        const rgb = niv.label === 'Critique' ? [220,38,38] : niv.label === 'Important' ? [217,119,6] : niv.label === 'Modéré' ? [2,132,199] : [5,150,105];
-        const lines0 = doc.splitTextToSize(r.danger||'—', WIDTHS[0]-1);
-        const linesMes = doc.splitTextToSize((r.mesures||'—').substring(0,80), WIDTHS[6]-1);
-        const nbLines = Math.max(lines0.length, linesMes.length, 1);
-        const rowH = nbLines * 4.5 + 3;
-        if (y + rowH > 270) { doc.addPage(); y = 20; }
-        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(0,0,0);
-        doc.text(lines0, COL[0], y+3);
-        doc.text((r.famille||'—').substring(0,12), COL[1], y+3);
-        doc.text(String(r.probabilite||1), COL[2], y+3);
-        doc.text(String(r.gravite||1), COL[3], y+3);
-        doc.setFont('helvetica','bold');
-        doc.setTextColor(...rgb);
-        doc.text(String(cot), COL[4], y+3);
-        doc.text(niv.label, COL[5], y+3);
-        doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
-        doc.text(linesMes, COL[6], y+3);
-        y += rowH;
-        doc.setDrawColor(220,220,220); doc.line(14, y, 196, y);
-      });
-      y += 4;
-    });
-
-    // ── Plan d'actions ───────────────────────────────
-    if (act.length) {
-      if (y > 230) { doc.addPage(); y = 20; }
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(232,84,26);
-      doc.text("PLAN D'ACTIONS", 14, y); y += 8;
-      const ACT_COL  = [14, 75, 110, 130, 152, 172];
-      const ACT_HDR  = ['Action','Responsable','Échéance','Priorité','Statut','Centre'];
-      const ACT_W    = [61, 35, 20, 22, 20, 22];
-      doc.setFillColor(240,242,245); doc.rect(14, y-3, 182, 7, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(60,60,60);
-      ACT_HDR.forEach((h,i) => doc.text(h, ACT_COL[i], y+1)); y += 7;
-      act.forEach(a => {
-        if (y > 265) { doc.addPage(); y = 20; }
-        const lines = doc.splitTextToSize(a.action||'—', ACT_W[0]-1);
-        const rowH  = lines.length * 4.5 + 3;
-        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(0,0,0);
-        doc.text(lines, ACT_COL[0], y+3);
-        doc.text((a.responsable||'—').substring(0,18), ACT_COL[1], y+3);
-        doc.text(a.echeance ? new Date(a.echeance).toLocaleDateString('fr-FR') : '—', ACT_COL[2], y+3);
-        const pCls = a.priorite==='Majeure' ? [220,38,38] : a.priorite==='Élevée' ? [217,119,6] : [5,150,105];
-        doc.setTextColor(...pCls); doc.text(a.priorite||'—', ACT_COL[3], y+3);
-        const sCls = a.statut==='Réalisée' ? [5,150,105] : a.statut==='En cours' ? [2,132,199] : [0,0,0];
-        doc.setTextColor(...sCls); doc.text(a.statut||'—', ACT_COL[4], y+3);
-        doc.setTextColor(0,0,0); doc.text((a.centre||'—').substring(0,12), ACT_COL[5], y+3);
-        y += rowH; doc.setDrawColor(220,220,220); doc.line(14, y, 196, y);
-      });
-    }
-
-    // Pagination
-    const pages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= pages; p++) {
-      doc.setPage(p);
-      doc.setFontSize(7); doc.setTextColor(150,150,150);
-      doc.text(`UCPA · DUERP · ${centre} · ${ts} · Page ${p}/${pages}`, 14, 292);
-    }
-    const nom = centre.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'').substring(0,20);
-    doc.save(`UCPA_DUERP_${nom}_${App.today()}.pdf`);
-  },
+  }
 };
 
 // ── DUERP save handlers (injectés dans App.saveModal) ──
@@ -13169,7 +12608,7 @@ const Cal = {
           description:'Description',priorite:'Priorité',statut:'Statut',numPV:'N° PV',
           site:'Site',domaine:'Domaine',details:'Détails',traitement:'Traitement',datetime:'Date/heure'};
         if (k === 'lien') {
-          body += `<div style="margin-bottom:6px"><a href="${v}" target="_blank" class="btn btn-secondary btn-sm" style="font-size:11px">📄 Ouvrir document</a></div>`;
+          body += `<div style="margin-bottom:6px"><button onclick="App.openLink('${v}')" class="btn btn-secondary btn-sm" style="font-size:11px">📄 Ouvrir document</button></div>`;
         } else {
           body += `<div style="margin-bottom:6px"><span style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">${labels[k]||k}</span><br><span style="font-size:13px">${v}</span></div>`;
         }
@@ -15409,7 +14848,7 @@ const Equip = {
         </div>
         <div style="grid-column:span 2">
           <label style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">Lien doc / notice</label>
-          <input type="url" class="editable-cell" style="width:100%;margin-top:4px" value="${eq.lien||''}" placeholder="https://…" onchange="Equip.updateField('${id}','lien',this.value)">
+          <input type="url" class="editable-cell" style="width:100%;margin-top:4px" value="${eq.lien||''}" placeholder="https://…" onchange="Equip.updateField('${id}','lien',this.value)" onblur="if(this.value&&!/^https?:\/\//i.test(this.value))this.value='https://'+this.value">
         </div>
       </div>
       <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:12px">
@@ -16120,6 +15559,15 @@ const InvModule = {
     if (del) del.style.display    = this._bulkMode ? '' : 'none';
     App.renderInvestissements();
   },
+  toggleSanctu(idx) {
+    const invs = App.load('investissements') || [];
+    if (!invs[idx]) return;
+    const current = (invs[idx].sanctuarise||'').toUpperCase();
+    invs[idx].sanctuarise = current === 'OUI' ? 'NON' : 'OUI';
+    App.save('investissements', invs);
+    App.renderInvestissements();
+  },
+
   toggleSelect(idx, checked) {
     if (checked) this._selected.add(idx); else this._selected.delete(idx);
     const del = document.getElementById('inv-bulk-del-btn');
@@ -16655,7 +16103,7 @@ window.addEventListener('firebase-ready', function() {
       const lsKey = localStorage.getItem('ucpa_anthropic_key');
       if (lsKey) {
         window._anthropicKey = lsKey;
-        console.info('[UCPA ERP] Clé API Anthropic chargée depuis localStorage');
+        (typeof console.info==="function"?console.info:console.log)('[UCPA ERP] Clé API Anthropic chargée depuis localStorage');
       }
     } catch(e) {}
   }
@@ -18214,7 +17662,7 @@ const DUERP = {
                     <span class="pill pill-${niv.cls}" style="font-size:10px">${niv.label}</span>
                   </td>
                   <td style="padding:8px 12px;font-size:11px;color:var(--muted)">${r.mesures||'—'}
-                    ${r.lien?`<br><a href="${r.lien}" target="_blank" style="font-size:10px;color:var(--accent)">📄 Document</a>`:''}
+                    ${r.lien?`<br><button onclick="App.openLink('{r.lien}')"  style="font-size:10px;color:var(--accent)" title="Ouvrir">📄 Document</button>`:''}
                   </td>
                   <td style="padding:8px;white-space:nowrap">
                     <button class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" onclick="DUERP.editRisque(${ridx})" title="Modifier">✏️</button>
@@ -18285,7 +17733,7 @@ const DUERP = {
         const prioCls = a.priorite==='Haute'?'ko':a.priorite==='Moyenne'?'warn':'ok';
         const statCls = a.statut==='Réalisée'?'ok':a.statut==='En cours'?'warn':retard?'ko':'';
         const aidx    = (d.actions||[]).indexOf(a);
-        const lienBtn = a.lien?`<a href="${a.lien}" target="_blank" class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px">📄</a>`:'—';
+        const lienBtn = a.lien?`<button onclick="App.openLink('{a.lien}')"  class="btn btn-ghost btn-sm" style="padding:2px 5px;font-size:10px" title="Ouvrir">📄</button>`:'—';
         return `<tr style="border-bottom:1px solid var(--border);${retard?'background:rgba(220,38,38,.04)':''}">
           <td style="padding:8px 12px;font-weight:600">${a.action||'—'}
             ${a.centre&&!this.getCentreFilt()?`<div style="font-size:10px;color:var(--accent)">📍 ${(a.centre||'').replace('VILLAGE SPORTIF ','VS ')}</div>`:''}
@@ -18945,9 +18393,9 @@ const GED = {
           </div>
         </div>
         <div class="ged-doc-actions">
-          ${doc.url ? `<a class="ged-drive-link" href="${doc.url}" target="_blank" rel="noopener">
+          ${doc.url ? `<button class="ged-drive-link" onclick="App.openLink('${doc.url}')" style="cursor:pointer;background:none;border:none;padding:0;font:inherit;color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
             <span>🔗</span> Ouvrir Drive
-          </a>` : '<span style="font-size:11px;color:var(--muted)">Pas de lien</span>'}
+          </button>` : '<span style="font-size:11px;color:var(--muted)">Pas de lien</span>'}
           <button class="btn btn-ghost btn-sm" onclick="GED.editDoc('${folderId}',${i})" title="Modifier">✏️</button>
           <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="GED.deleteDoc('${folderId}',${i})" title="Supprimer">🗑️</button>
         </div>
