@@ -2134,6 +2134,7 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
     <div class="nav-item" onclick="App.nav('rondes')" data-page="rondes"><span class="icon">🔄</span> Gammes & Rondes</div>
     <div class="nav-item" onclick="App.nav('sanitaire')" data-page="sanitaire"><span class="icon">💧</span> Carnet Sanitaire</div>
+    <div class="nav-item" onclick="App.nav('piscine')" data-page="piscine"><span class="icon">🏊</span> Suivi Piscine <span class="nav-badge" id="badge-piscine" style="display:none">0</span></div>
     <div class="nav-section">Investissements</div>
     <div class="nav-item" onclick="App.nav('investissements')" data-page="investissements"><span class="icon">💰</span> Suivi des Investissements</div>
     <div class="nav-section">Suivi centres</div>
@@ -3256,6 +3257,11 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
     <!-- CHECKLISTS METIER -->
 
+    <!-- SUIVI PISCINE -->
+    <div id="page-piscine" class="page">
+      <div id="piscine-root"></div>
+    </div>
+
     <!-- INVESTISSEMENTS -->
     <div id="page-investissements" class="page">
 
@@ -3722,94 +3728,49 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
       <!-- PANNEAU : Veille réglementaire — layout identique à veille-reglementaire-v3 -->
       <div id="assistant-panel-veille" style="display:none">
 
-        <!-- Topbar interne -->
-        <div class="vl-topbar">
-          <div class="vl-brand">
-            <div class="vl-brand-icon">🏔</div>
-            <div>
-              <div class="vl-brand-name">Veille Réglementaire</div>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="vl-last-scan" id="vl-last-scan-info">Aucun scan effectué</div>
-            <button class="vl-scan-all-btn" id="vl-scan-all-btn" onclick="VL.scanAll()">
-              <span class="vl-scan-icon" id="vl-scan-icon">⟳</span> Scanner
-            </button>
-          </div>
-        </div>
+        <!-- Barre de navigation thèmes -->
+        <div style="display:flex;gap:10px;align-items:flex-start">
 
-        <!-- Body grid 3 colonnes -->
-        <div id="vl-body-grid">
-
-          <!-- SIDEBAR domaines -->
-          <div id="vl-sidebar">
-            <div style="overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:var(--vl-bd) transparent;">
-              <div class="vl-sidebar-section"><div class="vl-sidebar-label">Domaines réglementaires</div></div>
-              <div class="vl-nav active" id="vl-nav-all" onclick="VL.filterFeed('all',this)"><div class="vl-nav-dot" style="background:var(--vl-txd)"></div><span class="vl-nav-label">Tout</span><span class="vl-nav-count" id="vl-count-all">0</span><div class="vl-nav-status idle" id="vl-status-all"></div></div>
-              <div class="vl-nav" id="vl-nav-fire" onclick="VL.filterFeed('fire',this)"><div class="vl-nav-dot" style="background:var(--vl-fire)"></div><span class="vl-nav-label">🔥 Sécurité ERP</span><span class="vl-nav-count" id="vl-count-fire">0</span><div class="vl-nav-status idle" id="vl-status-fire"></div></div>
-              <div class="vl-nav" id="vl-nav-nrj"  onclick="VL.filterFeed('nrj',this)"><div class="vl-nav-dot" style="background:var(--vl-nrj)"></div><span class="vl-nav-label">⚡ Énergie / CEE</span><span class="vl-nav-count" id="vl-count-nrj">0</span><div class="vl-nav-status idle" id="vl-status-nrj"></div></div>
-              <div class="vl-nav" id="vl-nav-acc"  onclick="VL.filterFeed('acc',this)"><div class="vl-nav-dot" style="background:var(--vl-acc)"></div><span class="vl-nav-label">♿ Accessibilité</span><span class="vl-nav-count" id="vl-count-acc">0</span><div class="vl-nav-status idle" id="vl-status-acc"></div></div>
-              <div class="vl-nav" id="vl-nav-eau"  onclick="VL.filterFeed('eau',this)"><div class="vl-nav-dot" style="background:var(--vl-eau)"></div><span class="vl-nav-label">💧 Légionelle / Eau</span><span class="vl-nav-count" id="vl-count-eau">0</span><div class="vl-nav-status idle" id="vl-status-eau"></div></div>
-              <div class="vl-divider" style="margin:4px 10px"></div>
-              <div class="vl-sidebar-label" style="padding:0 10px 3px;font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--vl-txd);">Bâtiment / Risques</div>
-              <div class="vl-nav" id="vl-nav-ami"  onclick="VL.filterFeed('ami',this)"><div class="vl-nav-dot" style="background:var(--vl-ami)"></div><span class="vl-nav-label">☣ Amiante</span><span class="vl-nav-count" id="vl-count-ami">0</span><div class="vl-nav-status idle" id="vl-status-ami"></div></div>
-              <div class="vl-nav" id="vl-nav-plb"  onclick="VL.filterFeed('plb',this)"><div class="vl-nav-dot" style="background:var(--vl-plb)"></div><span class="vl-nav-label">🪣 Plomb / CREP</span><span class="vl-nav-count" id="vl-count-plb">0</span><div class="vl-nav-status idle" id="vl-status-plb"></div></div>
-              <div class="vl-nav" id="vl-nav-elv"  onclick="VL.filterFeed('elv',this)"><div class="vl-nav-dot" style="background:var(--vl-elv)"></div><span class="vl-nav-label">🔼 Ascenseurs / Équip.</span><span class="vl-nav-count" id="vl-count-elv">0</span><div class="vl-nav-status idle" id="vl-status-elv"></div></div>
-              <div class="vl-nav" id="vl-nav-bru"  onclick="VL.filterFeed('bru',this)"><div class="vl-nav-dot" style="background:var(--vl-bru)"></div><span class="vl-nav-label">🔊 Bruit / Acoustique</span><span class="vl-nav-count" id="vl-count-bru">0</span><div class="vl-nav-status idle" id="vl-status-bru"></div></div>
-              <div class="vl-nav" id="vl-nav-chf"  onclick="VL.filterFeed('chf',this)"><div class="vl-nav-dot" style="background:var(--vl-chf)"></div><span class="vl-nav-label">🔥 Chaufferie / GAZ</span><span class="vl-nav-count" id="vl-count-chf">0</span><div class="vl-nav-status idle" id="vl-status-chf"></div></div>
-              <div class="vl-nav" id="vl-nav-qai"  onclick="VL.filterFeed('qai',this)"><div class="vl-nav-dot" style="background:var(--vl-qai)"></div><span class="vl-nav-label">🌬 Ventilation / QAI</span><span class="vl-nav-count" id="vl-count-qai">0</span><div class="vl-nav-status idle" id="vl-status-qai"></div></div>
-              <div class="vl-nav" id="vl-nav-elec" onclick="VL.filterFeed('elec',this)"><div class="vl-nav-dot" style="background:var(--vl-elec)"></div><span class="vl-nav-label">⚡ Électricité / NFC</span><span class="vl-nav-count" id="vl-count-elec">0</span><div class="vl-nav-status idle" id="vl-status-elec"></div></div>
-              <div class="vl-nav" id="vl-nav-cui"  onclick="VL.filterFeed('cui',this)"><div class="vl-nav-dot" style="background:var(--vl-cui)"></div><span class="vl-nav-label">🍳 Cuisine Professionnelle</span><span class="vl-nav-count" id="vl-count-cui">0</span><div class="vl-nav-status idle" id="vl-status-cui"></div></div>
-              <div class="vl-nav" id="vl-nav-pis"  onclick="VL.filterFeed('pis',this)"><div class="vl-nav-dot" style="background:var(--vl-pis)"></div><span class="vl-nav-label">🏊 Piscine / Baignade</span><span class="vl-nav-count" id="vl-count-pis">0</span><div class="vl-nav-status idle" id="vl-status-pis"></div></div>
-              <div class="vl-nav" id="vl-nav-rad"  onclick="VL.filterFeed('rad',this)"><div class="vl-nav-dot" style="background:var(--vl-rad)"></div><span class="vl-nav-label">☢ Radon</span><span class="vl-nav-count" id="vl-count-rad">0</span><div class="vl-nav-status idle" id="vl-status-rad"></div></div>
-              <div class="vl-nav" id="vl-nav-sec"  onclick="VL.filterFeed('sec',this)"><div class="vl-nav-dot" style="background:var(--vl-sec)"></div><span class="vl-nav-label">🧯 Moyens de secours</span><span class="vl-nav-count" id="vl-count-sec">0</span><div class="vl-nav-status idle" id="vl-status-sec"></div></div>
-              <div class="vl-nav" id="vl-nav-due"  onclick="VL.filterFeed('due',this)"><div class="vl-nav-dot" style="background:var(--vl-due)"></div><span class="vl-nav-label">📋 DUERP / Prévention</span><span class="vl-nav-count" id="vl-count-due">0</span><div class="vl-nav-status idle" id="vl-status-due"></div></div>
-              <div class="vl-nav" id="vl-nav-cvc"  onclick="VL.filterFeed('cvc',this)"><div class="vl-nav-dot" style="background:var(--vl-cvc)"></div><span class="vl-nav-label">🌡 CVC / Chauffage-Ventilation</span><span class="vl-nav-count" id="vl-count-cvc">0</span><div class="vl-nav-status idle" id="vl-status-cvc"></div></div>
-              <div class="vl-nav" id="vl-nav-san"  onclick="VL.filterFeed('san',this)"><div class="vl-nav-dot" style="background:var(--vl-san)"></div><span class="vl-nav-label">🚿 Sanitaires / ECS</span><span class="vl-nav-count" id="vl-count-san">0</span><div class="vl-nav-status idle" id="vl-status-san"></div></div>
-              <div class="vl-nav" id="vl-nav-cui2" onclick="VL.filterFeed('hyg',this)"><div class="vl-nav-dot" style="background:var(--vl-hyg)"></div><span class="vl-nav-label">🦠 Hygiène / HACCP</span><span class="vl-nav-count" id="vl-count-hyg">0</span><div class="vl-nav-status idle" id="vl-status-hyg"></div></div>
-              <div class="vl-nav" id="vl-nav-spo"  onclick="VL.filterFeed('spo',this)"><div class="vl-nav-dot" style="background:var(--vl-spo)"></div><span class="vl-nav-label">🏋 Équipements Sportifs</span><span class="vl-nav-count" id="vl-count-spo">0</span><div class="vl-nav-status idle" id="vl-status-spo"></div></div>
-            </div>
-            <div class="vl-divider"></div>
-            <div class="vl-sidebar-section"><div class="vl-sidebar-label">Assistant IA</div></div>
-            <button class="vl-chat-btn active" onclick="VL.openGlobalChat()">🤖 Chat réglementaire</button>
-            <div style="padding:8px 12px;border-top:1px solid var(--vl-bd);margin-top:auto">
-              <div style="font-family:var(--mono);font-size:8px;color:var(--vl-txd);line-height:1.7">Sources : Legifrance · JO · DHUP<br>ADEME · INRS · ANSES</div>
+          <!-- Sidebar thèmes -->
+          <div style="width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+            <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;font-weight:700">Thèmes</div>
+            <div style="overflow-y:auto;max-height:calc(100vh - 230px);padding:6px">
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:6px 8px 3px;font-family:'DM Mono',monospace">Sécurité</div>
+              <div class="vl-nav active" id="vl-nav-all" onclick="VL.showRegl('all',this)">📋 Toutes les thématiques</div>
+              <div class="vl-nav" id="vl-nav-fire" onclick="VL.showRegl('fire',this)">🔥 Sécurité incendie ERP</div>
+              <div class="vl-nav" id="vl-nav-sec"  onclick="VL.showRegl('sec',this)">🧯 Moyens de secours</div>
+              <div class="vl-nav" id="vl-nav-elec" onclick="VL.showRegl('elec',this)">⚡ Électricité</div>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 8px 3px;font-family:'DM Mono',monospace">Eau &amp; Santé</div>
+              <div class="vl-nav" id="vl-nav-eau"  onclick="VL.showRegl('eau',this)">💧 Légionelle / ECS</div>
+              <div class="vl-nav" id="vl-nav-pis"  onclick="VL.showRegl('pis',this)">🏊 Piscine / Baignade</div>
+              <div class="vl-nav" id="vl-nav-san"  onclick="VL.showRegl('san',this)">🚿 Sanitaires</div>
+              <div class="vl-nav" id="vl-nav-hyg"  onclick="VL.showRegl('hyg',this)">🦠 Hygiène / HACCP</div>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 8px 3px;font-family:'DM Mono',monospace">Bâtiment</div>
+              <div class="vl-nav" id="vl-nav-elv"  onclick="VL.showRegl('elv',this)">🔼 Ascenseurs / Équipements</div>
+              <div class="vl-nav" id="vl-nav-chf"  onclick="VL.showRegl('chf',this)">🔥 Chaufferie / Gaz</div>
+              <div class="vl-nav" id="vl-nav-cvc"  onclick="VL.showRegl('cvc',this)">🌡 CVC / Climatisation</div>
+              <div class="vl-nav" id="vl-nav-qai"  onclick="VL.showRegl('qai',this)">🌬 Ventilation / QAI</div>
+              <div class="vl-nav" id="vl-nav-ami"  onclick="VL.showRegl('ami',this)">☣ Amiante</div>
+              <div class="vl-nav" id="vl-nav-plb"  onclick="VL.showRegl('plb',this)">🪣 Plomb / CREP</div>
+              <div class="vl-nav" id="vl-nav-rad"  onclick="VL.showRegl('rad',this)">☢ Radon</div>
+              <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:10px 8px 3px;font-family:'DM Mono',monospace">Exploitation</div>
+              <div class="vl-nav" id="vl-nav-cui"  onclick="VL.showRegl('cui',this)">🍳 Cuisine / HACCP</div>
+              <div class="vl-nav" id="vl-nav-spo"  onclick="VL.showRegl('spo',this)">🏋 Équipements sportifs</div>
+              <div class="vl-nav" id="vl-nav-acc"  onclick="VL.showRegl('acc',this)">♿ Accessibilité PMR</div>
+              <div class="vl-nav" id="vl-nav-due"  onclick="VL.showRegl('due',this)">📋 DUERP / Prévention</div>
+              <div class="vl-nav" id="vl-nav-nrj"  onclick="VL.showRegl('nrj',this)">⚡ Énergie / Décret tertiaire</div>
+              <div class="vl-nav" id="vl-nav-bru"  onclick="VL.showRegl('bru',this)">🔊 Bruit / Acoustique</div>
             </div>
           </div>
 
-          <!-- MAIN FEED -->
-          <div id="vl-main-feed" style="display:flex;flex-direction:column;overflow:hidden;background:var(--vl-bg)">
-            <div class="vl-feed-header">
-              <div class="vl-feed-title" id="vl-feed-title" style="--vl-current-color:var(--vl-fire)">Toutes les mises à jour</div>
-              <div class="vl-filters">
-                <button class="vl-chip active" onclick="VL.setUrgencyFilter('all',this)">Tout</button>
-                <button class="vl-chip" onclick="VL.setUrgencyFilter('high',this)">🔴 Urgent</button>
-                <button class="vl-chip" onclick="VL.setUrgencyFilter('med',this)">🟠 Important</button>
-                <button class="vl-chip" onclick="VL.setUrgencyFilter('info',this)">🔵 Info</button>
-              </div>
-            </div>
-            <div class="vl-feed-content" id="vl-feed-content">
-              <div class="vl-empty-state">
-                <div class="vl-empty-icon">📡</div>
-                <div class="vl-empty-title">Lance un scan pour récupérer<br>les dernières actualités réglementaires.<br><br>L'IA va chercher les nouveautés sur<br>Legifrance · JO · DHUP · ADEME · ANSES…</div>
-                <button class="vl-scan-btn" onclick="VL.scanAll()">⟳ Lancer le premier scan</button>
-              </div>
-            </div>
+          <!-- Zone contenu -->
+          <div style="flex:1;min-width:0" id="vl-regl-content">
+            <!-- Rempli par VL.showRegl() -->
           </div>
-
-          <!-- DETAIL PANEL -->
-          <div id="vl-detail-panel">
-            <div class="vl-empty-detail" id="vl-empty-detail">
-              <div class="vl-empty-detail-icon">←</div>
-              <div class="vl-empty-detail-text">Clique sur une mise à jour<br>pour voir le détail et poser<br>des questions à l'IA</div>
-            </div>
-            <div id="vl-detail-content" style="display:none;flex-direction:column;height:100%"></div>
-          </div>
-
         </div>
       </div>
 
-      <!-- PANNEAU : Ressources -->
+            <!-- PANNEAU : Ressources -->
       <div id="assistant-panel-ressources" style="display:none">
         <div class="card">
           <div class="card-hdr" style="padding:12px 16px">
@@ -5232,6 +5193,7 @@ const App = {
     if (!this.load('investissements')) this.save('investissements', []);
     if (!this.load('centre_notes'))  this.save('centre_notes', []);
     if (!this.load('equipements'))   this.save('equipements', []);
+    if (!this.load('piscine'))       this.save('piscine', {releves:[], config:{}});
     if (!this.load('syntheses')) this.save('syntheses', {});
     if (!this.load('ged')) this.save('ged', {});
 
@@ -5558,6 +5520,7 @@ const App = {
         setTimeout(() => { this.showGamme(this._currentGamme || 'Quotidien'); }, 0);
         break;
       case 'sanitaire': this.renderSanitaire(); break;
+      case 'piscine':   Piscine.render(); break;
       case 'rh': this.renderRH(); break;
       case 'contrats': this.renderContrats(); break;
       case 'investissements': this.renderInvestissements(); break;
@@ -5720,7 +5683,8 @@ const App = {
 
   updateBadges() {
     CentreNotes._updateBadge();
-    if (typeof Equip !== 'undefined') Equip._updateBadge();
+    if (typeof Equip   !== 'undefined') Equip._updateBadge();
+    if (typeof Piscine !== 'undefined') Piscine._updateBadge();
     // Registre: expired
     const rows = this.centre==='ALL'
       ? CENTRES.flatMap(c => this.getRegistreForCentre(c))
@@ -6619,9 +6583,9 @@ const App = {
           <td style="font-size:12px;font-weight:500">${r.libelle}</td>
           <td>${r.periodicite?`<span class="pill pill-na" style="font-size:10px">${r.periodicite}</span>`:'—'}</td>
           <td><input class="editable-cell" type="date" value="${r.dateRealisation||''}"
-            onchange="App.updateRegistreField('${c}',${idx},'dateRealisation',this.value)" style="width:126px"></td>
+            onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${idx},'dateRealisation',this.value)" style="width:126px"></td>
           <td>
-            <select class="editable-cell" style="width:120px" onchange="App.updateRegistreField('${c}',${idx},'resultat',this.value)">
+            <select class="editable-cell" style="width:120px" onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${idx},'resultat',this.value)">
               <option value="">—</option>
               <option value="Favorable" ${r.resultat==='Favorable'?'selected':''}>✓ Favorable</option>
               <option value="Réserves"  ${r.resultat==='Réserves'?'selected':''}>~ Réserves</option>
@@ -6630,17 +6594,17 @@ const App = {
             </select>
           </td>
           <td><input class="editable-cell" type="text" value="${r.organisme||''}" placeholder="Organisme"
-            onchange="App.updateRegistreField('${c}',${idx},'organisme',this.value)" style="width:110px"></td>
+            onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${idx},'organisme',this.value)" style="width:110px"></td>
           <td style="color:${expired?'var(--red)':soon?'var(--amber)':'var(--text)'}">
             <input class="editable-cell" type="date" value="${r.prochainControle||''}"
-            onchange="App.updateRegistreField('${c}',${idx},'prochainControle',this.value)" style="width:126px;color:inherit"></td>
+            onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${idx},'prochainControle',this.value)" style="width:126px;color:inherit"></td>
           <td style="min-width:160px"><textarea class="editable-cell" rows="2" placeholder="Observations"
-            onchange="App.updateRegistreField('${c}',${idx},'observations',this.value)"
+            onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${idx},'observations',this.value)"
             style="width:100%;min-width:160px;resize:vertical;font-size:12px;font-family:'Barlow',sans-serif;padding:2px 4px">${r.observations||''}</textarea></td>
           <td>
             <div style="display:flex;align-items:center;gap:4px">
               <input class="editable-cell" type="url" value="${r.lien||''}" placeholder="Lien / Drive"
-                onchange="App.updateRegistreField('${c}',${idx},'lien',this.value)" onblur="if(this.value&&!/^https?:\/\//i.test(this.value))this.value='https://'+this.value" style="width:100px;font-size:10px" title="Lien vers document PDF, Google Drive…">
+                onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${idx},'lien',this.value)" onblur="if(this.value&&!/^https?:\/\//i.test(this.value))this.value='https://'+this.value" style="width:100px;font-size:10px" title="Lien vers document PDF, Google Drive…">
               ${r.lien?`<button onclick="App.openLink('${r.lien}')" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0;line-height:1" title="Ouvrir le document">📄</button>`:''}
             </div>
           </td>
@@ -6721,20 +6685,20 @@ const App = {
                   <span class="reg-card-flabel">Dernier contrôle</span>
                   <input type="date" class="reg-card-input"
                     value="${r.dateRealisation || ''}"
-                    onchange="App.updateRegistreField('${c}',${rowIdx},'dateRealisation',this.value)">
+                    onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${rowIdx},'dateRealisation',this.value)">
                 </div>
 
                 <div class="reg-card-field">
                   <span class="reg-card-flabel">Prochain contrôle</span>
                   <input type="date" class="reg-card-input${inputErr}"
                     value="${r.prochainControle || ''}"
-                    onchange="App.updateRegistreField('${c}',${rowIdx},'prochainControle',this.value)">
+                    onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${rowIdx},'prochainControle',this.value)">
                 </div>
 
                 <div class="reg-card-field">
                   <span class="reg-card-flabel">Résultat</span>
                   <select class="reg-card-select"
-                    onchange="App.updateRegistreField('${c}',${rowIdx},'resultat',this.value)">
+                    onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${rowIdx},'resultat',this.value)">
                     <option value="" ${!r.resultat ? 'selected' : ''}>—</option>
                     <option value="Favorable"    ${r.resultat === 'Favorable'    ? 'selected' : ''}>✓ Favorable</option>
                     <option value="Réserves"     ${r.resultat === 'Réserves'     ? 'selected' : ''}>~ Réserves</option>
@@ -6747,7 +6711,7 @@ const App = {
                   <span class="reg-card-flabel">Organisme</span>
                   <input type="text" class="reg-card-input"
                     value="${r.organisme || ''}" placeholder="Vérificateur"
-                    onchange="App.updateRegistreField('${c}',${rowIdx},'organisme',this.value)">
+                    onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${rowIdx},'organisme',this.value)">
                 </div>
 
                 <div class="reg-card-divider"></div>
@@ -6756,7 +6720,7 @@ const App = {
                   <span class="reg-card-flabel">Observations</span>
                   <input type="text" class="reg-card-input"
                     value="${r.observations || ''}" placeholder="Saisir une observation…"
-                    onchange="App.updateRegistreField('${c}',${rowIdx},'observations',this.value)">
+                    onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${rowIdx},'observations',this.value)">
                 </div>
 
                 <div class="reg-card-field full">
@@ -6764,7 +6728,7 @@ const App = {
                   <div class="reg-card-link">
                     <input type="url" class="reg-card-input"
                       value="${r.lien || ''}" placeholder="https://drive.google.com/…"
-                      onchange="App.updateRegistreField('${c}',${rowIdx},'lien',this.value)">
+                      onchange="App.updateRegistreField('${c.replace(/'/g, "\\'")}',${rowIdx},'lien',this.value)">
                     ${r.lien ? `<button onclick="App.openLink('${r.lien}')" style="background:none;border:none;cursor:pointer;font-size:14px;padding:0" title="Ouvrir">📄</button>` : ''}
                   </div>
                 </div>
@@ -6780,12 +6744,12 @@ const App = {
                         <div style="font-size:11px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.signataireNom || 'Signé'}</div>
                         <div style="font-size:10px;color:var(--muted);margin-top:1px">${r.signatureTs || ''}</div>
                       </div>
-                      <button onclick="App.openRegSig('${c}',${rowIdx})"
+                      <button onclick="App.openRegSig('${c.replace(/'/g, "\\'")}',${rowIdx})"
                         style="flex-shrink:0;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:6px 10px;font-size:11px;color:var(--muted);cursor:pointer">
                         ✏️ Modifier
                       </button>
                     </div>`
-                  : `<button onclick="App.openRegSig('${c}',${rowIdx})"
+                  : `<button onclick="App.openRegSig('${c.replace(/'/g, "\\'")}',${rowIdx})"
                       style="width:100%;background:rgba(232,84,26,0.08);border:1px dashed var(--accent);border-radius:8px;padding:11px;font-size:13px;font-weight:600;color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
                       ✍️ Signer ce contrôle
                     </button>`
@@ -8796,6 +8760,7 @@ Enregistrer quand même ?`)) return;
         this.renderInvestissements();
       },
       'equipements': () => { const ok = Equip.save_add(); return; },
+      'piscine-config': () => { Piscine.saveConfig(); return; },
       'duerp-risque': () => {
         const d = DUERP.getData();
         if (!d.risques) d.risques = [];
@@ -13299,7 +13264,7 @@ const Veille = {
     btn.style.borderBottom = '2px solid var(--accent)';
     btn.style.fontWeight = '700';
 
-    document.getElementById('veille-panel-veille').style.display    = tab === 'veille'     ? '' : 'none';
+    // handled by switchMainTab above
     document.getElementById('veille-panel-resources').style.display = tab === 'resources'  ? '' : 'none';
 
     if (tab === 'resources') this._renderResCards('commun');
@@ -13373,33 +13338,120 @@ const VL = {
     spo: { label:'🏋 Équipements Sportifs',      cls:'vld-spo',  color:'var(--vl-spo)',  short:'SPO' },
   },
 
-  // ── Prompts scan ──
+  // ── Résumés réglementaires statiques (intégrés, pas de recherche) ──────────
+  // Chaque thème a un résumé des obligations EN VIGUEUR pour les ERP UCPA
+  REGLEMENTS: JSON.parse('{\n  "fire": {\n    "titre": "Sécurité incendie ERP",\n    "refs": "Arrêté 25/06/1980 · GN, MS, DF, EL, EC · Code CCH R.123-1",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "SSI — vérification système sécurité incendie (détection, alarme, asservissements)",\n        "prestataire": "Bureau de contrôle agréé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Désenfumage — contrôle des dispositifs (clapets, exutoires, volets)",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Extincteurs portatifs — vérification et recharge si nécessaire",\n        "prestataire": "Prestataire agréé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "RIA — robinets incendie armés, contrôle pression et débit",\n        "prestataire": "Prestataire agréé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "BAES/BAEH — vérification éclairage de sécurité (Art. EC)",\n        "prestataire": "Électricien habilité"\n      },\n      {\n        "freq": "Triennal",\n        "libelle": "SSI Triennale — vérification approfondie avec Bureau de Contrôle",\n        "prestataire": "Bureau Veritas / Socotec"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "BAES — test manuel bouton poussoir, consignation registre",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Journalier",\n        "libelle": "Tableau SSI — vérification visuelle, aucun défaut actif",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Commission",\n        "libelle": "PV commission sécurité — lever toutes prescriptions avant prochaine visite",\n        "prestataire": "Commission préfectorale"\n      }\n    ],\n    "alerte": "Toute prescription non levée peut entraîner fermeture administrative."\n  },\n  "nrj": {\n    "titre": "Énergie / Décret tertiaire",\n    "refs": "Décret n°2019-771 du 23/07/2019 · Arrêté 10/04/2020 · Décret 2021-261",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Déclaration OPERAT — saisie consommations énergie (élec, gaz, fioul)",\n        "prestataire": "Responsable site"\n      },\n      {\n        "freq": "2025",\n        "libelle": "Objectif -40% consommation / 2010 — ERP surface > 1000 m²",\n        "prestataire": "Responsable site"\n      },\n      {\n        "freq": "2030",\n        "libelle": "Objectif -50% consommation / 2010",\n        "prestataire": "Responsable site"\n      },\n      {\n        "freq": "Continu",\n        "libelle": "DPE — Diagnostic de Performance Énergétique à jour",\n        "prestataire": "Diagnostiqueur certifié"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "CEE — valorisation des travaux économies énergie éligibles",\n        "prestataire": "Délégataire CEE"\n      }\n    ],\n    "alerte": "Non-déclaration OPERAT = amende jusqu\'à 7 500 € par an."\n  },\n  "acc": {\n    "titre": "Accessibilité PMR",\n    "refs": "Arrêté 8/12/2014 · Art. R.111-19-8 CCH · Loi 2005-102",\n    "obligations": [\n      {\n        "freq": "Permanent",\n        "libelle": "Registre Public Accessibilité — tenu à disposition, actualisé",\n        "prestataire": "Responsable ERP"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "63 points de conformité — cheminements, sanitaires, signalétique",\n        "prestataire": "Auto-évaluation"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Stationnement PMR — 1 place/50 (min.), signalisation réglementaire",\n        "prestataire": "Responsable site"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Ascenseur PMR — entretien, affichages, téléphone de secours en cabine",\n        "prestataire": "Mainteneur"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Mise à jour registre accessibilité si travaux ou modification",\n        "prestataire": "Responsable ERP"\n      }\n    ],\n    "alerte": "Registre non tenu = infraction pénale (R.111-19-45 CCH)."\n  },\n  "eau": {\n    "titre": "Légionelle / Eau sanitaire",\n    "refs": "Arrêté 01/02/2010 · Circ. DGS/EA4 2010-448 · Code santé R.1321-1",\n    "obligations": [\n      {\n        "freq": "Hebdomadaire",\n        "libelle": "Relevé T° retour bouclage ECS — min 50°C obligatoire, consigner carnet",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Chasse thermique points peu utilisés — T° > 70°C pendant 30 min",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Analyse bactériologique légionelles — tous points à risque",\n        "prestataire": "Laboratoire accrédité"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Détartrage et désinfection réseau ECS par prestataire",\n        "prestataire": "Prestataire spécialisé"\n      },\n      {\n        "freq": "Saison",\n        "libelle": "Chasse thermique OBLIGATOIRE avant remise en service (ouverture saison)",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "T° production ballon ECS > 60°C, T° distribution > 50°C",\n        "prestataire": "Interne"\n      }\n    ],\n    "alerte": "T° retour < 50°C = action corrective immédiate (zone prolifération légionelles = 25-50°C)."\n  },\n  "ami": {\n    "titre": "Amiante",\n    "refs": "Code travail R.4412-94 · Décret 96-97 · Art. R.1334-14 CSP",\n    "obligations": [\n      {\n        "freq": "Permanent",\n        "libelle": "DTA — Dossier Technique Amiante à jour, accessible à tout intervenant",\n        "prestataire": "Opérateur certifié"\n      },\n      {\n        "freq": "Avant travaux",\n        "libelle": "Repérage amiante avant travaux (RAT) — toute intervention sur bâti avant 1997",\n        "prestataire": "Opérateur certifié"\n      },\n      {\n        "freq": "Triennal",\n        "libelle": "Surveillance état matériaux amiantés si confinement",\n        "prestataire": "Diagnostiqueur certifié"\n      },\n      {\n        "freq": "Immédiat",\n        "libelle": "Retrait ou confinement si dégradation — matériaux à risque classe B/C",\n        "prestataire": "Entreprise SS4"\n      }\n    ],\n    "alerte": "Intervention sans RAT sur bâti avant 1997 = infraction pénale."\n  },\n  "plb": {\n    "titre": "Plomb / CREP",\n    "refs": "Code santé R.1334-1 · Arrêté 25/04/2006 · Décret 2001-477",\n    "obligations": [\n      {\n        "freq": "Avant vente",\n        "libelle": "CREP — Constat Risque Exposition au Plomb (bâti avant 1949)",\n        "prestataire": "Diagnostiqueur certifié"\n      },\n      {\n        "freq": "Avant travaux",\n        "libelle": "Repérage plomb avant travaux — bâti avant 1949",\n        "prestataire": "Diagnostiqueur certifié"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Seuil plomb eau potable ≤ 10 µg/L — canalisations internes à vérifier",\n        "prestataire": "Analyse eau"\n      }\n    ],\n    "alerte": "Exposition plomb > 50 µg/m³ = travaux obligatoires immédiats."\n  },\n  "elv": {\n    "titre": "Ascenseurs / Équipements",\n    "refs": "Décret 2004-964 · Arrêté 18/11/2004 · Code travail R.4322-1",\n    "obligations": [\n      {\n        "freq": "Semestriel",\n        "libelle": "Entretien ascenseur — contrat de maintenance obligatoire",\n        "prestataire": "Mainteneur agréé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "VGP — Vérification Générale Périodique par organisme habilité",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Quinquennal",\n        "libelle": "CTQ/VRE — Contrôle Technique Quinquennal et visite renforcée",\n        "prestataire": "Bureau Veritas / Apave"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Vérification visuelle : affichages cabine, téléphone, éclairage, portes",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Compacteurs — VGP obligatoire",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Portes automatiques — vérification annuelle",\n        "prestataire": "Mainteneur"\n      }\n    ],\n    "alerte": "Absence de VGP = mise hors service immédiate obligatoire."\n  },\n  "bru": {\n    "titre": "Bruit / Acoustique",\n    "refs": "Arrêté 25/04/2003 · Décret 2006-1099 · Code santé R.1334-30",\n    "obligations": [\n      {\n        "freq": "Permanent",\n        "libelle": "ERP > 300 personnes — isolation acoustique réglementaire",\n        "prestataire": "Bureau études"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Activités musicales > 90 dB — limiteur de son obligatoire",\n        "prestataire": "Prestataire son"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Mesures acoustiques si plainte ou modification des équipements",\n        "prestataire": "Acousticien"\n      }\n    ],\n    "alerte": "Dépassement 70 dB(A) en ERP = sanctions administratives."\n  },\n  "chf": {\n    "titre": "Chaufferie / Gaz",\n    "refs": "Arrêté 2/08/1977 · DTU 61.1 · Code travail R.4227-28 · Art. GC",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle réglementaire réseaux gaz intérieur (Q13)",\n        "prestataire": "Organisme habilité"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Entretien chaudières gaz — combustions, réglage brûleurs",\n        "prestataire": "Mainteneur RGE"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Ramonage conduits évacuation — minimum 1 fois/an + vérification vacuité",\n        "prestataire": "Ramoneur certifié"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle étanchéité GAZ frigorigène (si fluides > 12 kW)",\n        "prestataire": "Technicien certifié"\n      },\n      {\n        "freq": "4 ans",\n        "libelle": "Citerne GPL — révision obligatoire",\n        "prestataire": "Exploitant citerne"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Détecteur CO — test fonctionnement si chaufferie ou parking",\n        "prestataire": "Interne"\n      }\n    ],\n    "alerte": "Fuite gaz = coupure immédiate + appel GRDF 0 800 47 33 33."\n  },\n  "qai": {\n    "titre": "Ventilation / QAI",\n    "refs": "Décret 2012-14 · Arrêté 01/06/2016 · Décret 2023-695 · R.111-15 CCH",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Autodiagnostic QAI — ERP accueillant enfants (< 15 ans) obligatoire",\n        "prestataire": "Responsable ERP"\n      },\n      {\n        "freq": "3 ans",\n        "libelle": "Évaluation QAI complète + mesures formaldéhyde/benzène si indicateurs défaillants",\n        "prestataire": "Laboratoire accrédité"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Entretien VMC/CTA — nettoyage filtres, vérification débits",\n        "prestataire": "Mainteneur"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Dégraissage hottes cuisine — filtres et conduits extraction",\n        "prestataire": "Prestataire spécialisé"\n      }\n    ],\n    "alerte": "Non-respect autodiagnostic = amende 45 000 €."\n  },\n  "elec": {\n    "titre": "Électricité",\n    "refs": "NF C 15-100 · Arrêté 26/02/2003 · Décret 88-1056",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Vérification installations électriques Q18 — par organisme accrédité",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Thermographie infrarouge Q19 — détection points chauds tableaux",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Habilitations électriques personnel — BR/BC selon tâches",\n        "prestataire": "Formation habilitation"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "IRVE — vérification bornes recharge VE si installation",\n        "prestataire": "Électricien certifié"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Vérification visuelle TGBT — aucun voyant défaut, portes fermées",\n        "prestataire": "Interne"\n      }\n    ],\n    "alerte": "Résultat défavorable Q18 = travaux obligatoires avant prochaine commission."\n  },\n  "cui": {\n    "titre": "Cuisine / Gaz",\n    "refs": "Art. GC21 Arr. 25/06/1980 · Règl. CE 852/2004",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle appareils cuisson (feux vifs) — vérification gaz",\n        "prestataire": "Cuisiniste certifié"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle hottes et extraction — dégraissage conduits + ventilateurs",\n        "prestataire": "Prestataire spécialisé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle chambres froides — relevé températures + étanchéité",\n        "prestataire": "Frigoriste"\n      },\n      {\n        "freq": "Hebdomadaire",\n        "libelle": "Nettoyage filtres hottes — en période activité obligatoire",\n        "prestataire": "Cuisine (interne)"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Plan HACCP — maîtrise points critiques, traçabilité, températures",\n        "prestataire": "Responsable cuisine"\n      }\n    ],\n    "alerte": "Art. GC19 : puissance utile totale cuisine ≤ 20 kW sans extraction renforcée."\n  },\n  "pis": {\n    "titre": "Piscines / Baignade",\n    "refs": "Arrêté 7/04/1981 · Code santé R.1331-1 · Circ. DGS 2003-517",\n    "obligations": [\n      {\n        "freq": "Toutes 2h",\n        "libelle": "Contrôle pH (6,9-7,7) et chlore libre (0,4-1,4 mg/L) en période ouverture",\n        "prestataire": "Préposé piscine"\n      },\n      {\n        "freq": "Quotidien",\n        "libelle": "Relevé turbidité (≤ 0,5 NTU), T° eau, nb baigneurs — carnet sanitaire",\n        "prestataire": "Préposé piscine"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Analyse eau complète (bactériologie, légionelles, chloramines)",\n        "prestataire": "Laboratoire accrédité"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle anti-aspiration dispositifs — protection anti-noyade",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Carnet sanitaire tenu à jour — affiché ou accessible sur demande",\n        "prestataire": "Responsable piscine"\n      }\n    ],\n    "alerte": "Chloramines > 0,6 mg/L = fermeture obligatoire du bassin."\n  },\n  "rad": {\n    "titre": "Radon",\n    "refs": "Décret 2018-434 · Art. R.1333-34 CSP · Zones 3",\n    "obligations": [\n      {\n        "freq": "Tous 10 ans",\n        "libelle": "Mesure radon obligatoire — ERP en zone 3 (Alpes, Massif Central, Bretagne)",\n        "prestataire": "Organisme accrédité"\n      },\n      {\n        "freq": "Si > 300 Bq/m³",\n        "libelle": "Actions correctives — amélioration ventilation, étanchéification",\n        "prestataire": "Entreprise spécialisée"\n      },\n      {\n        "freq": "Si > 1000 Bq/m³",\n        "libelle": "Travaux obligatoires — délai 2 ans maximum",\n        "prestataire": "Entreprise spécialisée"\n      }\n    ],\n    "alerte": "Centres UCPA de montagne (Alpes, Pyrénées) en zone 3 — mesure obligatoire."\n  },\n  "sec": {\n    "titre": "Moyens de secours",\n    "refs": "Arrêté 25/06/1980 MS1 à MS9 · R.4224-15 Code travail · Décret 2018-928 (DAE)",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Extincteurs — vérification + recharge si nécessaire (APSAD R1)",\n        "prestataire": "Prestataire agréé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "RIA — contrôle pression et débit",\n        "prestataire": "Prestataire agréé"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Colonne sèche — vérification annuelle, épreuve hydraulique tous les 5 ans",\n        "prestataire": "Prestataire agréé"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "DAE défibrillateur — vérification présence, chargement, consommables",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "DAE — maintenance complète + mise à jour",\n        "prestataire": "Prestataire SAV"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Plan évacuation et consignes affichés dans chaque logement et salle",\n        "prestataire": "Interne"\n      }\n    ],\n    "alerte": "DAE obligatoire dans les ERP recevant du public (Loi 2018-527)."\n  },\n  "due": {\n    "titre": "DUERP / Prévention",\n    "refs": "Décret 2001-1016 · Loi 2021-1018 · Art. R.4121-1 Code travail",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "DUERP — mise à jour annuelle obligatoire ou à chaque modification conditions travail",\n        "prestataire": "Employeur / RH"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Programme annuel de prévention — actions prioritaires issues du DUERP",\n        "prestataire": "Employeur"\n      },\n      {\n        "freq": "Avant travaux",\n        "libelle": "Plan de prévention — toute entreprise extérieure intervenant sur site",\n        "prestataire": "Responsable site"\n      },\n      {\n        "freq": "Permanent",\n        "libelle": "Registre accidents du travail et presqu\'accidents — tenu à jour",\n        "prestataire": "RH / Interne"\n      }\n    ],\n    "alerte": "DUERP absent = amende 1 500 € + responsabilité pénale direction."\n  },\n  "cvc": {\n    "titre": "CVC / Chauffage-Ventilation",\n    "refs": "Arrêté 25/07/1997 · Décret 2004-903 · Art. R.224-41 Code énergie",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Entretien chaudière gaz > 4 kW — attestation entretien obligatoire",\n        "prestataire": "Mainteneur qualifié"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle étanchéité circuit frigorigène — si charge > 5 kg",\n        "prestataire": "Technicien certifié"\n      },\n      {\n        "freq": "Tous 2 ans",\n        "libelle": "Inspection système climatisation > 12 kW",\n        "prestataire": "Organisme accrédité"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Contrôle visuel CVC — températures, bruits anormaux, fuites",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Nettoyage échangeurs, filtres, batteries froides/chaudes",\n        "prestataire": "Mainteneur"\n      }\n    ],\n    "alerte": "Absence attestation entretien chaudière = infraction R.224-41."\n  },\n  "san": {\n    "titre": "Sanitaires / ECS",\n    "refs": "Arrêté 01/02/2010 · NF DTU 60.1 · Circ. DGS/EA4 2010-448",\n    "obligations": [\n      {\n        "freq": "Permanent",\n        "libelle": "T° production ECS ≥ 60°C, distribution ≥ 50°C (retour bouclage)",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Hebdomadaire",\n        "libelle": "Relevé températures tous points de distribution — carnet sanitaire",\n        "prestataire": "Interne"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Entretien adoucisseur et filtration réseau eau froide",\n        "prestataire": "Mainteneur"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Vérification disconnecteur (anti-pollution réseau eau chaude)",\n        "prestataire": "Plombier certifié"\n      }\n    ],\n    "alerte": "Zone prolifération légionelles = 25 à 50°C — danger immédiat."\n  },\n  "hyg": {\n    "titre": "Hygiène / HACCP",\n    "refs": "Règl. CE 852/2004 · Arrêté 21/12/2009 · Code rural L.233-2",\n    "obligations": [\n      {\n        "freq": "Permanent",\n        "libelle": "Plan HACCP — analyse des dangers, points critiques, surveillance, traçabilité",\n        "prestataire": "Responsable qualité"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Autocontrôles microbiologiques — surfaces, mains, air cuisine",\n        "prestataire": "Laboratoire"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Dératisation / désinsectisation — registre des interventions",\n        "prestataire": "Prestataire 3D"\n      }\n    ],\n    "alerte": "Rupture chaîne du froid = retrait immédiat + traçabilité obligatoire."\n  },\n  "spo": {\n    "titre": "Équipements sportifs",\n    "refs": "NF EN 913 (fitness) · NF P 90-312 (SAE) · R.322-1 Code sport",\n    "obligations": [\n      {\n        "freq": "Annuel",\n        "libelle": "Contrôle équipements fitness — selon EN 957, vérification usure et fixations",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "SAE (structure artificielle escalade) — contrôle NF P 90-312",\n        "prestataire": "Vérificateur agréé FFME"\n      },\n      {\n        "freq": "Annuel",\n        "libelle": "Terrains de sport, trampolines — contrôle EN 13219/EN 1176",\n        "prestataire": "Bureau de contrôle"\n      },\n      {\n        "freq": "Mensuel",\n        "libelle": "Contrôle visuel équipements sportifs — usure, boulonnerie, fixations au sol",\n        "prestataire": "Interne"\n      }\n    ],\n    "alerte": "Équipement non contrôlé = responsabilité civile et pénale en cas d\'accident."\n  }\n}'),
+
+  
+  // ── Prompts scan (pour actualités, optionnel) ──────────────────────────
   SCAN_PROMPTS: {
-    fire:`Tu es un expert en réglementation sécurité incendie ERP en France. Recherche les actualités réglementaires récentes (2024-2026) : modifications arrêtés ERP, nouvelles circulaires DHUP/DGSCGC, évolutions SSI/BAES/désenfumage. Sources : sitesecurite.com, legifrance.gouv.fr. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "...", "resume": "...", "urgence": "high|med|low|info", "source": "...", "url": "...", "date": "...", "tags": [], "actions": [], "detail": "..." } ] }. Trouve 3-4 actualités.`,
-    nrj: `Tu es un expert en réglementation énergétique du bâtiment en France. Recherche les actualités récentes (2024-2026) : décret tertiaire/OPERAT, fiches CEE, décret BACS, DPE. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 3-4 actualités.`,
-    acc: `Tu es un expert accessibilité PMR pour les ERP en France. Recherche les actualités récentes (2024-2026) : modifications réglementation ERP, normes Cerema/DHUP, Ad'AP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    eau: `Tu es un expert prévention légionelle et qualité eau sanitaire ERP. Recherche les actualités récentes (2024-2026) : évolutions réglementation légionelle ECS/TAR, circulaires DGS, avis ANSES. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    ami: `Tu es un expert réglementation amiante bâtiments ERP. Recherche les actualités récentes (2024-2026) : DTA, SS4, désamiantage, DGT/INRS/OPPBTP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    plb: `Tu es un expert réglementation plomb bâtiments ERP. Recherche les actualités récentes (2024-2026) : CREP, seuils réglementaires, ERP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités.`,
-    elv: `Tu es un expert réglementation ascenseurs et équipements sous pression ERP. Recherche les actualités récentes (2024-2026) : contrôles quinquennaux, décret ascenseurs, chaudières. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités.`,
-    bru: `Tu es un expert réglementation acoustique ERP. Recherche les actualités récentes (2024-2026) : ERP sportifs, piscines, bruit voisinage. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités.`,
-    chf: `Tu es un expert chaufferie gaz ERP. Recherche les actualités récentes (2024-2026) : entretien chaudières, gaz intérieur, CO, conduits fumée. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    qai: `Tu es un expert QAI ventilation ERP. Recherche les actualités récentes (2024-2026) : décrets QAI 2023-2025, autodiagnostic, VMC, CTA. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    elec:`Tu es un expert installations électriques ERP. Recherche les actualités récentes (2024-2026) : NF C 15-100, TGBT, IRVE, éclairage sécurité. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    cui: `Tu es un expert cuisines professionnelles ERP. Recherche les actualités récentes (2024-2026) : hottes, HACCP, gaz cuisine, déchets. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    pis: `Tu es un expert piscines et baignade ERP. Recherche les actualités récentes (2024-2026) : qualité eau, légionelle piscine, anti-noyade. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    rad: `Tu es un expert radon ERP. Recherche les actualités récentes (2024-2026) : seuils 300 Bq/m³, zones 3 (Alpes, Massif Central, Bretagne), IRSN. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2 actualités — important pour centres de montagne.`,
-    sec: `Tu es un expert moyens de secours ERP. Recherche les actualités récentes (2024-2026) : extincteurs, RIA, DAE, colonnes sèches, APSAD. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    due: `Tu es un expert DUERP et prévention risques ERP. Recherche les actualités récentes (2024-2026) : loi 2021, mise à jour annuelle, C2P, plan prévention. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    cvc: `Tu es un expert CVC ERP. Recherche les actualités récentes (2024-2026) : PAC, climatiseurs, TAR, désenfumage, filtration air. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    san: `Tu es un expert réseaux sanitaires ECS ERP. Recherche les actualités récentes (2024-2026) : arrêté 01/02/2010, carnet sanitaire, PGSSE, NF DTU 60.1. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    hyg: `Tu es un expert HACCP restauration collective. Recherche les actualités récentes (2024-2026) : règlement CE 852/2004, chaîne du froid, contrôles DDPP. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
-    spo: `Tu es un expert équipements sportifs ERP. Recherche les actualités récentes (2024-2026) : fitness EN 957, SAE NF P 90-312, remontées mécaniques STRMTG, piscines PLG. Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "url": "", "date": "", "tags": [], "actions": [], "detail": "" } ] }. Trouve 2-3 actualités.`,
+    fire:`Donne-moi en JSON les 2-3 évolutions réglementaires les plus importantes de l'année 2024-2025 concernant la sécurité incendie ERP en France (arrêtés, circulaires, nouvelles obligations). Réponds UNIQUEMENT en JSON : { "updates": [ { "titre": "...", "resume": "...", "urgence": "high|med|low|info", "source": "...", "date": "..." } ] }`,
+    eau: `Donne-moi en JSON les 2-3 évolutions réglementaires 2024-2025 sur la légionellose et l'eau sanitaire ERP. UNIQUEMENT JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "date": "" } ] }`,
+    nrj: `Donne-moi en JSON les 2-3 points clés du décret tertiaire 2024-2025 à retenir pour les ERP. UNIQUEMENT JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "date": "" } ] }`,
+    rad: `Donne-moi en JSON les 2-3 points clés de la réglementation radon 2024-2025 pour les ERP de montagne. UNIQUEMENT JSON : { "updates": [ { "titre": "", "resume": "", "urgence": "high|med|low|info", "source": "", "date": "" } ] }`,
   },
 
-  // ── Getters clé API ──
+    // ── Getters clé API ──
   _apiKey() {
     return window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+  },
+
+  // ── Affichage fiches réglementaires ─────────────────────────────────────
+  _activeReglDomain: 'all',
+
+  showRegl(domain, el) {
+    this._activeReglDomain = domain;
+
+    // Mettre à jour nav
+    document.querySelectorAll('#assistant-panel-veille .vl-nav').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    const container = document.getElementById('vl-regl-content');
+    if (!container) return;
+
+    const domaines = domain === 'all' ? Object.keys(this.REGLEMENTS) : [domain];
+
+    container.innerHTML = domaines.map(d => {
+      const r = this.REGLEMENTS[d];
+      if (!r) return '';
+      const urgColor = {fire:'#ef4444',sec:'#f97316',elec:'#f59e0b',eau:'#0ea5e9',pis:'#06b6d4',san:'#0284c7',
+        hyg:'#16a34a',elv:'#8b5cf6',chf:'#dc2626',cvc:'#6366f1',qai:'#0d9488',ami:'#78716c',plb:'#a3a3a3',
+        rad:'#f59e0b',cui:'#f97316',spo:'#22c55e',acc:'#3b82f6',due:'#6366f1',nrj:'#eab308',bru:'#64748b'}[d] || 'var(--accent)';
+      
+      const freqColor = f => ({
+        'Journalier':'#22c55e','Hebdomadaire':'#22c55e','Mensuel':'#3b82f6',
+        'Annuel':'#f59e0b','Semestriel':'#f59e0b','Triennal':'#f97316',
+        'Permanent':'#6366f1','Quinquennal':'#ef4444','Tous 10 ans':'#ef4444',
+      }[f] || '#94a3b8');
+
+      return `
+        <div class="card" style="margin-bottom:14px;border-left:4px solid ${urgColor}">
+          <div class="card-hdr" style="padding:12px 16px;cursor:pointer" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+            <span style="font-size:18px">${this.DOMAINS[d]?.label?.split(' ')[0]||'📋'}</span>
+            <div style="flex:1;min-width:0">
+              <h3 style="font-size:14px;font-weight:700;margin:0">${r.titre}</h3>
+              <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px">${r.refs}</div>
+            </div>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">${r.obligations.length} obligations</span>
+            <span style="margin-left:8px;font-size:12px;color:var(--muted)">▾</span>
+          </div>
+          <div style="padding:0 16px 14px">
+            <!-- Alerte -->
+            <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px">
+              <span style="font-size:14px;flex-shrink:0">⚠️</span>
+              <span style="font-size:12px;color:#ef4444;font-weight:600">${r.alerte}</span>
+            </div>
+            <!-- Tableau obligations -->
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse">
+                <thead>
+                  <tr style="background:var(--bg3)">
+                    <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600;white-space:nowrap">Fréquence</th>
+                    <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600">Obligation</th>
+                    <th style="padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600;white-space:nowrap">Intervenant</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${r.obligations.map((o, i) => `
+                  <tr style="border-top:1px solid var(--border);${i%2===1?'background:var(--bg2)':''}">
+                    <td style="padding:8px 10px;white-space:nowrap">
+                      <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;background:${freqColor(o.freq)}22;color:${freqColor(o.freq)};border:1px solid ${freqColor(o.freq)}44">${o.freq}</span>
+                    </td>
+                    <td style="padding:8px 10px;font-size:12px;color:var(--text)">${o.libelle}</td>
+                    <td style="padding:8px 10px;font-size:11px;color:var(--muted);white-space:nowrap">${o.prestataire}</td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+            <!-- Lien assistant -->
+            <div style="margin-top:10px;text-align:right">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px"
+                onclick="Assistant.switchMainTab('maintenance',document.getElementById('assistant-tab-maintenance'));Assistant.quick('Explique-moi en détail les obligations réglementaires pour : ${r.titre.replace(/'/g,"'")}. Quelles sont les sanctions en cas de non-respect ?')">
+                🤖 Demander à l'assistant →
+              </button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Si vue globale, ajouter un compteur
+    if (domain === 'all') {
+      const total = domaines.reduce((s,d) => s + (this.REGLEMENTS[d]?.obligations.length||0), 0);
+      container.insertAdjacentHTML('afterbegin', `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 16px;background:var(--bg2);border-radius:10px;border:1px solid var(--border)">
+          <span style="font-size:22px">📋</span>
+          <div>
+            <div style="font-weight:700;font-size:14px">Référentiel réglementaire UCPA</div>
+            <div style="font-size:11px;color:var(--muted)">${domaines.length} thématiques · ${total} obligations réglementaires · ERP type O/L/N/R</div>
+          </div>
+          <div style="margin-left:auto">
+            <button class="btn btn-ghost btn-sm" style="font-size:11px"
+              onclick="Assistant.switchMainTab('maintenance',document.getElementById('assistant-tab-maintenance'));Assistant.quick('Donne-moi un tableau complet de tous les contrôles réglementaires annuels obligatoires pour un ERP de type UCPA (hébergement sportif, ERP O/L/N/R), avec la fréquence et le type d'intervenant.')">
+              🤖 Synthèse complète par l'assistant
+            </button>
+          </div>
+        </div>`);
+    }
   },
 
   // ── Scan ──
@@ -14699,7 +14751,15 @@ STYLE : Pratique et direct, adapté au terrain. Pour urgences sécurité : proc�
       if (el) el.style.display = p === tab ? (p === 'maintenance' ? 'grid' : '') : 'none';
     });
     if (tab === 'ressources') Veille._renderResCards('commun');
-    if (tab === 'veille') setTimeout(() => Veille._loadHistory(), 100);
+    if (tab === 'veille') {
+      setTimeout(() => {
+        // Afficher les fiches réglementaires au premier affichage
+        const container = document.getElementById('vl-regl-content');
+        if (container && !container.innerHTML.trim()) {
+          VL.showRegl('all', document.getElementById('vl-nav-all'));
+        }
+      }, 50);
+    }
   }
 };
 
@@ -15675,7 +15735,8 @@ const DashNotes = {
     document.getElementById('dash-note-quick-text').value = '';
     this.render();
     CentreNotes._updateBadge();
-    if (typeof Equip !== 'undefined') Equip._updateBadge();
+    if (typeof Equip   !== 'undefined') Equip._updateBadge();
+    if (typeof Piscine !== 'undefined') Piscine._updateBadge();
   },
 };
 
@@ -18962,6 +19023,469 @@ const Admin = {
       sel.appendChild(opt);
     });
   }
+};
+
+// ══════════════════════════════════════════════════════════════
+// MODULE SUIVI PISCINE
+// Réf : Arrêté du 7 avril 1981 (piscines ERP) · Code de la santé publique
+//       R.1331-1 à R.1331-22 · Arrêté 7/04/1981 · Circulaire DGS 2003-517
+// ══════════════════════════════════════════════════════════════
+const Piscine = {
+
+  // ── Paramètres réglementaires (Arr. 7/04/1981 + Code santé publique) ────
+  NORMES: {
+    ph:          { min: 6.9,  max: 7.7,  unit: '',     label: 'pH',              critique: true  },
+    chlore_libre:{ min: 0.4,  max: 1.4,  unit: 'mg/L', label: 'Chlore libre',    critique: true  },
+    chlore_total:{ min: 0.0,  max: 2.0,  unit: 'mg/L', label: 'Chlore total',    critique: false },
+    chloramines: { min: 0.0,  max: 0.6,  unit: 'mg/L', label: 'Chloramines',     critique: true  },
+    tac:         { min: 80,   max: 180,  unit: 'mg/L', label: 'TAC',             critique: false },
+    th:          { min: 75,   max: 500,  unit: 'mg/L', label: 'TH (dureté)',     critique: false },
+    turbidite:   { min: 0,    max: 0.5,  unit: 'NTU',  label: 'Turbidité',       critique: true  },
+    temp_bassin: { min: 24,   max: 28,   unit: '°C',   label: 'T° bassin',       critique: false },
+    temp_pataug: { min: 26,   max: 30,   unit: '°C',   label: 'T° pataugeoire',  critique: false },
+    temp_douche: { min: 37,   max: 42,   unit: '°C',   label: 'T° douche (max)', critique: false },
+    baigneurs:   { min: 0,    max: null, unit: 'pers',  label: 'Nb baigneurs',    critique: false },
+  },
+
+  // Fréquences de mesure réglementaires
+  FREQUENCES: [
+    { id:'horaire',    label:'Toutes les heures',     icon:'⏱️' },
+    { id:'matin',      label:'Matin',                 icon:'🌅' },
+    { id:'apres_midi', label:'Après-midi',            icon:'☀️' },
+    { id:'soir',       label:'Soir',                  icon:'🌙' },
+    { id:'quotidien',  label:'Quotidien',             icon:'📅' },
+    { id:'hebdo',      label:'Hebdomadaire',          icon:'📆' },
+  ],
+
+  // Bassins types (personnalisables par centre)
+  BASSINS_DEFAUT: [
+    { id:'grand_bassin',  label:'Grand bassin',   actif: true  },
+    { id:'pataugeoire',   label:'Pataugeoire',    actif: false },
+    { id:'toboggan',      label:'Plongeoir/Toboggan', actif: false },
+  ],
+
+  load()  { return App.load('piscine') || { releves:[], config:{} }; },
+  save(d) { App.save('piscine', d); },
+
+  getConfig() {
+    const d = this.load();
+    return d.config || {};
+  },
+
+  getReleves() {
+    return (this.load().releves || []).sort((a,b) => new Date(b.date)-new Date(a.date));
+  },
+
+  getBassins() {
+    const cfg = this.getConfig();
+    return cfg.bassins || this.BASSINS_DEFAUT;
+  },
+
+  _validate(param, val) {
+    const n = this.NORMES[param];
+    if (!n || val === '' || val === null || val === undefined) return 'empty';
+    const v = parseFloat(val);
+    if (isNaN(v)) return 'empty';
+    if (n.min !== null && v < n.min) return 'low';
+    if (n.max !== null && v > n.max) return 'high';
+    return 'ok';
+  },
+
+  _statusIcon(status) {
+    return { ok:'✅', low:'🔴', high:'🔴', empty:'—' }[status] || '—';
+  },
+
+  _statusClass(status) {
+    return { ok:'ok', low:'ko', high:'ko', empty:'' }[status] || '';
+  },
+
+  _updateBadge() {
+    const releves = this.getReleves();
+    if (!releves.length) { const b=document.getElementById('badge-piscine'); if(b) b.style.display='none'; return; }
+    const last = releves[0];
+    // Compter les dépassements dans le dernier relevé
+    let dérives = 0;
+    (last.mesures || []).forEach(m => {
+      Object.entries(m.valeurs || {}).forEach(([param, val]) => {
+        if (this._validate(param, val) !== 'ok' && this._validate(param, val) !== 'empty') dérives++;
+      });
+    });
+    const b = document.getElementById('badge-piscine');
+    if (b) { b.textContent = dérives; b.style.display = dérives > 0 ? '' : 'none'; }
+  },
+
+  render() {
+    const root = document.getElementById('piscine-root');
+    if (!root) return;
+    const releves = this.getReleves();
+    const bassins = this.getBassins().filter(b => b.actif);
+    const cfg = this.getConfig();
+
+    // KPIs
+    const lastReleve = releves[0];
+    let nbDerives = 0, nbParams = 0;
+    if (lastReleve) {
+      (lastReleve.mesures||[]).forEach(m => {
+        Object.entries(m.valeurs||{}).forEach(([p,v]) => {
+          nbParams++;
+          if (this._validate(p,v) !== 'ok' && this._validate(p,v) !== 'empty') nbDerives++;
+        });
+      });
+    }
+
+    root.innerHTML = `
+      <!-- KPIs ───────────────────────────────────────────────── -->
+      <div class="kpi-grid" style="margin-bottom:14px">
+        <div class="kpi"><div class="kpi-label">Relevés total</div><div class="kpi-val">${releves.length}</div></div>
+        <div class="kpi ${lastReleve ? '' : 'warn'}">
+          <div class="kpi-label">Dernier relevé</div>
+          <div class="kpi-val" style="font-size:16px">${lastReleve ? new Date(lastReleve.date).toLocaleDateString('fr-FR') : '—'}</div>
+          <div class="kpi-sub">${lastReleve ? (lastReleve.operateur||'') : 'aucun relevé'}</div>
+        </div>
+        <div class="kpi ${nbDerives>0?'ko':'ok'}">
+          <div class="kpi-label">Dérives dernier relevé</div>
+          <div class="kpi-val">${lastReleve ? nbDerives : '—'}</div>
+          <div class="kpi-sub">${lastReleve ? nbParams+' paramètres contrôlés' : ''}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Bassins actifs</div>
+          <div class="kpi-val">${bassins.length}</div>
+        </div>
+      </div>
+
+      <!-- Formulaire nouveau relevé ──────────────────────────── -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-hdr">
+          <span>🏊</span><h3>Suivi Piscine — Qualité de l'eau</h3>
+          <div style="font-size:10px;color:var(--muted);margin-left:4px">Arr. 7/04/1981 · R.1331-1 CSP · Circulaire DGS 2003-517</div>
+          <div class="ml flex" style="gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="Piscine.exportExcel()">📊 Excel</button>
+            <button class="btn btn-ghost btn-sm" onclick="Piscine.exportPDF()">📄 PDF</button>
+            <button class="btn btn-ghost btn-sm" onclick="Piscine.openConfig()">⚙️ Configurer</button>
+            <button class="btn btn-primary btn-sm" onclick="Piscine.saveReleve()">💾 Enregistrer le relevé</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding-top:12px">
+          <!-- En-tête relevé -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px">
+            <div class="form-group">
+              <label>Date & heure</label>
+              <input type="datetime-local" id="pisc-date" value="${new Date().toISOString().slice(0,16)}"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text)">
+            </div>
+            <div class="form-group">
+              <label>Opérateur</label>
+              <input type="text" id="pisc-operateur" placeholder="Nom du préposé"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text)">
+            </div>
+            <div class="form-group">
+              <label>Fréquence</label>
+              <select id="pisc-freq" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text)">
+                ${this.FREQUENCES.map(f=>`<option value="${f.id}">${f.icon} ${f.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Nb baigneurs</label>
+              <input type="number" id="pisc-baigneurs" min="0" placeholder="0"
+                style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text)">
+            </div>
+          </div>
+
+          <!-- Tableau de mesures par bassin ───────────────────── -->
+          ${bassins.length === 0
+            ? `<div class="empty-state" style="padding:24px"><div class="icon">🏊</div><div>Aucun bassin configuré — cliquez sur ⚙️ Configurer</div></div>`
+            : `<div style="overflow-x:auto"><table id="pisc-mesures-table">
+            <thead><tr>
+              <th style="min-width:160px">Paramètre</th>
+              <th style="font-size:10px;color:var(--muted)">Norme réglementaire</th>
+              ${bassins.map(b=>`<th style="text-align:center;min-width:100px">${b.label}</th>`).join('')}
+            </tr></thead>
+            <tbody>
+              ${Object.entries(this.NORMES).map(([param, n]) => {
+                const normeTxt = n.min !== null && n.max !== null
+                  ? `${n.min} – ${n.max} ${n.unit}`
+                  : n.max !== null ? `≤ ${n.max} ${n.unit}` : `≥ ${n.min} ${n.unit}`;
+                return `<tr>
+                  <td style="font-size:12px;font-weight:600">${n.label}${n.critique?'<span style="color:var(--red);margin-left:4px" title="Paramètre critique">*</span>':''}</td>
+                  <td style="font-size:10px;color:var(--muted);font-family:\'DM Mono\'">${normeTxt}</td>
+                  ${bassins.map(b => {
+                    // Ne pas afficher T° pataugeoire pour grand bassin et vice versa
+                    const skip = (param==='temp_pataug' && b.id==='grand_bassin') ||
+                                 (param==='temp_bassin' && b.id==='pataugeoire');
+                    if (skip) return `<td style="text-align:center;color:var(--muted)">—</td>`;
+                    return `<td style="text-align:center">
+                      <input type="number" step="0.01"
+                        id="pisc-${param}-${b.id}"
+                        placeholder="${n.min||0}"
+                        oninput="Piscine._highlightCell(this,'${param}')"
+                        style="width:80px;text-align:center;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 6px;color:var(--text);font-family:\'DM Mono\'">
+                    </td>`;
+                  }).join('')}
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table></div>`}
+
+          <div class="form-group" style="margin-top:12px">
+            <label>Observations</label>
+            <textarea id="pisc-obs" rows="2" placeholder="Remarques, actions correctives…"
+              style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:\'Barlow\',sans-serif;font-size:13px;resize:vertical"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique ────────────────────────────────────────────── -->
+      <div class="card">
+        <div class="card-hdr">
+          <span>📊</span><h3>Historique des relevés</h3>
+          <div class="ml"><span style="font-size:11px;color:var(--muted)">${releves.length} relevé${releves.length>1?'s':''}</span></div>
+        </div>
+        <div id="pisc-historique" style="overflow-x:auto;max-height:500px;overflow-y:auto">
+          ${this._renderHistorique(releves)}
+        </div>
+      </div>
+
+      <!-- Tableau normes réglementaires ─────────────────────────── -->
+      <div class="card" style="margin-top:14px">
+        <div class="card-hdr"><span>📋</span><h3>Normes réglementaires (Arr. 7/04/1981)</h3></div>
+        <div class="card-body" style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Paramètre</th><th>Min</th><th>Max</th><th>Unité</th><th>Critique</th><th>Référence réglementaire</th></tr></thead>
+            <tbody>
+              <tr><td>pH</td><td>6,9</td><td>7,7</td><td>—</td><td>⭐ Oui</td><td>Art. 5 Arr. 7/04/1981</td></tr>
+              <tr><td>Chlore libre</td><td>0,4</td><td>1,4</td><td>mg/L</td><td>⭐ Oui</td><td>Art. 5 Arr. 7/04/1981</td></tr>
+              <tr><td>Chlore total</td><td>—</td><td>2,0</td><td>mg/L</td><td>—</td><td>Art. 5 Arr. 7/04/1981</td></tr>
+              <tr><td>Chloramines</td><td>—</td><td>0,6</td><td>mg/L</td><td>⭐ Oui</td><td>Art. 5 Arr. 7/04/1981</td></tr>
+              <tr><td>TAC</td><td>80</td><td>180</td><td>mg/L</td><td>—</td><td>Guide ANSES 2021</td></tr>
+              <tr><td>TH (dureté)</td><td>75</td><td>500</td><td>mg/L</td><td>—</td><td>Guide ANSES 2021</td></tr>
+              <tr><td>Turbidité</td><td>—</td><td>0,5</td><td>NTU</td><td>⭐ Oui</td><td>Art. 4 Arr. 7/04/1981</td></tr>
+              <tr><td>T° bassin</td><td>24</td><td>28</td><td>°C</td><td>—</td><td>Recommandation FFNS</td></tr>
+              <tr><td>T° pataugeoire</td><td>26</td><td>30</td><td>°C</td><td>—</td><td>Recommandation FFNS</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted)">⭐ Paramètres critiques — dépassement implique action corrective immédiate et inscription au carnet sanitaire</div>
+        </div>
+      </div>`;
+
+    this._updateBadge();
+  },
+
+  _highlightCell(input, param) {
+    const val = parseFloat(input.value);
+    const status = this._validate(param, input.value);
+    const colors = { ok:'rgba(5,150,105,.15)', low:'rgba(220,38,38,.15)', high:'rgba(220,38,38,.15)', empty:'' };
+    input.style.background = colors[status] || '';
+    input.style.borderColor = status==='ok'?'rgba(5,150,105,.4)':status!=='empty'?'rgba(220,38,38,.4)':'var(--border)';
+    input.style.color = status==='ok'?'var(--green)':status!=='empty'&&status!=='empty'?'var(--red)':'var(--text)';
+  },
+
+  _renderHistorique(releves) {
+    if (!releves.length) return '<div class="empty-state" style="padding:32px"><div class="icon">🏊</div><div>Aucun relevé enregistré</div></div>';
+    const bassins = this.getBassins().filter(b=>b.actif);
+    return `<table><thead><tr>
+      <th>Date</th><th>Opérateur</th><th>Bassin</th>
+      <th>pH</th><th>Cl libre</th><th>Cl total</th><th>Chloram.</th>
+      <th>TAC</th><th>TH</th><th>Turbidité</th><th>T° eau</th><th>Baigneurs</th>
+      <th>Statut</th><th></th>
+    </tr></thead><tbody>
+    ${releves.slice(0,50).flatMap(r => {
+      const date = new Date(r.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      return (r.mesures||[{valeurs:{},bassin:'—'}]).map((m,mi) => {
+        const v = m.valeurs || {};
+        const dérives = Object.entries(v).filter(([p,val])=>this._validate(p,val)==='low'||this._validate(p,val)==='high').length;
+        const cell = (p) => {
+          const val = v[p];
+          const st = this._validate(p, val);
+          const color = st==='ok'?'var(--green)':st!=='empty'?'var(--red)':'var(--muted)';
+          return `<td style="font-family:'DM Mono';font-size:11px;text-align:center;color:${color}">${val!==undefined&&val!==''?val:'—'}</td>`;
+        };
+        return `<tr style="${dérives>0?'background:rgba(220,38,38,.04)':''}">
+          ${mi===0?`<td style="font-size:11px;white-space:nowrap;font-family:'DM Mono'">${date}</td><td style="font-size:11px">${r.operateur||'—'}</td>`:'<td></td><td></td>'}
+          <td style="font-size:11px">${m.bassin||'—'}</td>
+          ${cell('ph')}${cell('chlore_libre')}${cell('chlore_total')}${cell('chloramines')}
+          ${cell('tac')}${cell('th')}${cell('turbidite')}${cell('temp_bassin')}
+          <td style="font-family:'DM Mono';font-size:11px;text-align:center">${r.baigneurs||'—'}</td>
+          ${mi===0?`<td><span class="pill pill-${dérives>0?'ko':'ok'}" style="font-size:10px">${dérives>0?'⚠️ '+dérives+' dérive'+(dérives>1?'s':''):'✅ OK'}</span></td>
+          <td><button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px" onclick="Piscine.deleteReleve('${r.id}')">🗑</button></td>`:'<td></td><td></td>'}
+        </tr>`;
+      }).join('');
+    }).join('')}
+    </tbody></table>`;
+  },
+
+  saveReleve() {
+    const bassins = this.getBassins().filter(b=>b.actif);
+    const date = document.getElementById('pisc-date')?.value;
+    const operateur = (document.getElementById('pisc-operateur')?.value||'').trim();
+    if (!date) { alert('Veuillez renseigner la date et l\'heure.'); return; }
+
+    const mesures = bassins.map(b => {
+      const valeurs = {};
+      Object.keys(this.NORMES).forEach(param => {
+        const el = document.getElementById(`pisc-${param}-${b.id}`);
+        if (el && el.value !== '') valeurs[param] = parseFloat(el.value);
+      });
+      return { bassin: b.label, bassinId: b.id, valeurs };
+    });
+
+    // Détecter les dérives critiques
+    const dérivesCritiques = [];
+    mesures.forEach(m => {
+      Object.entries(m.valeurs).forEach(([param, val]) => {
+        const n = this.NORMES[param];
+        const st = this._validate(param, val);
+        if (n && n.critique && (st==='low'||st==='high')) {
+          dérivesCritiques.push(`${n.label} (${m.bassin}): ${val} ${n.unit} — norme: ${n.min||0}–${n.max} ${n.unit}`);
+        }
+      });
+    });
+
+    if (dérivesCritiques.length > 0) {
+      const msg = `⚠️ ${dérivesCritiques.length} DÉRIVE(S) CRITIQUE(S) DÉTECTÉE(S) :\n\n${dérivesCritiques.join('\n')}\n\nAction corrective immédiate requise.\nEnregistrer quand même ?`;
+      if (!confirm(msg)) return;
+    }
+
+    const releve = {
+      id:          App.uuid(),
+      date:        new Date(date).toISOString(),
+      operateur,
+      frequence:   document.getElementById('pisc-freq')?.value || '',
+      baigneurs:   parseInt(document.getElementById('pisc-baigneurs')?.value)||0,
+      observations:(document.getElementById('pisc-obs')?.value||'').trim(),
+      mesures,
+      centre:      App.centre,
+      dérivesCritiques,
+    };
+
+    const data = this.load();
+    data.releves = data.releves || [];
+    data.releves.unshift(releve);
+    this.save(data);
+
+    // Toast
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+    toast.textContent = dérivesCritiques.length > 0
+      ? `⚠️ Relevé enregistré — ${dérivesCritiques.length} dérive(s) critique(s)`
+      : '✅ Relevé enregistré';
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(), 3000);
+
+    this.render();
+  },
+
+  deleteReleve(id) {
+    if (!confirm('Supprimer ce relevé ?')) return;
+    const data = this.load();
+    data.releves = (data.releves||[]).filter(r=>r.id!==id);
+    this.save(data);
+    this.render();
+  },
+
+  openConfig() {
+    const bassins = this.getBassins();
+    App.openModal('⚙️ Configuration piscine', `
+      <div style="margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Bassins à suivre</div>
+        <div id="pisc-cfg-bassins" style="display:flex;flex-direction:column;gap:8px">
+          ${bassins.map((b,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:8px">
+              <input type="checkbox" id="pisc-b-${i}" ${b.actif?'checked':''} style="width:16px;height:16px">
+              <input type="text" value="${b.label}" id="pisc-bl-${i}"
+                style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text)">
+            </div>`).join('')}
+        </div>
+        <button onclick="Piscine._addBassinField()" class="btn btn-ghost btn-sm" style="margin-top:8px;font-size:11px">+ Ajouter un bassin</button>
+      </div>`, 'piscine-config');
+  },
+
+  saveConfig() {
+    const data = this.load();
+    const existing = this.getBassins();
+    const newBassins = existing.map((b,i) => ({
+      ...b,
+      label: document.getElementById(`pisc-bl-${i}`)?.value || b.label,
+      actif: document.getElementById(`pisc-b-${i}`)?.checked || false,
+    }));
+    // Récupérer les bassins ajoutés dynamiquement
+    let idx = existing.length;
+    while (document.getElementById(`pisc-b-${idx}`)) {
+      newBassins.push({
+        id: 'bassin_'+idx,
+        label: document.getElementById(`pisc-bl-${idx}`)?.value || 'Bassin '+idx,
+        actif: document.getElementById(`pisc-b-${idx}`)?.checked || false,
+      });
+      idx++;
+    }
+    data.config = data.config || {};
+    data.config.bassins = newBassins;
+    this.save(data);
+    App.closeModal();
+    this.render();
+  },
+
+  _addBassinField() {
+    const container = document.getElementById('pisc-cfg-bassins');
+    if (!container) return;
+    const idx = container.children.length;
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border-radius:8px';
+    div.innerHTML = `<input type="checkbox" id="pisc-b-${idx}" checked style="width:16px;height:16px">
+      <input type="text" id="pisc-bl-${idx}" placeholder="Nom du bassin"
+        style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text)">`;
+    container.appendChild(div);
+  },
+
+  exportExcel() {
+    if (!window.XLSX) { alert('SheetJS non disponible'); return; }
+    const releves = this.getReleves();
+    const rows = [['Date','Opérateur','Fréquence','Bassin','pH','Cl libre','Cl total','Chloramines','TAC','TH','Turbidité','T° eau','Baigneurs','Dérives critiques','Observations']];
+    releves.forEach(r => {
+      const date = new Date(r.date).toLocaleString('fr-FR');
+      (r.mesures||[]).forEach(m => {
+        const v = m.valeurs||{};
+        rows.push([date, r.operateur||'', r.frequence||'', m.bassin||'',
+          v.ph||'', v.chlore_libre||'', v.chlore_total||'', v.chloramines||'',
+          v.tac||'', v.th||'', v.turbidite||'', v.temp_bassin||v.temp_pataug||'',
+          r.baigneurs||0, (r.dérivesCritiques||[]).join('; '), r.observations||''
+        ]);
+      });
+    });
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Piscine');
+    XLSX.writeFile(wb, `UCPA_Piscine_${App.today()}.xlsx`);
+  },
+
+  exportPDF() {
+    if (!window.jspdf) { alert('jsPDF non disponible'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const centre = App.centre==='ALL'?'Tous centres':App.centre.replace('STATION DE SKI ','');
+    doc.setFillColor(2,132,199); doc.rect(0,0,210,22,'F');
+    doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.text('REGISTRE QUALITÉ EAU — PISCINE', 14, 14);
+    doc.setFontSize(9); doc.text(centre+' · '+new Date().toLocaleDateString('fr-FR'), 140, 14);
+    let y = 32;
+    const releves = this.getReleves();
+    doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont('helvetica','normal');
+    releves.slice(0,30).forEach(r => {
+      const date = new Date(r.date).toLocaleString('fr-FR');
+      doc.setFont('helvetica','bold'); doc.text(date+' — '+r.operateur, 14, y); y+=5;
+      (r.mesures||[]).forEach(m=>{
+        const v=m.valeurs||{};
+        const txt = `${m.bassin}: pH=${v.ph||'—'} Cl=${v.chlore_libre||'—'} TAC=${v.tac||'—'} T°=${v.temp_bassin||v.temp_pataug||'—'}°C`;
+        doc.setFont('helvetica','normal'); doc.text(txt, 18, y); y+=4;
+      });
+      if (r.dérivesCritiques?.length) {
+        doc.setTextColor(220,38,38);
+        r.dérivesCritiques.forEach(d=>{doc.text('⚠ '+d, 18, y); y+=4;});
+        doc.setTextColor(0,0,0);
+      }
+      y+=3; if(y>280){doc.addPage(); y=14;}
+    });
+    doc.save(`UCPA_Piscine_${App.today()}.pdf`);
+  },
 };
 
 const UCPAImport = {
