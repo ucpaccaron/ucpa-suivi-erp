@@ -3616,23 +3616,23 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
           <div style="font-size:13px;color:var(--muted2)">Rondes · Sécurité incendie · ECS · Cuisine · Prestataires · Réglementation ERP · Veille législative</div>
         </div>
         <div id="ia-key-status" style="font-size:11px;font-family:'DM Mono',monospace;padding:4px 10px;border-radius:4px;border:1px solid var(--border);color:var(--muted)">— clé —</div>
-        <button class="btn btn-ghost btn-sm" onclick="if(typeof Assistant!==\'undefined\'){Assistant.clearHistory()}">🗑 Effacer</button>
+        <button class="btn btn-ghost btn-sm" onclick="if(typeof Assistant!=='undefined'){Assistant.clearHistory()}">🗑 Effacer</button>
       </div>
 
       <!-- Onglets principaux -->
       <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border)">
         <button id="assistant-tab-maintenance" class="btn btn-ghost btn-sm assistant-main-tab"
-          onclick="if(typeof Assistant!==\'undefined\'){Assistant.switchMainTab('maintenance',this)}"
+          onclick="if(typeof Assistant!=='undefined'){Assistant.switchMainTab('maintenance',this)}"
           style="border-radius:6px 6px 0 0;border-bottom:2px solid var(--accent);font-weight:700;padding:6px 18px">
           🔧 Maintenance UCPA
         </button>
         <button id="assistant-tab-veille" class="btn btn-ghost btn-sm assistant-main-tab"
-          onclick="if(typeof Assistant!==\'undefined\'){Assistant.switchMainTab('veille',this)}"
+          onclick="if(typeof Assistant!=='undefined'){Assistant.switchMainTab('veille',this)}"
           style="border-radius:6px 6px 0 0;border-bottom:2px solid transparent;padding:6px 18px">
           📰 Veille réglementaire
         </button>
         <button id="assistant-tab-ressources" class="btn btn-ghost btn-sm assistant-main-tab"
-          onclick="if(typeof Assistant!==\'undefined\'){Assistant.switchMainTab('ressources',this)}"
+          onclick="if(typeof Assistant!=='undefined'){Assistant.switchMainTab('ressources',this)}"
           style="border-radius:6px 6px 0 0;border-bottom:2px solid transparent;padding:6px 18px">
           📚 Ressources
         </button>
@@ -3677,19 +3677,19 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
 
           <div style="border-top:1px solid var(--border);padding:10px 14px;background:var(--bg);flex-shrink:0">
             <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">
-              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Que faire en cas de défaut sur la centrale incendie SSI ?')}">🔥 Défaut SSI</button>
-              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Procédure complète de ronde technique journalière UCPA ?')}">📋 Ronde du jour</button>
-              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Température ECS retour inférieure à 50°C — que faire ?')}">💧 ECS &lt;50°C</button>
-              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Contrôles obligatoires à réaliser à l\'ouverture de saison ?')}">🔑 Ouverture saison</button>
-              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Fréquence de nettoyage des filtres de hotte de cuisine ?')}">🍳 Filtres hottes</button>
-              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Je suis nouveau technicien UCPA, par quoi commencer ?')}">👋 Je suis nouveau</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Que faire en cas de défaut sur la centrale incendie SSI ?')}">🔥 Défaut SSI</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Procédure complète de ronde technique journalière UCPA ?')}">📋 Ronde du jour</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Température ECS retour inférieure à 50°C — que faire ?')}">💧 ECS &lt;50°C</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Contrôles obligatoires à réaliser à l\'ouverture de saison ?')}">🔑 Ouverture saison</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Fréquence de nettoyage des filtres de hotte de cuisine ?')}">🍳 Filtres hottes</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;border-radius:20px" onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Je suis nouveau technicien UCPA, par quoi commencer ?')}">👋 Je suis nouveau</button>
             </div>
             <div style="display:flex;gap:8px">
               <input type="text" id="ia-input"
                 style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:9px 13px;color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;outline:none"
                 placeholder="Pose ta question maintenance ou réglementaire…"
                 onkeydown="if(event.key==='Enter'){event.preventDefault();Assistant.send();}">
-              <button class="btn btn-primary" id="ia-send-btn" onclick="if(typeof Assistant!==\'undefined\'){Assistant.send()}">Envoyer</button>
+              <button class="btn btn-primary" id="ia-send-btn" onclick="if(typeof Assistant!=='undefined'){Assistant.send()}">Envoyer</button>
             </div>
           </div>
         </div>
@@ -3700,18 +3700,18 @@ body.region-admin { --accent:#7c3aed; --accent2:#9d5af0; }
             <div class="card-hdr" style="padding:10px 14px"><span>⚡</span><h3 style="font-size:12px">Sujets fréquents</h3></div>
             <div style="padding:6px 8px">
               <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:6px 8px 4px">Urgences</div>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Procédure en cas d\'incendie détecté dans les logements ?')}" class="ia-side-btn">🔥 Incendie — que faire ?</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Le défibrillateur n\'est plus en charge — protocole ?')}" class="ia-side-btn">❤️ Défibrillateur HS</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('ECS : température de retour inférieure à 50°C — risque légionella — protocole d\'urgence ?')}" class="ia-side-btn">💧 ECS — risque légionella</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Procédure en cas d\'incendie détecté dans les logements ?')}" class="ia-side-btn">🔥 Incendie — que faire ?</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Le défibrillateur n\'est plus en charge — protocole ?')}" class="ia-side-btn">❤️ Défibrillateur HS</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('ECS : température de retour inférieure à 50°C — risque légionella — protocole d\'urgence ?')}" class="ia-side-btn">💧 ECS — risque légionella</button>
               <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 8px 4px">Réglementation</div>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Quels sont tous les contrôles réglementaires annuels obligatoires pour un ERP type UCPA ?')}" class="ia-side-btn">📜 Contrôles annuels ERP</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Comment préparer la visite de la commission de sécurité ERP ?')}" class="ia-side-btn">🏛️ Commission sécurité</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Obligations ramonage conduits cuisine — Article GC21 ?')}" class="ia-side-btn">🍳 Ramonage GC21</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Qu\'est-ce que le DUERP et comment le rédiger ?')}" class="ia-side-btn">🛡️ DUERP</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Quels sont tous les contrôles réglementaires annuels obligatoires pour un ERP type UCPA ?')}" class="ia-side-btn">📜 Contrôles annuels ERP</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Comment préparer la visite de la commission de sécurité ERP ?')}" class="ia-side-btn">🏛️ Commission sécurité</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Obligations ramonage conduits cuisine — Article GC21 ?')}" class="ia-side-btn">🍳 Ramonage GC21</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Qu\'est-ce que le DUERP et comment le rédiger ?')}" class="ia-side-btn">🛡️ DUERP</button>
               <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;padding:10px 8px 4px">Méthode &amp; process</div>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Comment rédiger un bon d\'intervention et assurer le suivi ?')}" class="ia-side-btn">📝 Bon d'intervention</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Checklist complète ouverture de saison centre UCPA ?')}" class="ia-side-btn">🔑 Checklist ouverture</button>
-              <button onclick="if(typeof Assistant!==\'undefined\'){Assistant.quick('Que doit contenir un plan de prévention prestataire ?')}" class="ia-side-btn">👷 Plan de prévention</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Comment rédiger un bon d\'intervention et assurer le suivi ?')}" class="ia-side-btn">📝 Bon d'intervention</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Checklist complète ouverture de saison centre UCPA ?')}" class="ia-side-btn">🔑 Checklist ouverture</button>
+              <button onclick="if(typeof Assistant!=='undefined'){Assistant.quick('Que doit contenir un plan de prévention prestataire ?')}" class="ia-side-btn">👷 Plan de prévention</button>
             </div>
           </div>
           <div class="card" style="margin:0">
