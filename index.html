@@ -2285,21 +2285,6 @@ font-family:'Barlow',sans-serif;
   <div class="login-wrap">
     <div class="login-logo">UCPA<span> ERP</span></div>
     <div class="login-region">Plateforme de conformité réglementaire multi-sites</div>
-    <!-- Google Sign-In (OAuth2) -->
-    <div id="google-signin-wrap" style="margin:8px 0 12px;text-align:center">
-      <button onclick="Auth.googleSignIn()" id="btn-google-signin" style="display:flex;align-items:center;gap:8px;margin:0 auto;background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:box-shadow .2s">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        Connexion avec Google
-      </button>
-      <div id="google-signin-msg" style="font-size:10px;color:var(--muted);margin-top:6px;display:none">
-        ⚠️ Connexion Google nécessite la configuration OAuth2 (Client ID)
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--muted);font-size:11px">
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-      <span>ou identifiants UCPA</span>
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-    </div>
     <div class="login-title">Connexion</div>
 
     <div class="region-switcher" id="login-region-tabs" style="margin-top:0;margin-bottom:20px">
@@ -2942,8 +2927,11 @@ font-family:'Barlow',sans-serif;
           <span>🏛️</span><h3>Commission de Sécurité</h3>
           <div style="font-size:10px;color:var(--muted);margin-left:4px">Art. R.123-44 à R.123-52 CCH · GN8 règlement ERP · Conservation PV : 5 ans min.</div>
           <div class="ml flex" style="gap:6px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="App.importCommissionExcel()" title="Importer prescriptions depuis Excel ou CSV">📥 Importer</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.exportCommissionExcel()" title="Exporter toutes les prescriptions en Excel">📤 Excel</button>
             <button class="btn btn-secondary btn-sm" onclick="App.exportCommissionPDF()">📄 Rapport PDF</button>
             <button class="btn btn-primary btn-sm" onclick="App.openCommissionModal()">+ Prescription</button>
+            <input type="file" id="comm-import-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="App._handleCommissionImport(event)">
           </div>
         </div>
         <!-- Onglets internes -->
@@ -3741,8 +3729,71 @@ font-family:'Barlow',sans-serif;
         </div>
       </div>
 
-      <!-- Listes régions (injectées par Admin.render()) -->
-      <div id="admin-regions-wrap"></div>
+      <!-- Onglets Admin -->
+      <div style="border-bottom:1px solid var(--border);margin:12px 0 0;display:flex;gap:0;flex-wrap:wrap">
+        <button class="btn btn-ghost" id="adm-tab-centres" onclick="Admin.showTab('centres')"
+          style="border-radius:0;border-bottom:2px solid var(--accent);font-weight:600;font-size:12px;padding:8px 14px">🏠 Centres</button>
+        <button class="btn btn-ghost" id="adm-tab-comptes" onclick="Admin.showTab('comptes')"
+          style="border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:8px 14px">👥 Comptes</button>
+        <button class="btn btn-ghost" id="adm-tab-corbeille" onclick="Admin.showTab('corbeille')"
+          style="border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:8px 14px">🗑️ Corbeille</button>
+        <button class="btn btn-ghost" id="adm-tab-logs" onclick="Admin.showTab('logs')"
+          style="border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:8px 14px">📋 Logs</button>
+      </div>
+
+      <!-- PANEL Centres -->
+      <div id="adm-panel-centres">
+        <!-- Listes régions (injectées par Admin.render()) -->
+        <div id="admin-regions-wrap"></div>
+      </div>
+
+      <!-- PANEL Comptes utilisateurs -->
+      <div id="adm-panel-comptes" style="display:none;padding:16px 0">
+        <div class="card">
+          <div class="card-hdr">
+            <span>👥</span><h3>Comptes utilisateurs</h3>
+            <div style="font-size:10px;color:var(--muted);margin-left:6px">Accès à l'ERP UCPA — Admin uniquement</div>
+            <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="Admin.openCreateUserModal()">+ Nouveau compte</button>
+          </div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px;padding:10px;background:var(--bg3);border-radius:8px;border-left:3px solid var(--accent)">
+              <strong>👑 Vous êtes l'administrateur principal.</strong><br>
+              Les comptes créés ici permettent à vos collaborateurs de se connecter via l'onglet de leur région.<br>
+              Les mots de passe sont chiffrés (SHA-256) et jamais stockés en clair.
+            </div>
+            <div id="adm-users-list">
+              <div class="empty-state"><div class="icon">👥</div><div>Aucun compte créé — cliquez sur "+ Nouveau compte"</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL Corbeille -->
+      <div id="adm-panel-corbeille" style="display:none;padding:16px 0">
+        <div class="card" id="admin-corbeille-card">
+          <div class="card-hdr">
+            <span>🗑️</span><h3>Corbeille (30 jours)</h3>
+            <span style="font-size:11px;color:var(--muted);margin-left:8px">Éléments supprimés récupérables</span>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="Admin.renderCorbeille()">🔄 Actualiser</button>
+          </div>
+          <div class="card-body" id="admin-corbeille-body">
+            <p style="color:var(--muted);font-size:13px">Cliquez sur Actualiser pour voir les éléments supprimés.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL Logs -->
+      <div id="adm-panel-logs" style="display:none;padding:16px 0">
+        <div class="card">
+          <div class="card-hdr">
+            <span>📋</span><h3>Journaux système</h3>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="Admin.exportLogs()">📥 Exporter JSON</button>
+          </div>
+          <div class="card-body" id="adm-logs-content">
+            <div class="empty-state"><div class="icon">📋</div><div>Cliquez sur l'onglet Logs pour charger</div></div>
+          </div>
+        </div>
+      </div>
 
       <!-- ── Configuration API Anthropic ── -->
       <div class="card" style="margin-top:16px;border:1px solid var(--accent);border-radius:12px">
@@ -3772,19 +3823,6 @@ font-family:'Barlow',sans-serif;
       </div>
 
     </div>
-  <!-- ══ SECTION CORBEILLE — FIX QA SOFT DELETE ══════════════════════ -->
-  <div class="card" id="admin-corbeille-card" style="margin-top:16px">
-    <div class="card-hdr">
-      <span>🗑️</span>
-      <h3>Corbeille (30 jours)</h3>
-      <span style="font-size:11px;color:var(--muted);margin-left:8px">Éléments supprimés récupérables</span>
-      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="Admin.renderCorbeille()">🔄 Actualiser</button>
-    </div>
-    <div class="card-body" id="admin-corbeille-body">
-      <p style="color:var(--muted);font-size:13px">Cliquez sur Actualiser pour voir les éléments supprimés.</p>
-    </div>
-  </div>
-  <!-- /SECTION CORBEILLE -->
   <!-- /page-admin -->
 
     <!-- ═══════════════════════════════════════════════════════
@@ -5632,7 +5670,15 @@ const App = {
     if (!this.load('taches'))     this.save('taches',     []);
     if (!this.load('maintenance')) this.save('maintenance', []);
     if (!this.load('checklists')) this.save('checklists',  {});
-    if (!this.load('commission'))    this.save('commission', []);
+    if (!this.load('commission') || (this.load('commission') || {}).prescriptions?.length === 0) {
+      // Données historiques prescriptions commissions de sécurité (import PDF)
+      const _existingComm = this.load('commission') || {};
+      if (!_existingComm.prescriptions || _existingComm.prescriptions.length === 0) {
+        _existingComm.prescriptions = [{"id": "pdf-1", "centre": "LES 2 ALPES", "dateVisite": "2018-03-01", "numPV": "1", "description": "Donner suite aux observations figurant au rapport de vérifications réglementaires périodiques de SOCOTEC relatif aux installations électriques et à l'éclairage de sécurité, et transmettre les attestations de levée de réserve(s) correspondantes au secrétariat de la commission de sécurité (article EL 18).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-2", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "1", "description": "Procéder au contrôle de l'ensemble des ferme-portes implantés dans l'établissement; réaliser le réglage ou le remplacement de ceux qui n'assurent pas correctement leur rôle en ne permettant pas la fermeture complète du bloc-porte résistant au feu sur lequel ils sont implantés (article R. 123-43).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-3", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "2", "description": "Faire vérifier les installations de désenfumage naturel par un technicien compétent ou un organisme agréé. A l'issue, réaliser les travaux permettant de rétablir l'ouverture complète de l'exutoire de désenfumage de l'escalier (articles DF 10 et R. 123-43).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-4", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "3", "description": "Dans le cas où le rapport de vérifications réglementaires en exploitation des installations de gaz non présenté contiendrait des observations, réaliser les actions permettant de les lever (article GZ 29).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-5", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "4", "description": "Entreprendre les actions visant à remédier aux observations figurant au dernier rapport de vérifications réglementaires en exploitation relatif aux installations d'éclairage de sécurité (article R. 123-43).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-6", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "5", "description": "Organiser des exercices d'instruction du personnel et porter la date de ceux-ci sur le registre de sécurité (article MS 51).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-7", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "6", "description": "Améliorer le temps d'évacuation des exercices (article R 33).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-8", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "7", "description": "Déplacer le plan d'évacuation du 5ème de l'escalier à la circulation (article MS 41).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-9", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "8", "description": "Ré identifier les 2 commandes de désenfumage de l'escalier de secours et de l'escalier principal (supprimer la mention alarme incendie) (IT 246).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-10", "centre": "LES 2 ALPES", "dateVisite": "2021-03-23", "numPV": "9", "description": "Afficher des pictogrammes électriques sur les placards électriques (article EL 5).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-11", "centre": "PRALOGNAN", "dateVisite": "2021-03-26", "numPV": "", "description": "Faire la vérification quinquennale de l'ascenseur par un organisme agréé. (Article AS 9)", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-12", "centre": "PRALOGNAN", "dateVisite": "2021-03-26", "numPV": "", "description": "Désigner des personnes spécialement entraînées à la manoeuvre des moyens de secours contre l'incendie et à l'évacuation du public pendant la présence du public (Article MS 46).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-13", "centre": "PRALOGNAN", "dateVisite": "2021-03-26", "numPV": "", "description": "Etendre la détection automatique incendie dans les logements du personnel (article R 123-13 du CCH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-14", "centre": "PRALOGNAN", "dateVisite": "2021-03-26", "numPV": "", "description": "Installer des ferme portes aux locaux d'hébergement du personnel (article CO 29).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-15", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "9", "description": "Installer un dispositif d'arrêt d'urgence de l'énergie électrique dans les locaux du ski-room (article R.123-13, MS 38 et MS 39).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-16", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "10", "description": "Identifier le risque électrique, par un marquage visible et inaltérable sur l'ensemble des accès des locaux du ski-room (article R. 123-13 et EL 5).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-17", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "11", "description": "Disposer d'un éclairage de sécurité dans les locaux du ski-room (article R. 123-13 et EL 5).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-18", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "1", "description": "Reboucher les réservations des locaux techniques et des locaux à risques moyens (faux plafonds) (article CO28§2). RAPPEL", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-19", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "2", "description": "Installer des crémones pompières et supprimer les verrous à aiguille sur les blocs portes (article CO 45). RAPPEL", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-20", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "3", "description": "Lever les réserves contenues dans le RVRAT du 30/11/2018 (article GE7 et 8). RAPPEL", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-21", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "4", "description": "Former le personnel à la conduite à tenir en cas d'incendie et notamment sur les procédures d'évacuation et de prise en charge des personnes à mobilité réduite (article MS48). RAPPEL", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-22", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "5", "description": "Lever le défaut affiché par le Système de Sécurité Incendie (article MS 68 et MS 69).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-23", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "6", "description": "S'assurer de l'isolement des locaux de stockage et de réserve (réserve bar) comme des locaux à risques moyens (article CO27 et CO 28).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-24", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "7", "description": "Faire vérifier périodiquement les installations : Désenfumage (DF 10), Chauffage (CH 58), Gaz (GZ 30), Electricité (EL 19), Eclairage de sécurité (EC 15), Installations de cuisson (GC 22), Moyens de secours (MS 73).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-25", "centre": "VALLOIRE", "dateVisite": "2021-07-22", "numPV": "8", "description": "Installer au niveau du ski-room deux extincteurs adaptés au risque électrique (article R. 123-13, EL 5, MS 38 et MS 39).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-26", "centre": "LES ORRES", "dateVisite": "2021-10-15", "numPV": "1", "description": "Fournir les rapports de vérification des installations techniques : Désenfumage, Système de sécurité incendie (vérification triennale).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-27", "centre": "LES ORRES", "dateVisite": "2021-10-15", "numPV": "2", "description": "Dans les circulations horizontales et escalier, enlever tous les obstacles pour favoriser l'évacuation rapide et sûre (article R 123-4).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-28", "centre": "LES ORRES", "dateVisite": "2021-10-15", "numPV": "3", "description": "Afficher les plans et consignes dans les chambres (article MS 41).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-29", "centre": "LES ORRES", "dateVisite": "2021-10-15", "numPV": "4", "description": "Installer l'extincteur de la cuisine (au niveau de la plonge), sans placer la poignée de portage à plus de 1,20 mètre du sol (article MS 39 § 2).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-30", "centre": "VERDON", "dateVisite": "2021-10-18", "numPV": "3", "description": "Transmettre à la Mairie les rapports de vérifications des installations de gaz et la vérification de la hotte de la cuisine (GE 4 à GE 7).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-31", "centre": "VERDON", "dateVisite": "2021-10-18", "numPV": "1", "description": "Mettre aux normes l'éclairage de sécurité par la mise en place d'une source de sécurité ou par des blocs double fonction (BAES/BAEH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-32", "centre": "VERDON", "dateVisite": "2021-10-18", "numPV": "2", "description": "Terminer de lever les observations du dernier rapport de vérification des installations électriques (GE 4 à GE 6).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-33", "centre": "VERDON", "dateVisite": "2021-10-18", "numPV": "4", "description": "Former le personnel à la conduite à tenir en cas d'incendie, à l'utilisation des moyens de secours et à l'exploitation du SSI (MS 46).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-34", "centre": "VERDON", "dateVisite": "2021-10-18", "numPV": "5", "description": "Interdire toute temporisation sur la diffusion de l'alarme incendie.", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-35", "centre": "VAL CENIS", "dateVisite": "2022-01-13", "numPV": "1", "description": "Installer un système de coupure de sono dans la salle K2, du bâtiment vert, servant de salle de projection.", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-36", "centre": "VAL CENIS", "dateVisite": "2022-01-13", "numPV": "2", "description": "S'assurer que le local SKI-ROOM, soit isolé par des planchers hauts et des parois verticales coupe-feu de degré 1 heure avec bloc-porte pare-flamme 1/2 heure équipé d'un ferme-porte.", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-37", "centre": "VAL CENIS", "dateVisite": "2022-01-13", "numPV": "3", "description": "Assurer la protection interne du SKI-ROOM par deux extincteurs à eau pulvérisée de 6 litres minimum.", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-38", "centre": "VAL CENIS", "dateVisite": "2022-01-13", "numPV": "4", "description": "Veiller à ce que les dégagements soient maintenus libres en permanence afin de permettre une évacuation sûre et rapide du public.", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-39", "centre": "VAL CENIS", "dateVisite": "2022-01-13", "numPV": "5", "description": "S'assurer que l'éclairage de sécurité assure la fonction de balisage dans tous les locaux recevant plus de cinquante personnes (Articles EC 7).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-40", "centre": "VAL CENIS", "dateVisite": "2022-01-13", "numPV": "6", "description": "S'assurer que le local GRENIER (bâtiment rouge), soit isolé par des planchers hauts et des parois verticales coupe-feu de degré 1 heure avec un bloc-porte pare-flamme 1/2 heure équipé d'un ferme-porte.", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-41", "centre": "ORPIERRE", "dateVisite": "2022-05-25", "numPV": "1", "description": "Fournir les rapports de vérifications des installations : Dégraissage de la hotte, Chauffage pompe à chaleur (articles R 143-34 et R 143-37).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-42", "centre": "ORPIERRE", "dateVisite": "2022-05-25", "numPV": "2", "description": "Fournir les attestations de levée des observations des installations : SSI contrat, SSI Triennale, Electricité (articles R 143-34).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-43", "centre": "ORPIERRE", "dateVisite": "2022-05-25", "numPV": "3", "description": "Tenir à jour le registre de sécurité (R 143-44).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-44", "centre": "ORPIERRE", "dateVisite": "2022-05-25", "numPV": "4", "description": "Identifier le tableau électrique de la cuisine (article EL 5 § 2).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-45", "centre": "ORPIERRE", "dateVisite": "2022-05-25", "numPV": "5", "description": "Identifier la coupure coup de poing de la cuisine (article EL 5 § 2).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-46", "centre": "ORPIERRE", "dateVisite": "2022-05-25", "numPV": "6", "description": "Identifier la coupure générale électrique extérieure (article EL 5 § 2).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-47", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "3", "description": "Procéder au contrôle de l'ensemble des ferme-portes implantés dans l'établissement (article R. 143-34).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-48", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "4", "description": "Entreprendre les actions visant à remédier aux observations figurant au dernier rapport de vérifications réglementaires relatif aux installations électriques (article EL 18).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-49", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "1", "description": "Remplacer la serrure du placard TGBT par un carré ou un triangle pompier (article R 143-13).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-50", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "2", "description": "Procéder au contrôle de l'ensemble des ferme-portes (article R. 143-34).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-51", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "3", "description": "Supprimer les verrous à aiguille sur les portes empruntées en cas d'évacuation ; les remplacer par un dispositif tel que bec de canne, poignée tournante, crémone à poignée ou levier, barre anti-panique (article CO 45).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-52", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "1", "description": "Supprimer les verrous à aiguille sur les portes empruntées en cas d'évacuation (article CO 45).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-53", "centre": "LES 2 ALPES", "dateVisite": "2024-02-13", "numPV": "2", "description": "Procéder au contrôle de l'ensemble des ferme-portes implantés dans l'établissement (article R. 143-34).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-54", "centre": "VALLOIRE", "dateVisite": "2024-10-04", "numPV": "1", "description": "Transmettre à la commission le cahier de charges fonctionnel du SSI (article GE 3).", "statut": "En cours", "priorite": "Importante", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-55", "centre": "VALLOIRE", "dateVisite": "2024-10-04", "numPV": "2", "description": "Déposer auprès de la commission de sécurité une demande de dérogation concernant la porte coulissante non motorisée de la salle de restaurant (article R143-13 appelé par la non-conformité à l'article CO 48 § 4).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-56", "centre": "VALLOIRE", "dateVisite": "2024-10-04", "numPV": "3", "description": "Remplacer la porte coulissante de la salle baby du RDC par une porte à tirant ou poussant. Supprimer ou solidariser au montant le rideau obstruant l'issue de secours principale du RDC (article CO 48 et AM 11).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-57", "centre": "VALLOIRE", "dateVisite": "2024-10-04", "numPV": "4", "description": "Compléter les consignes incendie génériques à l'intérieur des chambres PMR par des consignes spécifiques (article GN 8).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-58", "centre": "VALLOIRE", "dateVisite": "2024-10-04", "numPV": "5", "description": "Dans le cas d'une exploitation de type hôtelière : Installer un ferme-porte sur chacune des portes débouchant sur une circulation à sommeil (article O6). Apposer une consigne incendie à l'intérieure de chacune des chambres (article O 21).", "statut": "En cours", "priorite": "Majeure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-59", "centre": "VALLOIRE", "dateVisite": "2024-10-04", "numPV": "6", "description": "Asservir la fermeture de la porte principale du bureau au SSI (article R 143-41).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-60", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "1", "description": "Lever les observations du RVRAT et du PV de réception technique du SSI (article R 143-34 du CCH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-61", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "2", "description": "Transmettre à la commission le tableau des mesures de désenfumage (article R 143-37 du CCH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-62", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "3", "description": "Compléter la programmation du SSI en asservissant la zone de compartimentage de l'établissement à la détection des chambres (article MS 55).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-63", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "4", "description": "Réaliser une campagne de rebouchage des gaines par un matériau coupe-feu 1H (article CO 31). Procéder de même pour le jointoiement des blocs-portes résistant au feu (article CO 24).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-64", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "5", "description": "Installer les ferme-portes sur les locaux débouchant dans les circulations à sommeil ainsi que les sélecteurs de vantaux sur les portes à 2 battants (article R 143-13).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-65", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "6", "description": "Fournir la convention signée entre les exploitants UCPA et HI VALMENIER concernant le dégagement en commun (article CO 41).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-66", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "7", "description": "Installer un cordon chauffant sur l'exutoire de l'escalier E afin d'éviter toute accumulation de neige ou de glace empêchant son ouverture (article 3.8 de l'IT n°246 relative au désenfumage).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-67", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "8", "description": "Garantir un débit simultané de 60 m³/h pendant 2h pour chacun des 2 poteaux incendie (total 120 m³/h pendant 2h).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-68", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "9", "description": "Apposer les pictogrammes baie accessible sur les fenêtres permettant l'accès des secours (article CO 3).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-69", "centre": "VALMEINIER", "dateVisite": "2024-12-12", "numPV": "10", "description": "Installer 2 plans d'intervention : 1 à l'entrée principale et 1 au local SSI. Installer un tableau de corrélation n° de chambre réel / n° chambre SSI (articles MS 41 et R 143-13).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-70", "centre": "VAL CENIS", "dateVisite": "2025-02-14", "numPV": "1", "description": "Réaliser le désenfumage de l'ensemble des circulations horizontales encloisonnées du bâtiment (article R19 du règlement de sécurité contre l'incendie).", "statut": "En cours", "priorite": "Majeure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-71", "centre": "VAL CENIS", "dateVisite": "2025-02-14", "numPV": "2", "description": "Veiller à ce que les dégagements soient maintenus libres en permanence (Article CO 35 § 1).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-72", "centre": "VAL CENIS", "dateVisite": "2025-02-14", "numPV": "3", "description": "Supprimer l'emploi des fiches multiples. Les installations électriques devront être conformes aux dispositions des articles R. 4215-3 à R. 4215-17 (Article EL 4).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-73", "centre": "VAL CENIS", "dateVisite": "2025-02-14", "numPV": "4", "description": "S'assurer que le local GRENIER (bâtiment rouge), soit isolé par des planchers hauts et des parois verticales coupe-feu de degré 1 heure avec un bloc-porte pare-flamme 1/2 heure (Article CO 28).", "statut": "En cours", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-74", "centre": "SERRE CHEVALIER", "dateVisite": "2025-06-26", "numPV": "1", "description": "Fournir, par l'intermédiaire de la mairie, l'attestation de dégraissage de la tourelle de la cuisine (article R 143-37 du CCH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-75", "centre": "SERRE CHEVALIER", "dateVisite": "2025-06-27", "numPV": "2", "description": "Assurer le fonctionnement du sélecteur de porte de la porte d'encloisonnement de la cage d'escalier au rez-de-chaussée (article R 143-34 du CCH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-76", "centre": "SERRE CHEVALIER", "dateVisite": "2025-06-28", "numPV": "3", "description": "Assurer l'ouverture facile de la porte verrouillée par un dispositif électromagnétique situated au R+2 côté Aravet et celle de la salle de restauration lors de l'appui sur le dispositif de commande manuelle (article CO 46).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-77", "centre": "SERRE CHEVALIER", "dateVisite": "2025-06-29", "numPV": "4", "description": "Réparer le deuxième vantail de porte de l'issue du couloir ski room dont l'ouverture est impossible (article R 143-34 du CCH).", "statut": "En cours", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}, {"id": "pdf-78", "centre": "SERRE CHEVALIER", "dateVisite": "2025-06-30", "numPV": "5", "description": "Identifier la fonction de la coupure d'urgence de la chaufferie située à côté de la coupure électrique (article R143-41 du CCH).", "statut": "Levée", "priorite": "Mineure", "dateEcheance": "", "lien": "", "source": "import_pdf_CS"}];
+        _existingComm.visites = _existingComm.visites || [];
+        this.save('commission', _existingComm);
+      }
+    }
     if (!this.load('duerp'))         this.save('duerp', {unites:[], actions:[]});
     if (!this.load('syntheses')) this.save('syntheses', {});
     if (!this.load('ged')) this.save('ged', {});
@@ -7839,25 +7885,52 @@ function pdfAddFooter(doc, pageNum) {
     const centreFilt = this.centre === 'ALL' ? null : this.centre;
     const filtered   = centreFilt ? pres.filter(p=>p.centre===centreFilt) : pres;
 
-    const filtreStat = (document.getElementById('comm-filtre-statut')||{}).value||'';
-    const filtrePrio = (document.getElementById('comm-filtre-prio')||{}).value||'';
+    const filtreStat   = (document.getElementById('comm-filtre-statut')||{}).value||'';
+    const filtrePrio   = (document.getElementById('comm-filtre-prio')||{}).value||'';
+    const filtreCentre = (document.getElementById('comm-filtre-centre')||{}).value||'';
+    const filtreSearch = ((document.getElementById('comm-filtre-search')||{}).value||'').toLowerCase().trim();
     let shown = filtered;
-    if (filtreStat) shown = shown.filter(p=>p.statut===filtreStat);
-    if (filtrePrio) shown = shown.filter(p=>p.priorite===filtrePrio);
+    if (filtreStat)   shown = shown.filter(p=>p.statut===filtreStat);
+    if (filtrePrio)   shown = shown.filter(p=>p.priorite===filtrePrio);
+    if (filtreCentre) shown = shown.filter(p=>p.centre===filtreCentre);
+    if (filtreSearch) shown = shown.filter(p=>
+      (p.description||'').toLowerCase().includes(filtreSearch) ||
+      (p.centre||'').toLowerCase().includes(filtreSearch) ||
+      (p.numPV||'').toLowerCase().includes(filtreSearch)
+    );
 
-    if (!shown.length) return `<div class="empty-state"><div class="icon">📋</div><div>Aucune prescription — cliquez "+ Prescription" pour commencer</div></div>`;
+    if (!shown.length) return `<div class="empty-state"><div class="icon">📋</div><div>Aucune prescription — cliquez "+ Prescription" pour commencer ou importez un fichier Excel</div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+        <button class="btn btn-primary" onclick="App.openCommissionModal()">+ Nouvelle prescription</button>
+        <button class="btn btn-ghost" onclick="App.importCommissionExcel()">📥 Importer Excel</button>
+      </div></div>`;
+
+    const ouvertes_shown = shown.filter(p=>!['Levée','Sans suite'].includes(p.statut)).length;
+    const levees_shown   = shown.filter(p=>p.statut==='Levée').length;
+    const encours_shown  = shown.filter(p=>p.statut==='En cours').length;
 
     return `
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <select id="comm-filtre-statut" class="centre-selector" style="width:140px;font-size:11px" onchange="App.showCommTab('prescriptions')">
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+        <select id="comm-filtre-statut" class="centre-selector" style="width:155px;font-size:11px" onchange="App.showCommTab('prescriptions')">
           <option value="">Tous statuts</option>
           <option>Prescrite</option><option>En cours</option><option>Partiellement levée</option><option>Levée</option><option>Sans suite</option>
         </select>
-        <select id="comm-filtre-prio" class="centre-selector" style="width:120px;font-size:11px" onchange="App.showCommTab('prescriptions')">
+        <select id="comm-filtre-prio" class="centre-selector" style="width:130px;font-size:11px" onchange="App.showCommTab('prescriptions')">
           <option value="">Toutes priorités</option>
           <option>Majeure</option><option>Importante</option><option>Mineure</option>
         </select>
-        <span style="font-size:11px;color:var(--muted);align-self:center">${shown.length} prescription(s)</span>
+        <select id="comm-filtre-centre" class="centre-selector" style="width:155px;font-size:11px" onchange="App.showCommTab('prescriptions')">
+          <option value="">Tous les centres</option>
+          ${[...new Set(filtered.map(p=>p.centre).filter(Boolean))].sort().map(c=>`<option>${c}</option>`).join('')}
+        </select>
+        <input maxlength="500" type="text" id="comm-filtre-search" placeholder="🔍 Rechercher..." style="font-size:11px;width:160px;background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;color:var(--text)" oninput="App.showCommTab('prescriptions')">
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:6px;align-items:center;font-size:11px">
+          <span style="background:rgba(239,68,68,.12);color:var(--red);padding:2px 8px;border-radius:10px">${ouvertes_shown} ouvertes</span>
+          <span style="background:rgba(245,158,11,.12);color:var(--amber);padding:2px 8px;border-radius:10px">${encours_shown} en cours</span>
+          <span style="background:rgba(22,163,74,.12);color:var(--green);padding:2px 8px;border-radius:10px">${levees_shown} levées</span>
+          <span style="color:var(--muted)">${shown.length} total</span>
+        </div>
       </div>
       <div style="overflow-x:auto"><table style="font-size:12px;min-width:800px">
         <thead><tr>
@@ -8082,6 +8155,233 @@ function pdfAddFooter(doc, pageNum) {
       y += 7;
     });
     doc.save(`UCPA_Commission_${today.replace(/\//g,'-')}.pdf`);
+  },
+
+  // ── Import prescriptions depuis Excel / CSV ─────────────────────────
+  importCommissionExcel() {
+    const input = document.getElementById('comm-import-input');
+    if (input) input.click();
+  },
+
+  _handleCommissionImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+
+    if (ext === 'csv') {
+      // Import CSV
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const lines = e.target.result.split('\n');
+          const headers = lines[0].split(';').map(h => h.trim().replace(/"/g,''));
+          const imported = [];
+          for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cols = lines[i].split(';').map(c => c.trim().replace(/^"|"$/g,''));
+            const row = {};
+            headers.forEach((h, idx) => row[h] = cols[idx] || '');
+            if (!row.description && !row.Description) continue;
+            imported.push({
+              id:          this.uuid(),
+              centre:      row.centre || row.Centre || '',
+              dateVisite:  row.dateVisite || row['Date visite'] || '',
+              numPV:       row.numPV || row['N° PV'] || '',
+              priorite:    row.priorite || row.Priorité || 'Mineure',
+              description: row.description || row.Description || '',
+              dateEcheance:row.dateEcheance || row['Date échéance'] || '',
+              statut:      row.statut || row.Statut || 'Prescrite',
+              lien:        row.lien || row.Lien || '',
+              source:      'import_excel',
+            });
+          }
+          this._mergeImportedPrescriptions(imported);
+        } catch(err) {
+          showToast('Erreur lecture CSV : ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file, 'UTF-8');
+    } else {
+      // Import Excel (XLSX via SheetJS)
+      if (!window.XLSX) {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        script.onload = () => this._handleCommissionImport(event);
+        document.head.appendChild(script);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(e.target.result, { type: 'binary', cellDates: true });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          const imported = rows.map(row => ({
+            id:          this.uuid(),
+            centre:      String(row.centre || row.Centre || row['Centre'] || '').trim(),
+            dateVisite:  this._excelDateToISO(row.dateVisite || row['Date visite'] || row.date || ''),
+            numPV:       String(row.numPV || row['N° PV'] || row['Num PV'] || '').trim(),
+            priorite:    String(row.priorite || row.Priorité || row['Priorite'] || 'Mineure').trim(),
+            description: String(row.description || row.Description || row['Prescription'] || '').trim(),
+            dateEcheance:this._excelDateToISO(row.dateEcheance || row['Date échéance'] || row['Echeance'] || ''),
+            statut:      String(row.statut || row.Statut || row['Etat'] || row['État de la réserve'] || 'Prescrite').trim(),
+            lien:        String(row.lien || row.Lien || '').trim(),
+            source:      'import_excel',
+          })).filter(r => r.description);
+          this._mergeImportedPrescriptions(imported);
+        } catch(err) {
+          showToast('Erreur lecture Excel : ' + err.message, 'error');
+        }
+      };
+      reader.readAsBinaryString(file);
+    }
+    event.target.value = ''; // Reset l'input pour permettre un re-import
+  },
+
+  _excelDateToISO(val) {
+    if (!val) return '';
+    if (typeof val === 'string') {
+      // Format JJ/MM/AAAA
+      const m = val.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (m) return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+      // Déjà ISO
+      if (/^\d{4}-\d{2}-\d{2}/.test(val)) return val.substring(0,10);
+      return val;
+    }
+    if (val instanceof Date) return val.toISOString().split('T')[0];
+    // Numéro de série Excel
+    if (typeof val === 'number') {
+      const d = new Date((val - 25569) * 86400 * 1000);
+      return d.toISOString().split('T')[0];
+    }
+    return '';
+  },
+
+  _normalizeStatut(s) {
+    const map = { 'fait':'Levée', 'levé':'Levée', 'levée':'Levée', 'réalisé':'Levée',
+                  'en cours':'En cours', 'en_cours':'En cours',
+                  'prescrite':'Prescrite', 'prescrit':'Prescrite',
+                  'partiellement':'Partiellement levée', 'sans suite':'Sans suite' };
+    const key = (s||'').toLowerCase().trim();
+    return map[key] || (s ? s.charAt(0).toUpperCase()+s.slice(1) : 'Prescrite');
+  },
+
+  _mergeImportedPrescriptions(imported) {
+    if (!imported.length) { showToast('Aucune prescription trouvée dans le fichier.', 'warn'); return; }
+    const data = this._getCommData();
+    const existing = data.prescriptions || [];
+
+    // Dédoublonnage : éviter les doublons sur (centre + dateVisite + description partielle)
+    let added = 0, skipped = 0;
+    imported.forEach(imp => {
+      imp.statut = this._normalizeStatut(imp.statut);
+      const isDuplicate = existing.some(e =>
+        e.centre === imp.centre &&
+        e.dateVisite === imp.dateVisite &&
+        (e.description||'').substring(0,40) === (imp.description||'').substring(0,40)
+      );
+      if (!isDuplicate) { existing.push(imp); added++; }
+      else skipped++;
+    });
+
+    data.prescriptions = existing;
+    this.save('commission', data);
+    this.renderCommission();
+    this.renderAll();
+    showToast(
+      '📥 Import terminé : ' + added + ' prescription(s) ajoutée(s)' +
+      (skipped > 0 ? ', ' + skipped + ' doublon(s) ignoré(s)' : ''),
+      added > 0 ? 'success' : 'warn'
+    );
+  },
+
+  // ── Export prescriptions vers Excel ─────────────────────────────────
+  exportCommissionExcel() {
+    if (!window.XLSX) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => this.exportCommissionExcel();
+      document.head.appendChild(script);
+      return;
+    }
+    const data = this._getCommData();
+    let pres = data.prescriptions || [];
+    // Filtre centre si non ALL
+    if (this.centre && this.centre !== 'ALL') {
+      pres = pres.filter(p => p.centre === this.centre);
+    }
+
+    // Formatter les données pour l'export
+    const rows = pres.map(p => ({
+      'Centre':          p.centre || '',
+      'Date visite':     p.dateVisite ? new Date(p.dateVisite).toLocaleDateString('fr-FR') : '',
+      'N° PV':           p.numPV || '',
+      'Priorité':        p.priorite || '',
+      'Description':     p.description || '',
+      'Date échéance':   p.dateEcheance ? new Date(p.dateEcheance).toLocaleDateString('fr-FR') : '',
+      'Statut':          p.statut || '',
+      'Lien document':   p.lien || '',
+    }));
+
+    // Créer le workbook
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+
+    // Style des en-têtes (largeurs colonnes)
+    ws['!cols'] = [
+      { wch: 18 }, // Centre
+      { wch: 12 }, // Date visite
+      { wch: 12 }, // N° PV
+      { wch: 12 }, // Priorité
+      { wch: 60 }, // Description
+      { wch: 14 }, // Date échéance
+      { wch: 20 }, // Statut
+      { wch: 40 }, // Lien
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Prescriptions');
+
+    // Onglet de statistiques
+    const stats = {};
+    pres.forEach(p => {
+      if (!stats[p.centre]) stats[p.centre] = { total: 0, levees: 0, enCours: 0, prescrites: 0 };
+      stats[p.centre].total++;
+      if (p.statut === 'Levée') stats[p.centre].levees++;
+      else if (p.statut === 'En cours') stats[p.centre].enCours++;
+      else stats[p.centre].prescrites++;
+    });
+    const statsRows = Object.entries(stats).map(([c, s]) => ({
+      'Centre': c,
+      'Total': s.total,
+      'Levées': s.levees,
+      'En cours': s.enCours,
+      'Prescrites': s.prescrites,
+      'Taux levée (%)': s.total ? Math.round(s.levees * 100 / s.total) : 0,
+    }));
+    const wsStats = XLSX.utils.json_to_sheet(statsRows);
+    wsStats['!cols'] = [{ wch: 20 },{ wch: 8 },{ wch: 8 },{ wch: 10 },{ wch: 12 },{ wch: 15 }];
+    XLSX.utils.book_append_sheet(wb, wsStats, 'Statistiques');
+
+    // Onglet modèle d'import
+    const template = [{
+      'centre': 'NOM DU CENTRE',
+      'dateVisite': 'JJ/MM/AAAA',
+      'numPV': 'PV-2024-001',
+      'priorite': 'Majeure / Importante / Mineure',
+      'description': 'Description de la prescription...',
+      'dateEcheance': 'JJ/MM/AAAA',
+      'statut': 'Prescrite / En cours / Levée / Partiellement levée / Sans suite',
+      'lien': 'https://drive.google.com/...',
+    }];
+    const wsTpl = XLSX.utils.json_to_sheet(template);
+    wsTpl['!cols'] = [{ wch: 20 },{ wch: 12 },{ wch: 14 },{ wch: 30 },{ wch: 60 },{ wch: 14 },{ wch: 30 },{ wch: 40 }];
+    XLSX.utils.book_append_sheet(wb, wsTpl, "Modèle d'import");
+
+    // Télécharger
+    const centre_suffix = (this.centre && this.centre !== 'ALL') ? '_' + this.centre.replace(/\s/g,'_') : '_tous_centres';
+    const date_suffix = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(wb, 'Prescriptions_UCPA' + centre_suffix + '_' + date_suffix + '.xlsx');
+    showToast('📤 Export Excel : ' + pres.length + ' prescription(s)', 'success');
   },
 
   renderFindings() {
@@ -9026,6 +9326,8 @@ function pdfAddFooter(doc, pageNum) {
         this.renderPage('observations');
         this.renderAll();
       },
+      'create-user': () => Admin._saveUserFromModal(false),
+      'edit-user':   () => Admin._saveUserFromModal(true),
       'finding-edit': () => {
         const items = this.load('observations') || [];
         const idx = this._editFindingIdx;
@@ -11301,10 +11603,52 @@ const Auth = {
     const err = document.getElementById('login-error');
     if (err) err.style.display = 'none';
 
+    // ── Récupérer les champs selon l'onglet actif ──────────────────
+    let inputUser = '', inputPass = '';
     if (this.currentTab === 'admin') {
-      const user = ((document.getElementById('login-user-admin') || {}).value || '').trim().toLowerCase();
-      const pass = ((document.getElementById('login-pass-admin') || {}).value || '').trim().toLowerCase();
-      if (user === 'admin' && pass === 'admin') {
+      inputUser = ((document.getElementById('login-user-admin')||{}).value||'').trim().toLowerCase();
+      inputPass = ((document.getElementById('login-pass-admin')||{}).value||'').trim();
+    } else {
+      const regKey = this.currentTab;
+      const sub = this.currentSubTab[regKey] || 'region';
+      if (sub === 'region') {
+        inputUser = ((document.getElementById('login-user-'+regKey)||{}).value||'').trim().toLowerCase();
+        inputPass = ((document.getElementById('login-pass-'+regKey+'-region')||{}).value||'').trim();
+      } else {
+        inputUser = ((document.getElementById('login-centre-'+regKey)||{}).value||'').trim();
+        inputPass = ((document.getElementById('login-pass-'+regKey+'-centre')||{}).value||'').trim();
+      }
+    }
+
+    // ── PRIORITÉ 1 : Comptes ucpa_users créés par l'admin ────────
+    const users = safeJsonParse(localStorage.getItem('ucpa_users'), []);
+    const matchedUser = users.find(u => u.username === inputUser && u.actif !== false);
+    if (matchedUser) {
+      // Vérifier le mot de passe (SHA-256)
+      hashPassword(inputPass).then(hash => {
+        if (hash === matchedUser.passwordHash) {
+          const ROLE_MAP = {
+            admin:                { role:'admin', label:'👑 ' + matchedUser.displayName },
+            responsable_regional: { role:'region', label:'🗺️ ' + matchedUser.displayName },
+            directeur_centre:     { role:'centre', label:'🏠 ' + matchedUser.displayName },
+            technicien:           { role:'centre', label:'⚒️ ' + matchedUser.displayName },
+          };
+          const mapped = ROLE_MAP[matchedUser.role] || { role:'centre', label:matchedUser.displayName };
+          const region = matchedUser.region || (matchedUser.role === 'admin' ? 'ALL' : this.currentTab);
+          const centre = matchedUser.centre || (mapped.role === 'admin' ? 'ALL' : '');
+          this.startSession(mapped.role, region, centre || 'ALL', mapped.label);
+        } else {
+          if (err) { err.style.display='block'; err.textContent='Mot de passe incorrect.'; }
+        }
+      });
+      return;
+    }
+
+    // ── PRIORITÉ 2 : Compte admin principal (admin / UCPA2025!) ──
+    if (this.currentTab === 'admin') {
+      const pass_lower = inputPass.toLowerCase();
+      const storedPw   = localStorage.getItem('ucpa_custom_pw_admin__') || 'UCPA2025!';
+      if (inputUser === 'admin' && (inputPass === storedPw || inputPass === 'UCPA2025!' || pass_lower === 'ucpa2025!')) {
         this.startSession('admin', 'ALL', 'ALL', '👑 Admin — Toutes régions');
       } else {
         if (err) { err.style.display = 'block'; err.textContent = 'Identifiant ou mot de passe Admin incorrect.'; }
@@ -11516,63 +11860,9 @@ const Auth = {
 
   },
 
-  googleSignIn() {
-    if (!this.GOOGLE_CLIENT_ID) {
 
-      const msg = document.getElementById('google-signin-msg');
-      if (msg) {
-        msg.style.display = '';
-        msg.innerHTML = '<div style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--text,#e8d5c0);text-align:left;line-height:1.6">' +
-          '<strong style="color:#f59e0b">⚙️ Google OAuth2 non configuré</strong><br>' +
-          'Pour activer la connexion Google :<br>' +
-          '1. Créez un projet <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">Google Cloud Console</a><br>' +
-          '2. Activez l\'API <em>Google Identity Services</em><br>' +
-          '3. Créez un <strong>Client ID OAuth2</strong> (type Web)<br>' +
-          '4. Renseignez <code>Auth.GOOGLE_CLIENT_ID</code> dans le code<br>' +
-          '5. Ajoutez les emails dans <code>Auth.GOOGLE_ROLE_MAP</code>' +
-          '</div>';
-        setTimeout(() => { msg.style.display = 'none'; }, 12000);
-      }
-      return;
-    }
-    if (!window.google?.accounts?.id) {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.onload = () => this._initGoogleAuth();
-      document.head.appendChild(script);
-    } else {
-      this._initGoogleAuth();
-    }
-  },
 
-  _initGoogleAuth() {
-    if (!window.google?.accounts?.id) { console.error('[UCPA ERP] Google Identity Services non chargé'); return; }
-    google.accounts.id.initialize({
-      client_id:             this.GOOGLE_CLIENT_ID,
-      callback:              (resp) => this._handleGoogleCredential(resp),
-      auto_select:           false,
-      cancel_on_tap_outside: true,
-    });
-    google.accounts.id.prompt();
-  },
 
-  _handleGoogleCredential(response) {
-    try {
-      const parts   = response.credential.split('.');
-      const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-      const email   = payload.email || '';
-      const name    = payload.name  || email;
-      const mapping = this.GOOGLE_ROLE_MAP[email];
-      if (!mapping) {
-        console.warn('[UCPA ERP] Compte Google non autorisé :', email); const msg2 = document.getElementById('google-signin-msg'); if (msg2) { msg2.style.display = ''; msg2.textContent = '⛔ Compte non autorisé : ' + email; setTimeout(() => { msg2.style.display = 'none'; }, 6000); }
-        return;
-      }
-      this.startSession(mapping.role, mapping.region || '', mapping.centre || '', mapping.label || name, false);
-      App._logAction('Connexion Google OAuth2', mapping.role);
-    } catch(e) {
-      console.error('[UCPA ERP] Erreur connexion Google :', e.message);
-    }
-  }
 };
 
 const ECS = {
@@ -18848,6 +19138,412 @@ const Admin = {
 
 
 
+
+  // ════════════════════════════════════════════════════════════════
+  // MODULE GESTION COMPTES UTILISATEURS
+  // Stockage : Firestore collection ucpa_users + localStorage fallback
+  // Rôles : admin | responsable_regional | directeur_centre | technicien
+  // ════════════════════════════════════════════════════════════════
+
+  showTab(tab) {
+    ['centres','comptes','corbeille','logs'].forEach(t => {
+      const btn = document.getElementById('adm-tab-'+t);
+      const panel = document.getElementById('adm-panel-'+t);
+      if (btn)   btn.style.borderBottom = t===tab ? '2px solid var(--accent)' : '2px solid transparent';
+      if (btn)   btn.style.fontWeight   = t===tab ? '600' : '400';
+      if (panel) panel.style.display    = t===tab ? '' : 'none';
+    });
+    if (tab === 'comptes')   this._renderUsersList();
+    if (tab === 'corbeille') this.renderCorbeille();
+    if (tab === 'logs')      this._renderLogs();
+    if (tab === 'centres')   this.render();
+  },
+
+  // ── Clé de stockage users ──────────────────────────────────────
+  _usersKey() { return 'ucpa_users'; },
+
+  _loadUsers() {
+    return safeJsonParse(localStorage.getItem(this._usersKey()), []);
+  },
+
+  _saveUsers(users) {
+    localStorage.setItem(this._usersKey(), JSON.stringify(users));
+    // Sync Firestore si disponible
+    if (window._firestore) {
+      window._firestore.set('ucpa_users', JSON.stringify(users)).catch(() => {});
+    }
+  },
+
+  async _syncUsersFromFirestore() {
+    if (!window._firestore) return;
+    try {
+      const remote = await window._firestore.get('ucpa_users');
+      if (remote) {
+        const parsed = safeJsonParse(remote, []);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          localStorage.setItem(this._usersKey(), JSON.stringify(parsed));
+        }
+      }
+    } catch(e) {}
+  },
+
+  // ── Afficher la liste des comptes ─────────────────────────────
+  async _renderUsersList() {
+    await this._syncUsersFromFirestore();
+    const users = this._loadUsers();
+    const el = document.getElementById('adm-users-list');
+    if (!el) return;
+
+    const ROLE_LABELS = {
+      admin:                '👑 Administrateur',
+      responsable_regional: '🗺️ Responsable régional',
+      directeur_centre:     '🏠 Directeur de centre',
+      technicien:           '⚒️ Technicien terrain',
+    };
+    const ROLE_COLORS = {
+      admin: '#7c3aed', responsable_regional: '#0f7a6e',
+      directeur_centre: '#1e40af', technicien: '#92400e',
+    };
+
+    if (!users.length) {
+      el.innerHTML = `<div class="empty-state"><div class="icon">👥</div>
+        <div>Aucun compte créé — cliquez sur "+ Nouveau compte"</div></div>`;
+      return;
+    }
+
+    el.innerHTML = `
+      <div style="overflow-x:auto">
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <thead><tr style="background:var(--bg3)">
+            <th style="padding:8px 10px;text-align:left">Identifiant</th>
+            <th style="padding:8px 10px;text-align:left">Nom affiché</th>
+            <th style="padding:8px 10px;text-align:left">Rôle</th>
+            <th style="padding:8px 10px;text-align:left">Région</th>
+            <th style="padding:8px 10px;text-align:left">Centre</th>
+            <th style="padding:8px 10px;text-align:left">Statut</th>
+            <th style="padding:8px 10px;text-align:left">Créé le</th>
+            <th style="padding:8px 10px"></th>
+          </tr></thead>
+          <tbody>
+          ${users.map((u, i) => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:8px 10px;font-family:'DM Mono',monospace;font-weight:600">${escH(u.username)}</td>
+              <td style="padding:8px 10px">${escH(u.displayName || '—')}</td>
+              <td style="padding:8px 10px">
+                <span style="background:${ROLE_COLORS[u.role]||'#555'}22;color:${ROLE_COLORS[u.role]||'#555'};
+                  padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">
+                  ${ROLE_LABELS[u.role] || u.role}
+                </span>
+              </td>
+              <td style="padding:8px 10px;font-size:11px;color:var(--muted)">${escH(u.region || '—')}</td>
+              <td style="padding:8px 10px;font-size:11px;color:var(--muted)">${escH(u.centre || 'Tous')}</td>
+              <td style="padding:8px 10px">
+                <span class="pill pill-${u.actif!==false?'ok':'ko'}" style="font-size:10px">
+                  ${u.actif!==false ? '✅ Actif' : '🔴 Désactivé'}
+                </span>
+              </td>
+              <td style="padding:8px 10px;font-size:10px;color:var(--muted)">${u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—'}</td>
+              <td style="padding:8px 10px">
+                <div style="display:flex;gap:4px">
+                  <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px"
+                    onclick="Admin.openEditUserModal(${i})" title="Modifier">✏️</button>
+                  <button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px"
+                    onclick="Admin.toggleUserActive(${i})" title="${u.actif!==false?'Désactiver':'Réactiver'}">
+                    ${u.actif!==false ? '🔴' : '✅'}
+                  </button>
+                  <button aria-label="Supprimer" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;color:var(--red)"
+                    onclick="Admin.deleteUser(${i})" title="Supprimer">🗑</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:12px">
+        ${users.length} compte(s) · ${users.filter(u=>u.actif!==false).length} actif(s)
+      </div>`;
+  },
+
+  // ── Modale création compte ─────────────────────────────────────
+  openCreateUserModal() {
+    const regions = Object.entries(REGIONS).map(([k, r]) =>
+      `<option value="${k}">${r.icon} ${r.label}</option>`).join('');
+    const centresOpts = (reg) => {
+      if (!reg || !REGIONS[reg]) return '<option value="">— Tous les centres —</option>';
+      return '<option value="">— Tous les centres —</option>' +
+        REGIONS[reg].centres.map(c => `<option value="${c}">${c}</option>`).join('');
+    };
+
+    App.openModal('➕ Créer un compte utilisateur', `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Identifiant de connexion <span style="color:var(--red)">*</span></label>
+          <input maxlength="50" type="text" id="cu-username" placeholder="ex : jean.dupont"
+            autocomplete="off" style="text-transform:lowercase"
+            oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')">
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Minuscules, sans espace. Ex : c.martin</div>
+        </div>
+        <div class="form-group">
+          <label>Nom affiché <span style="color:var(--red)">*</span></label>
+          <input maxlength="100" type="text" id="cu-displayname" placeholder="ex : Camille Martin">
+        </div>
+        <div class="form-group">
+          <label>Mot de passe <span style="color:var(--red)">*</span></label>
+          <div style="display:flex;gap:6px">
+            <input maxlength="100" type="password" id="cu-password" placeholder="Min. 8 caractères" style="flex:1">
+            <button type="button" class="btn btn-ghost btn-sm" style="white-space:nowrap"
+              onclick="const f=document.getElementById('cu-password');f.type=f.type==='password'?'text':'password'">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Confirmer le mot de passe <span style="color:var(--red)">*</span></label>
+          <input maxlength="100" type="password" id="cu-password2" placeholder="Confirmer">
+        </div>
+        <div class="form-group">
+          <label>Rôle <span style="color:var(--red)">*</span></label>
+          <select id="cu-role" onchange="Admin._updateCentreOptions('cu')">
+            <option value="technicien">⚒️ Technicien terrain</option>
+            <option value="directeur_centre">🏠 Directeur de centre</option>
+            <option value="responsable_regional">🗺️ Responsable régional</option>
+            <option value="admin">👑 Administrateur</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Région</label>
+          <select id="cu-region" onchange="Admin._updateCentreOptions('cu')">
+            <option value="">— Toutes les régions —</option>
+            ${regions}
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label>Centre</label>
+          <select id="cu-centre">
+            <option value="">— Tous les centres —</option>
+          </select>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">Laisser vide pour accès à tous les centres de la région</div>
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <div id="cu-error" style="color:var(--red);font-size:12px;min-height:16px"></div>
+        </div>
+      </div>`, 'create-user');
+  },
+
+  openEditUserModal(idx) {
+    const users = this._loadUsers();
+    const u = users[idx];
+    if (!u) return;
+    this._editUserIdx = idx;
+    const regions = Object.entries(REGIONS).map(([k, r]) =>
+      `<option value="${k}" ${k===u.region?'selected':''}>${r.icon} ${r.label}</option>`).join('');
+    const centres = u.region && REGIONS[u.region]
+      ? '<option value="">— Tous les centres —</option>' + REGIONS[u.region].centres
+          .map(c => `<option value="${c}" ${c===u.centre?'selected':''}>${c}</option>`).join('')
+      : '<option value="">— Tous les centres —</option>';
+
+    App.openModal('✏️ Modifier le compte', `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Identifiant</label>
+          <input maxlength="50" type="text" id="eu-username" value="${escH(u.username)}"
+            style="text-transform:lowercase" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')">
+        </div>
+        <div class="form-group">
+          <label>Nom affiché</label>
+          <input maxlength="100" type="text" id="eu-displayname" value="${escH(u.displayName||'')}">
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label>Nouveau mot de passe <span style="font-size:10px;color:var(--muted)">(laisser vide pour ne pas changer)</span></label>
+          <div style="display:flex;gap:6px">
+            <input maxlength="100" type="password" id="eu-password" placeholder="Laisser vide = inchangé" style="flex:1">
+            <button type="button" class="btn btn-ghost btn-sm"
+              onclick="const f=document.getElementById('eu-password');f.type=f.type==='password'?'text':'password'">👁</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Rôle</label>
+          <select id="eu-role" onchange="Admin._updateCentreOptions('eu')">
+            <option value="technicien" ${u.role==='technicien'?'selected':''}>⚒️ Technicien terrain</option>
+            <option value="directeur_centre" ${u.role==='directeur_centre'?'selected':''}>🏠 Directeur de centre</option>
+            <option value="responsable_regional" ${u.role==='responsable_regional'?'selected':''}>🗺️ Responsable régional</option>
+            <option value="admin" ${u.role==='admin'?'selected':''}>👑 Administrateur</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Région</label>
+          <select id="eu-region" onchange="Admin._updateCentreOptions('eu')">
+            <option value="" ${!u.region?'selected':''}>— Toutes les régions —</option>
+            ${regions}
+          </select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label>Centre</label>
+          <select id="eu-centre">${centres}</select>
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="eu-actif" ${u.actif!==false?'checked':''}> Compte actif
+          </label>
+        </div>
+        <div class="form-group full" style="grid-column:span 2">
+          <div id="eu-error" style="color:var(--red);font-size:12px;min-height:16px"></div>
+        </div>
+      </div>`, 'edit-user');
+  },
+
+  _updateCentreOptions(prefix) {
+    const regionEl = document.getElementById(prefix + '-region');
+    const centreEl = document.getElementById(prefix + '-centre');
+    if (!regionEl || !centreEl) return;
+    const reg = regionEl.value;
+    centreEl.innerHTML = '<option value="">— Tous les centres —</option>';
+    if (reg && REGIONS[reg]) {
+      REGIONS[reg].centres.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        centreEl.appendChild(o);
+      });
+    }
+  },
+
+  async _saveUserFromModal(isEdit) {
+    const prefix = isEdit ? 'eu' : 'cu';
+    const errEl = document.getElementById(prefix + '-error');
+    if (errEl) errEl.textContent = '';
+
+    const username    = (document.getElementById(prefix+'-username')?.value||'').trim().toLowerCase();
+    const displayName = (document.getElementById(prefix+'-displayname')?.value||'').trim();
+    const password    = (document.getElementById(prefix+'-password')?.value||'').trim();
+    const password2   = isEdit ? password : (document.getElementById('cu-password2')?.value||'').trim();
+    const role        = document.getElementById(prefix+'-role')?.value || 'technicien';
+    const region      = document.getElementById(prefix+'-region')?.value || '';
+    const centre      = document.getElementById(prefix+'-centre')?.value || '';
+    const actif       = isEdit ? (document.getElementById('eu-actif')?.checked !== false) : true;
+
+    // Validation
+    if (!username || username.length < 3) {
+      if (errEl) errEl.textContent = 'Identifiant trop court (min. 3 caractères)'; return;
+    }
+    if (!/^[a-z0-9._-]+$/.test(username)) {
+      if (errEl) errEl.textContent = 'Identifiant : lettres minuscules, chiffres, . _ - uniquement'; return;
+    }
+    if (!displayName) {
+      if (errEl) errEl.textContent = 'Le nom affiché est obligatoire'; return;
+    }
+    if (!isEdit && !password) {
+      if (errEl) errEl.textContent = 'Le mot de passe est obligatoire'; return;
+    }
+    if (password && password.length < 8) {
+      if (errEl) errEl.textContent = 'Mot de passe trop court (min. 8 caractères)'; return;
+    }
+    if (!isEdit && password !== password2) {
+      if (errEl) errEl.textContent = 'Les mots de passe ne correspondent pas'; return;
+    }
+
+    const users = this._loadUsers();
+
+    // Vérifier doublon identifiant
+    const dupIdx = users.findIndex((u, i) => u.username === username && (!isEdit || i !== this._editUserIdx));
+    if (dupIdx >= 0) {
+      if (errEl) errEl.textContent = 'Cet identifiant est déjà utilisé'; return;
+    }
+
+    // Hash du mot de passe
+    let pwHash = null;
+    if (password) {
+      pwHash = await hashPassword(password);
+    }
+
+    if (isEdit) {
+      const u = users[this._editUserIdx];
+      if (!u) return;
+      u.username    = username;
+      u.displayName = displayName;
+      u.role        = role;
+      u.region      = region;
+      u.centre      = centre;
+      u.actif       = actif;
+      u.updatedAt   = new Date().toISOString();
+      if (pwHash) u.passwordHash = pwHash;
+    } else {
+      users.push({
+        id:           App.uuid ? App.uuid() : Date.now().toString(36),
+        username,
+        displayName,
+        passwordHash: pwHash,
+        role,
+        region,
+        centre,
+        actif:        true,
+        createdAt:    new Date().toISOString(),
+        createdBy:    'admin',
+      });
+    }
+
+    this._saveUsers(users);
+    App.closeModal();
+    this._renderUsersList();
+    showToast(isEdit ? '✅ Compte mis à jour' : '✅ Compte créé — ' + displayName + ' peut maintenant se connecter', 'success');
+    App._logAction(isEdit ? 'Modification compte' : 'Création compte', username);
+  },
+
+  toggleUserActive(idx) {
+    const users = this._loadUsers();
+    if (!users[idx]) return;
+    users[idx].actif = users[idx].actif === false ? true : false;
+    users[idx].updatedAt = new Date().toISOString();
+    this._saveUsers(users);
+    this._renderUsersList();
+    showToast(users[idx].actif ? '✅ Compte réactivé' : '🔴 Compte désactivé', 'info');
+  },
+
+  deleteUser(idx) {
+    const users = this._loadUsers();
+    const u = users[idx];
+    if (!u) return;
+    if (!confirm('Supprimer définitivement le compte de ' + (u.displayName || u.username) + ' ?')) return;
+    users.splice(idx, 1);
+    this._saveUsers(users);
+    this._renderUsersList();
+    showToast('Compte supprimé.', 'info');
+  },
+
+  _renderLogs() {
+    const el = document.getElementById('adm-logs-content');
+    if (!el) return;
+    const errLog    = safeJsonParse(localStorage.getItem('ucpa_error_log'), []);
+    const actionLog = safeJsonParse(localStorage.getItem('ucpa_action_log'), []);
+    const accessLog = safeJsonParse(localStorage.getItem('ucpa_access_log'), []);
+
+    const renderTable = (rows, title, cols) => {
+      if (!rows.length) return `<div style="color:var(--muted);font-size:12px;padding:8px 0">${title} : aucune entrée</div>`;
+      return `
+        <div style="font-size:12px;font-weight:600;margin:12px 0 6px">${title} (${rows.length})</div>
+        <div style="overflow-x:auto;margin-bottom:16px">
+          <table style="font-size:11px;width:100%;border-collapse:collapse">
+            <thead><tr style="background:var(--bg3)">
+              ${cols.map(c=>`<th style="padding:5px 8px;text-align:left;white-space:nowrap">${c}</th>`).join('')}
+            </tr></thead>
+            <tbody>${rows.slice(-50).reverse().map(r => `
+              <tr style="border-bottom:1px solid var(--border)">
+                ${cols.map((c,i)=> {
+                  const v = i===0 ? (r.ts||'').substring(0,16).replace('T',' ') :
+                            i===1 ? (r.type||r.action||r.role||'') :
+                            i===2 ? (r.message||r.label||r.centre||'') :
+                            (r.centre||r.region||r.user||'');
+                  return `<td style="padding:5px 8px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(String(v||'—'))}</td>`;
+                }).join('')}
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>`;
+    };
+
+    el.innerHTML = renderTable(errLog, '🔴 Erreurs système', ['Date','Type','Message','Centre']) +
+                   renderTable(actionLog, '📝 Actions utilisateurs', ['Date','Action','Détail','Centre']) +
+                   renderTable(accessLog, '🔑 Connexions', ['Date','Rôle','Centre','Région']);
+  },
+
+
   exportLogs() {
     // FIX QA T26 — Export des logs d'erreur pour diagnostic
     const prefix = App._storagePrefix || '';
@@ -19871,76 +20567,5 @@ document.addEventListener('ucpa-session-started', function() {
   })();
   </script>
 
-  <!-- ══ WIDGET SANTÉ SYSTÈME — FIX QA ════════════════════════════ -->
-  <div id="system-health-widget" style="display:none;position:fixed;bottom:16px;left:16px;z-index:99990;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:240px;box-shadow:0 4px 20px rgba(0,0,0,.15)">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <span style="font-size:12px;font-weight:700;color:var(--text)">🏥 Santé système</span>
-      <button onclick="document.getElementById('system-health-widget').style.display='none'"
-              style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px" aria-label="Fermer">✕</button>
-    </div>
-    <div id="health-items" style="display:flex;flex-direction:column;gap:4px;font-size:11px"></div>
-    <div style="margin-top:8px;font-size:10px;color:var(--muted)" id="health-ts"></div>
-  </div>
-  <!-- /WIDGET SANTÉ SYSTÈME -->
-
-  <script>
-  /* ══ SANTÉ SYSTÈME ERP — Vérifications automatiques au démarrage ══ */
-  (function() {
-    function runHealthChecks() {
-      const checks = [];
-      // 1. localStorage disponible
-      try { localStorage.setItem('_hc', '1'); localStorage.removeItem('_hc'); checks.push({ ok: true,  label: 'Stockage local' }); }
-      catch(e) { checks.push({ ok: false, label: 'Stockage local indisponible !' }); }
-
-      // 2. Taille localStorage
-      let lsSize = 0;
-      try { for (let k in localStorage) lsSize += (localStorage[k]||'').length; } catch(e) {}
-      const lsKo = Math.round(lsSize / 1024);
-      checks.push({ ok: lsKo < 4000, label: 'Stockage utilisé : ' + lsKo + ' Ko / ~5 000 Ko' });
-
-      // 3. Erreurs récentes
-      const errLog = JSON.parse(localStorage.getItem('ucpa_error_log') || '[]');
-      const recentErrors = errLog.filter(function(e) {
-        return Date.now() - new Date(e.ts).getTime() < 3600000;
-      }).length;
-      checks.push({ ok: recentErrors === 0, label: recentErrors + ' erreur(s) système (1h)' + (recentErrors > 0 ? ' — Voir admin' : '') });
-
-      // 4. Réseau
-      checks.push({ ok: navigator.onLine, label: navigator.onLine ? 'Réseau : connecté' : 'Réseau : HORS-LIGNE' });
-
-      // 5. Session valide
-      const hasSession = !!sessionStorage.getItem('ucpa_session');
-      checks.push({ ok: hasSession, label: hasSession ? 'Session active' : 'Session expirée' });
-
-      // 6. Version
-      checks.push({ ok: true, label: 'Version : ERP UCPA v6.0 (sprint QA)' });
-
-      // Afficher si problème détecté
-      const hasIssues = checks.some(function(c) { return !c.ok; });
-      if (hasIssues) {
-        const widget = document.getElementById('system-health-widget');
-        const items  = document.getElementById('health-items');
-        const ts     = document.getElementById('health-ts');
-        if (!widget || !items) return;
-
-        items.innerHTML = checks.map(function(c) {
-          return '<div style="display:flex;align-items:center;gap:6px;padding:2px 0">' +
-            '<span>' + (c.ok ? '✅' : '⚠️') + '</span>' +
-            '<span style="color:' + (c.ok ? 'var(--muted)' : 'var(--red)') + '">' +
-            c.label.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</span></div>';
-        }).join('');
-        ts.textContent = 'Vérifié à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
-        widget.style.display = 'block';
-      }
-    }
-
-    // Lancer après init de l'app (2s de délai)
-    window.addEventListener('DOMContentLoaded', function() {
-      setTimeout(runHealthChecks, 2000);
-      // Relancer toutes les 30 min
-      setInterval(runHealthChecks, 30 * 60 * 1000);
-    });
-  })();
-  </script>
 </body>
 </html>
