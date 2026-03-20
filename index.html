@@ -795,7 +795,7 @@ flex-shrink:0;
 }
 #page-title{font-size:16px;font-weight:700;color:var(--text)}
 #page-sub{font-size:12px;color:var(--muted);margin-left:4px}
-.topbar-actions{margin-left:auto;display:flex;gap:8px}
+.topbar-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:nowrap;overflow:hidden}
 .btn{
 padding:8px 16px;border-radius:6px;border:none;cursor:pointer;
 font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;
@@ -1200,7 +1200,7 @@ display:flex;align-items:center;justify-content:center;
 flex-direction:column;
 }
 .login-wrap{
-width:420px;
+width:min(420px,92vw);
 background:#FFFFFF;
 border:none;
 border-radius:16px;
@@ -1631,6 +1631,7 @@ font-size:13px;cursor:pointer;transition:border-color 0.15s;
 .restore-zone:hover{border-color:var(--accent);color:var(--text)}
 
 .notice-layout{display:grid;grid-template-columns:240px 1fr;gap:16px;height:calc(100vh - 140px)}
+@media(max-width:768px){.notice-layout{grid-template-columns:1fr !important;height:auto !important}.notice-nav-panel{max-height:180px;overflow-y:auto}.notice-content-panel{padding:12px}}
 .notice-nav-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .notice-nav-head{padding:12px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:700;color:var(--muted2)}
 .notice-nav-item{
@@ -1670,7 +1671,262 @@ font-size:11px;color:var(--text);
 .notice-table th{padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);border-bottom:2px solid var(--border);font-family:'DM Mono',monospace}
 .notice-table td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--muted2)}
 .notice-table td:first-child{font-weight:600;color:var(--text)}
-.notice-version{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:24px;padding-top:12px;border-top:1px solid var(--border)}</style>
+.notice-version{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:24px;padding-top:12px;border-top:1px solid var(--border)}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE MOBILE — Corrections complètes tous onglets
+   Breakpoints : 768px (tablette/mobile) · 480px (petit mobile)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Tables : scroll horizontal universel ─────────────────────── */
+@media (max-width: 768px) {
+  .card-body table,
+  .card table,
+  [id$="-content"] table,
+  [id$="-list"] table,
+  [id$="-wrap"] table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+}
+
+/* ── Topbar : masquer les actions secondaires sur mobile ─────── */
+@media (max-width:768px) {
+
+  /* Topbar */
+  #topbar { padding:0 12px; gap:8px; }
+  #page-title { font-size:14px; }
+  .topbar-actions { gap:4px; }
+  .topbar-actions .btn-ghost:not(.theme-toggle-btn):not([onclick*="nav"]) {
+    display: none;
+  }
+
+  /* Contenu principal */
+  #content { padding:12px; }
+
+  /* ── Assistant / Veille réglementaire ────────────────────── */
+  /* Panel maintenance : grille 2 col → 1 col */
+  #assistant-panel-maintenance,
+  .assistant-main-panel {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: unset !important;
+  }
+  /* Sidebar IA (colonne droite) passe en bas */
+  #assistant-panel-maintenance > div:last-child {
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  /* Panel veille : layout flex col sur mobile */
+  #assistant-panel-veille > div {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  /* Sidebar thèmes → pleine largeur */
+  .vl-theme-sidebar,
+  #assistant-panel-veille > div > div:first-child {
+    width: 100% !important;
+    max-height: none !important;
+    border-radius: 8px !important;
+  }
+  /* Liste thèmes → pills scrollables */
+  .vl-theme-sidebar > div:last-child,
+  #assistant-panel-veille > div > div:first-child > div:last-child {
+    max-height: none !important;
+    overflow-y: visible !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    padding: 8px !important;
+  }
+  /* Label section thèmes : masqué sur mobile (les thèmes parlent d'eux-mêmes) */
+  .vl-theme-sidebar > div:first-child {
+    font-size: 9px;
+    padding: 6px 10px;
+  }
+  .vl-nav {
+    padding: 5px 10px !important;
+    font-size: 11px !important;
+    border-radius: 20px !important;
+    border-left: none !important;
+    border: 1px solid var(--border) !important;
+    white-space: nowrap !important;
+  }
+  .vl-nav.active {
+    background: var(--accent) !important;
+    color: #fff !important;
+    border-color: var(--accent) !important;
+  }
+  /* Contenu réglementation : pleine largeur */
+  #assistant-panel-veille > div > div:last-child {
+    width: 100% !important;
+  }
+
+  /* ── Commission sécurité ───────────────────────────────── */
+  #commission-content table { font-size:11px; }
+  #commission-content { padding: 8px 6px; }
+
+  /* Onglets internes commission → scroll horizontal */
+  #page-commission .card > div[style*="border-bottom"] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    flex-wrap: nowrap !important;
+  }
+
+  /* ── KPIs : uniformiser sur mobile ───────────────────── */
+  .reg-kpi-strip { grid-template-columns: repeat(2,1fr) !important; gap:6px !important; }
+  .admin-kpi-bar { grid-template-columns: repeat(2,1fr) !important; }
+  .kpi { padding: 10px 8px !important; }
+  .kpi-val { font-size: 20px !important; }
+
+  /* ── Calendrier ───────────────────────────────────────── */
+  #cal-grid {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  #cal-grid table { min-width: 500px; }
+  .cal-hdr-bar { flex-wrap: wrap; gap: 6px; }
+
+  /* ── PMR ──────────────────────────────────────────────── */
+  .pmr-grid { grid-template-columns: 1fr !important; }
+  .pmr-zone-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Sanitaire ECS ────────────────────────────────────── */
+  .ecs-layout { grid-template-columns: 1fr !important; }
+  .ecs-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Piscine ──────────────────────────────────────────── */
+  #piscine-content { padding: 8px; }
+  #piscine-content table { font-size: 11px; }
+
+  /* ── DUERP ────────────────────────────────────────────── */
+  .duerp-grid { grid-template-columns: 1fr !important; }
+
+  /* ── GED ──────────────────────────────────────────────── */
+  .ged-layout { 
+    grid-template-columns: 1fr !important; 
+    height: auto !important; 
+  }
+  .ged-tree-panel { max-height: 200px; border-right: none !important; border-bottom: 1px solid var(--border); }
+  .ged-file-panel  { min-height: 300px; }
+
+  /* ── Investissements ──────────────────────────────────── */
+  #inv-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ── Équipements ──────────────────────────────────────── */
+  #equip-list { overflow-x: auto; }
+
+  /* ── Admin ────────────────────────────────────────────── */
+  #adm-users-list { overflow-x: auto; }
+  #adm-users-list table { font-size: 11px; min-width: 600px; }
+  .admin-kpi-bar { gap: 6px; }
+
+  /* ── Matrice conformité ───────────────────────────────── */
+  #matrix-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+
+  /* ── Modales ──────────────────────────────────────────── */
+  .modal-box { width: 95vw !important; max-height: 90vh; overflow-y: auto; padding: 16px !important; }
+  .form-grid { grid-template-columns: 1fr !important; }
+  .form-grid .full,
+  [style*="grid-column:span 2"] { grid-column: span 1 !important; }
+
+  /* ── Notice / Aide ────────────────────────────────────── */
+  .notice-layout { grid-template-columns: 1fr !important; height: auto !important; }
+  .notice-nav-panel { max-height: 200px; overflow-y: auto; }
+
+  /* ── Grilles multi-colonnes génériques → 1 col ────────── */
+  [style*="grid-template-columns:1fr 1fr 1fr 1fr"],
+  [style*="grid-template-columns:1fr 1fr 1fr"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  [style*="grid-template-columns:repeat(4,1fr)"],
+  [style*="grid-template-columns:repeat(5,1fr)"] {
+    grid-template-columns: repeat(2,1fr) !important;
+  }
+
+  /* ── Filtre tabs (onglets internes) : scroll horizontal ─ */
+  [style*="display:flex;gap:0;border-bottom"],
+  .gamme-tabs, .inv-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+  }
+
+  /* ── Breadcrumb / toolbar actions : retour à la ligne ─── */
+  .card-hdr { flex-wrap: wrap; gap: 6px; }
+  .card-hdr .ml { flex-wrap: wrap; gap: 4px; overflow-x: auto; }
+  .card-hdr .ml .btn { white-space: nowrap; }
+
+  /* ── Rondes / Gammes ──────────────────────────────────── */
+  .gamme-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Prestataires ─────────────────────────────────────── */
+  #prest-content table { font-size: 11px; }
+
+  /* ── Login : tabs régions → scroll horizontal ─────────── */
+  .region-switcher {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    padding-bottom: 4px !important;
+  }
+  .region-tab { flex-shrink: 0 !important; }
+
+  /* ── Dropdown sidebar ─────────────────────────────────── */
+  .sb-dropdown-list { max-height: 200px; }
+}
+
+/* ── Petit mobile 480px ──────────────────────────────────────── */
+@media (max-width:480px) {
+  #content { padding: 8px; }
+  .card-hdr { padding: 8px 10px; }
+  .card-body { padding: 8px 10px; }
+  .kpi { padding: 8px 6px !important; }
+  .kpi-val { font-size: 18px !important; }
+  .kpi-label { font-size: 9px !important; }
+  .btn { font-size: 12px; padding: 7px 12px; }
+  .btn-sm { font-size: 11px; padding: 5px 8px; }
+
+  /* Grids 2 col → 1 col sur très petit écran */
+  [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  .reg-kpi-strip { grid-template-columns: repeat(2,1fr) !important; }
+  .pmr-zone-grid { grid-template-columns: 1fr !important; }
+  .ecs-grid { grid-template-columns: 1fr !important; }
+
+  /* Topbar ultra compact */
+  #page-title { font-size: 13px; }
+  #page-sub { display: none; }
+  .theme-toggle-btn span:not(.theme-icon-dark):not(.theme-icon-light) { display: none; }
+
+  /* Commission : onglets en scroll */
+  #comm-tab-prescriptions, #comm-tab-visites, #comm-tab-historique {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Admin : onglets compact */
+  #adm-tab-centres, #adm-tab-comptes, #adm-tab-corbeille, #adm-tab-logs {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+  }
+}
+
+
+@media (max-width: 480px) {
+  /* Assistant : sidebar IA complètement masquée sur petit mobile */
+  #assistant-panel-maintenance > div:last-child { display: none !important; }
+  #assistant-panel-veille .vl-theme-sidebar > div:last-child { flex-direction: column !important; }
+}
+/* ═══════════════════════════════════════════════════════════════ */
+</style>
 <!-- PWA -->
 <link rel="manifest" href="data:application/json,{%22name%22:%22UCPA ERP%22,%22short_name%22:%22UCPA ERP%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23161618%22,%22theme_color%22:%22%23e8541a%22}">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2102,6 +2358,7 @@ font-family:'DM Sans',sans-serif;
 
 #assistant-panel-veille{background:var(--vl-bg);border-radius:8px;overflow:hidden}
 #vl-body-grid{display:grid;grid-template-columns:220px 1fr 320px;height:calc(100vh - var(--hdr) - 200px);min-height:500px;overflow:hidden}
+@media(max-width:768px){#vl-body-grid{grid-template-columns:1fr !important;height:auto !important;min-height:unset !important;overflow:visible !important}#vl-sidebar{max-height:220px;overflow-y:auto;border-right:none !important;border-bottom:1px solid var(--vl-bd)}}
 
 #vl-sidebar{background:var(--vl-s1);border-right:1px solid var(--vl-bd);display:flex;flex-direction:column;overflow:hidden}
 .vl-sidebar-section{padding:10px 12px 4px}
@@ -2333,6 +2590,101 @@ font-family:'Barlow',sans-serif;
 .cn-search{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--text);font-family:'Barlow',sans-serif;outline:none;width:200px}
 .cn-search:focus{border-color:var(--accent)}
 @media(max-width:700px){.cn-layout{grid-template-columns:1fr}.cn-sidebar{height:auto;max-height:200px}}</style>
+
+<script>
+/* ── Responsive helpers ──────────────────────────────────────────
+   Ajuste les éléments inline-stylés qui résistent au CSS
+   ─────────────────────────────────────────────────────────────── */
+(function() {
+  function applyMobileLayout() {
+    const isMobile = window.innerWidth <= 768;
+    const isSmall  = window.innerWidth <= 480;
+
+    // ── Panel maintenance assistant (grid 2col ↔ 1col) ──────
+    const mp = document.getElementById('assistant-panel-maintenance');
+    if (mp) {
+      if (isMobile) {
+        mp.style.gridTemplateColumns = '1fr';
+        mp.style.height = 'auto';
+        mp.style.minHeight = 'unset';
+      } else {
+        mp.style.gridTemplateColumns = '1fr 270px';
+        mp.style.height = 'calc(100vh - var(--hdr) - 170px)';
+        mp.style.minHeight = '480px';
+      }
+    }
+
+    // ── Sidebar thèmes veille (width 220px ↔ 100%) ──────────
+    const vls = document.querySelector('.vl-theme-sidebar');
+    if (vls) {
+      if (isMobile) {
+        vls.style.width = '100%';
+        vls.style.flexShrink = '0';
+        // Liste interne en flex wrap
+        const inner = vls.querySelector('div:last-child');
+        if (inner) {
+          inner.style.maxHeight = 'none';
+          inner.style.overflowY = 'visible';
+          inner.style.display = 'flex';
+          inner.style.flexWrap = 'wrap';
+          inner.style.gap = '4px';
+          inner.style.padding = '8px';
+        }
+        // Conteneur parent : flex col
+        const parent = vls.parentElement;
+        if (parent) {
+          parent.style.flexDirection = 'column';
+          parent.style.gap = '8px';
+        }
+      } else {
+        vls.style.width = '220px';
+        vls.style.flexShrink = '0';
+        const inner = vls.querySelector('div:last-child');
+        if (inner) {
+          inner.style.maxHeight = 'calc(100vh - 230px)';
+          inner.style.overflowY = 'auto';
+          inner.style.display = '';
+          inner.style.flexWrap = '';
+          inner.style.padding = '6px';
+        }
+        const parent = vls.parentElement;
+        if (parent) {
+          parent.style.flexDirection = '';
+          parent.style.gap = '10px';
+        }
+      }
+    }
+
+    // ── GED layout ──────────────────────────────────────────
+    const gedLayout = document.querySelector('.ged-layout');
+    if (gedLayout) {
+      if (isMobile) {
+        gedLayout.style.gridTemplateColumns = '1fr';
+        gedLayout.style.height = 'auto';
+      } else {
+        gedLayout.style.gridTemplateColumns = '';
+        gedLayout.style.height = '';
+      }
+    }
+  }
+
+  // Appel au chargement
+  document.addEventListener('DOMContentLoaded', applyMobileLayout);
+  // Appel à chaque redimensionnement (avec debounce)
+  let _rTimer;
+  window.addEventListener('resize', function() {
+    clearTimeout(_rTimer);
+    _rTimer = setTimeout(applyMobileLayout, 120);
+  });
+  // Hook sur la navigation de l'app
+  document.addEventListener('ucpa-session-started', function() {
+    setTimeout(applyMobileLayout, 300);
+  });
+  // Exposer pour les nav() de l'app
+  window._applyMobileLayout = applyMobileLayout;
+})();
+</script>
+
 
 <!-- ════════════════════════════════════════════════════════════════════
      GUIDE FIREBASE AUTHENTICATION — Migration mots de passe localStorage
@@ -3087,7 +3439,7 @@ font-family:'Barlow',sans-serif;
           <button class="btn btn-ghost" id="comm-tab-historique"     onclick="App.showCommTab('historique')"
             style="border-radius:0;border-bottom:2px solid transparent;font-size:12px;padding:8px 14px">🕐 Historique</button>
         </div>
-        <div class="card-body" id="commission-content"></div>
+        <div class="card-body" id="commission-content" style="overflow-x:auto"></div>
       </div>
     </div>
 
@@ -4126,7 +4478,7 @@ font-family:'Barlow',sans-serif;
       </div>
 
       <!-- PANNEAU : Maintenance -->
-      <div id="assistant-panel-maintenance" style="display:grid;grid-template-columns:1fr 270px;gap:16px;height:calc(100vh - var(--hdr) - 170px);min-height:480px">
+      <div id="assistant-panel-maintenance" class="assistant-main-panel" style="display:grid;grid-template-columns:1fr 270px;gap:16px;height:calc(100vh - var(--hdr) - 170px);min-height:480px">
 
         <!-- Chat principal -->
         <div class="card" style="display:flex;flex-direction:column;overflow:hidden;margin:0">
@@ -4219,7 +4571,7 @@ font-family:'Barlow',sans-serif;
         <div style="display:flex;gap:10px;align-items:flex-start">
 
           <!-- Sidebar thèmes -->
-          <div style="width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
+          <div class="vl-theme-sidebar" style="width:220px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden">
             <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace;font-weight:700">Thèmes</div>
             <div style="overflow-y:auto;max-height:calc(100vh - 230px);padding:6px">
               <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:6px 8px 3px;font-family:'DM Mono',monospace">Sécurité</div>
@@ -6096,6 +6448,8 @@ const App = {
     document.getElementById('page-title').textContent = titles[page] || page;
     const centre = this.centre === 'ALL' ? 'Tous les centres' : this.centre.replace('VILLAGE SPORTIF ','');
     document.getElementById('page-sub').textContent = ' · ' + centre;
+    // Ajustement responsive après chaque navigation
+    if (window._applyMobileLayout) setTimeout(window._applyMobileLayout, 80);
   },
 
   selectCentre(val) {
@@ -7135,7 +7489,7 @@ function pdfAddFooter(doc, pageNum) {
     });
 
     html += '</tbody></table>';
-    wrap.innerHTML = html;
+    wrap.innerHTML = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch">${html}</div>`;
   },
 
   cycleMatrix(key) {
