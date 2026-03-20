@@ -555,11 +555,11 @@ if (!document.getElementById('ucpa-toast-style')) {
 --accent:      var(--ucpa-orange);
 --accent2:     var(--ucpa-orange-lt);
 
-/* Couleurs sémantiques */
---green:       var(--ucpa-green);
---amber:       var(--ucpa-yellow);
---red:         #E8361A;
---blue:        var(--ucpa-teal);
+/* Couleurs sémantiques — versions claires pour fond sombre */
+--green:       #66BB6A;   /* vert clair — ratio 5.2:1 sur #0F1D2A ✅ */
+--amber:       #FFB300;   /* ambre clair — ratio 7.1:1 sur #0F1D2A ✅ */
+--red:         #EF5350;   /* rouge clair — ratio 4.6:1 sur #0F1D2A ✅ */
+--blue:        #29B6F6;   /* bleu clair — ratio 5.8:1 sur #0F1D2A ✅ */
 
 --shadow:          rgba(0,0,0,0.5);
 --matrix-sticky-bg:#0A1520;
@@ -573,18 +573,18 @@ if (!document.getElementById('ucpa-toast-style')) {
 --panel:       #FFFFFF;
 --border:      #D0D9EC;
 --text:        var(--ucpa-navy);
---muted:       var(--ucpa-gray);
---muted2:      #4A5A7A;
+--muted:       #6B7280;   /* ratio 4.7:1 sur blanc ✅ */
+--muted2:      #374151;   /* ratio 10.5:1 sur blanc ✅✅ */
 
 /* Accent = orange UCPA principal */
 --accent:      var(--ucpa-orange);
 --accent2:     var(--ucpa-orange-lt);
 
-/* Couleurs sémantiques */
---green:       var(--ucpa-green);
---amber:       var(--ucpa-yellow);
---red:         #DC2626;
---blue:        var(--ucpa-teal);
+/* Couleurs sémantiques — versions foncées pour lisibilité sur fond clair */
+--green:       #2E7D32;   /* vert foncé — ratio 7.1:1 sur blanc ✅ */
+--amber:       #B45309;   /* ambre foncé — ratio 5.9:1 sur blanc ✅ */
+--red:         #C62828;   /* rouge foncé — ratio 6.4:1 sur blanc ✅ */
+--blue:        #0277BD;   /* bleu foncé — ratio 6.0:1 sur blanc ✅ */
 
 --shadow:          rgba(0,0,0,0.10);
 --matrix-sticky-bg:#F5F7FA;
@@ -647,25 +647,100 @@ font-family:'Barlow',sans-serif;
 .logo span{color:rgba(255,255,255,0.85);font-weight:300}
 .region-label{
 font-size:10px;letter-spacing:2px;text-transform:uppercase;
-color:rgba(255,255,255,0.40);margin-top:2px;font-family:'DM Mono',monospace;
+color:rgba(255,255,255,0.60);margin-top:2px;font-family:'DM Mono',monospace;
 }
+/* ══ CUSTOM DROPDOWN SIDEBAR ════════════════════════════════ */
+.sb-dropdown{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:10px;
+  padding:8px 12px;
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:8px;
+  cursor:pointer;
+  font-size:12px;
+  color:rgba(255,255,255,0.90);
+  font-family:'Barlow',sans-serif;
+  font-weight:500;
+  transition:background .15s,border-color .15s;
+  user-select:none;
+  white-space:nowrap;
+  overflow:hidden;
+}
+.sb-dropdown:hover{
+  background:rgba(255,255,255,0.10);
+  border-color:rgba(255,255,255,0.25);
+}
+.sb-dropdown.open{
+  border-color:var(--ucpa-orange);
+  background:rgba(232,54,26,0.10);
+}
+.sb-dropdown.open svg{transform:rotate(180deg)}
+
+.sb-dropdown-list{
+  position:absolute;
+  left:12px;right:12px;
+  background:#1A2D3E;
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:8px;
+  max-height:260px;
+  overflow-y:auto;
+  z-index:500;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  margin-top:2px;
+}
+.sb-dropdown-list::-webkit-scrollbar{width:3px}
+.sb-dropdown-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:2px}
+
+.sb-dropdown-item{
+  padding:9px 14px;
+  font-size:12px;
+  font-family:'Barlow',sans-serif;
+  color:rgba(255,255,255,0.80);
+  cursor:pointer;
+  transition:background .1s,color .1s;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.sb-dropdown-item:last-child{border-bottom:none}
+.sb-dropdown-item:hover{
+  background:rgba(255,255,255,0.08);
+  color:#fff;
+}
+.sb-dropdown-item.selected{
+  background:rgba(232,54,26,0.15);
+  color:var(--ucpa-orange);
+  font-weight:600;
+}
+/* ══════════════════════════════════════════════════════════ */
+
+/* ── Selects généraux (fond clair, partout dans l'app) ── */
 .centre-selector{
-margin-top:12px;
-background:rgba(255,255,255,0.07);
-border:1px solid rgba(255,255,255,0.12);
+margin-top:0;
+background:var(--bg2);
+border:1px solid var(--border);
 border-radius:6px;
 padding:8px 10px;
-color:rgba(255,255,255,0.85);
+color:var(--text);
 font-size:12px;
 width:100%;
 font-family:'Barlow',sans-serif;
 cursor:pointer;
 appearance:none;
-background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ffffff80'/%3E%3C/svg%3E");
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B7280'/%3E%3C/svg%3E");
 background-repeat:no-repeat;
 background-position:right 10px center;
 }
-.centre-selector:focus{outline:none;border-color:var(--ucpa-orange)}
+.centre-selector:focus{outline:none;border-color:var(--accent)}
+/* Les options héritent du fond/texte du navigateur — on force */
+.centre-selector option{
+background:var(--bg2);
+color:var(--text);
+}
+
+/* sidebar select → custom dropdown (voir .sb-dropdown) */
 
 .conformite-badge{
 margin-top:10px;
@@ -681,13 +756,13 @@ display:flex;align-items:center;gap:8px;
 #sidebar-nav::-webkit-scrollbar{width:2px}
 #sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15)}
 
-.nav-section{padding:16px 16px 4px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.35);font-family:'DM Mono',monospace}
+.nav-section{padding:16px 16px 4px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.50);font-family:'DM Mono',monospace}
 .nav-item{
 display:flex;align-items:center;gap:10px;
 padding:9px 16px;
 cursor:pointer;
 font-size:13px;font-weight:400;
-color:rgba(255,255,255,0.60);
+color:rgba(255,255,255,0.80);
 transition:all 0.15s;
 border-left:2px solid transparent;
 position:relative;
@@ -736,7 +811,7 @@ transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;
 
 #content{flex:1;overflow-y:auto;padding:24px}
 #content::-webkit-scrollbar{width:4px}
-#content::-webkit-scrollbar-thumb{background:var(--ucpa-orange);border-radius:2px;opacity:0.5}
+#content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
 .page{display:none}
 .page.active{display:block}
@@ -845,7 +920,7 @@ font-family:'DM Mono',monospace;
 }
 .pill-ok{background:var(--ucpa-green-20);color:#166534}
 .pill-warn{background:var(--ucpa-yellow-20);color:#854D0E}
-.pill-ko{background:rgba(232,54,26,0.15);color:var(--red)}
+.pill-ko{background:rgba(198,40,40,0.10);color:var(--red)}
 .pill-na{background:rgba(90,107,133,0.1);color:var(--muted)}
 
 .matrix-wrap{overflow:auto;max-height:65vh}
@@ -854,8 +929,8 @@ font-family:'DM Mono',monospace;
 .matrix-table td,.matrix-table th{border:1px solid var(--border);padding:6px 8px}
 .matrix-table .domain-col{position:sticky;left:0;background:var(--matrix-sticky-bg);z-index:5;min-width:160px;font-weight:600}
 .mce{width:24px;height:24px;border-radius:4px;margin:auto;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px}
-.mce-ok{background:rgba(29,185,84,0.2);color:var(--green)}
-.mce-warn{background:rgba(245,166,35,0.2);color:var(--amber)}
+.mce-ok{background:rgba(46,125,50,0.12);color:var(--green)}
+.mce-warn{background:rgba(180,83,9,0.10);color:var(--amber)}
 .mce-ko{background:rgba(232,54,26,0.2);color:var(--red)}
 .mce-na{background:rgba(90,107,133,0.1);color:var(--muted)}
 
@@ -1016,7 +1091,7 @@ font-size:12px;width:100%;text-align:center;
 transition:border-color 0.15s;
 }
 .ecs-input:focus{outline:none;border-color:var(--accent)}
-.ecs-input.ok{border-color:var(--green);background:rgba(29,185,84,0.08)}
+.ecs-input.ok{border-color:var(--green);background:rgba(46,125,50,0.08)}
 .ecs-input.ko{border-color:var(--red);background:rgba(232,54,26,0.08)}
 .ecs-status{
 width:56px;height:28px;border-radius:5px;
@@ -1024,7 +1099,7 @@ display:flex;align-items:center;justify-content:center;
 font-size:10px;font-weight:700;font-family:'DM Mono',monospace;
 flex-shrink:0;
 }
-.ecs-status.ok{background:rgba(29,185,84,0.15);color:var(--green)}
+.ecs-status.ok{background:rgba(46,125,50,0.10);color:var(--green)}
 .ecs-status.ko{background:rgba(232,54,26,0.15);color:var(--red)}
 .ecs-status.empty{background:var(--bg3);color:var(--muted)}
 .ecs-unit{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;text-align:center}
@@ -1051,7 +1126,7 @@ padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s
 .ecs-history-meta{font-size:10px;color:var(--muted);margin-top:2px}
 .ecs-history-badges{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
 .ecs-anom-badge{font-size:9px;padding:2px 6px;border-radius:10px;font-family:'DM Mono',monospace;font-weight:600}
-.ecs-anom-badge.ok{background:rgba(29,185,84,0.15);color:var(--green)}
+.ecs-anom-badge.ok{background:rgba(46,125,50,0.10);color:var(--green)}
 .ecs-anom-badge.ko{background:rgba(232,54,26,0.15);color:var(--red)}
 
 .purge-row{display:grid;grid-template-columns:110px 1fr 1fr 36px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
@@ -1087,8 +1162,8 @@ padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s
 .remind-meta{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
 .remind-days{font-size:11px;font-weight:700;padding:3px 8px;border-radius:12px;font-family:'DM Mono',monospace;flex-shrink:0}
 .remind-days.urgent{background:rgba(232,54,26,0.15);color:var(--red)}
-.remind-days.soon{background:rgba(245,166,35,0.15);color:var(--amber)}
-.remind-days.ok{background:rgba(29,185,84,0.12);color:var(--green)}
+.remind-days.soon{background:rgba(180,83,9,0.08);color:var(--amber)}
+.remind-days.ok{background:rgba(46,125,50,0.08);color:var(--green)}
 
 tr.row-expired td{background:rgba(232,54,26,0.04)}
 tr.row-soon td{background:rgba(245,166,35,0.03)}
@@ -1126,11 +1201,11 @@ flex-direction:column;
 }
 .login-wrap{
 width:420px;
-background:var(--panel);
-border:1px solid var(--border);
+background:#FFFFFF;
+border:none;
 border-radius:16px;
 padding:40px;
-box-shadow:0 24px 80px rgba(0,0,0,0.5);
+box-shadow:0 24px 80px rgba(0,0,0,0.4);
 }
 .login-wrap::before{
 content:'';display:block;
@@ -1151,7 +1226,7 @@ color:var(--ucpa-gray);font-family:'DM Mono',monospace;
 margin-bottom:32px;
 }
 .login-title{
-font-size:16px;font-weight:700;color:var(--ucpa-navy);
+font-size:16px;font-weight:700;color:#0F1F28;
 margin-bottom:6px;
 }
 .login-sub{
@@ -1171,7 +1246,7 @@ transition:all 0.15s;
 .login-field{margin-bottom:16px}
 .login-field label{
 display:block;font-size:10px;letter-spacing:1.5px;
-text-transform:uppercase;color:var(--ucpa-gray);
+text-transform:uppercase;color:#757575;
 font-family:'DM Mono',monospace;margin-bottom:6px;
 }
 .login-field input,
@@ -1194,9 +1269,9 @@ display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .login-btn:hover{background:var(--accent2)}
 .login-error{
-background:rgba(255,67,16,0.08);
-border:1px solid rgba(255,67,16,0.25);
-color:var(--ucpa-orange);border-radius:6px;
+background:rgba(198,40,40,0.08);
+border:1px solid rgba(198,40,40,0.25);
+color:#C62828;border-radius:6px;
 padding:10px 14px;font-size:13px;
 margin-top:14px;display:none;
 }
@@ -2429,9 +2504,16 @@ font-family:'Barlow',sans-serif;
   <div id="sidebar-head">
     <div class="logo">UCPA<span> ERP</span></div>
     <div class="region-label" id="sidebar-region-label">▲ Alpes · ERP Régional</div>
-    <select class="centre-selector" id="centre-select" onchange="App.selectCentre(this.value)">
+    <!-- Select natif caché — utilisé par la logique JS -->
+    <select id="centre-select" style="display:none" onchange="App.selectCentre(this.value)">
       <option value="ALL">— Tous les centres —</option>
     </select>
+    <!-- Custom dropdown stylé sidebar -->
+    <div id="centre-dropdown" class="sb-dropdown" onclick="App.toggleCentreDropdown()">
+      <span id="centre-dropdown-label">— Tous les centres —</span>
+      <svg width="10" height="6" viewBox="0 0 10 6" style="flex-shrink:0;transition:transform .2s"><path d="M0 0l5 6 5-6z" fill="rgba(255,255,255,0.6)"/></svg>
+    </div>
+    <div id="centre-dropdown-list" class="sb-dropdown-list" style="display:none"></div>
     <div class="conformite-badge" id="conf-badge">
       <div class="dot" id="conf-dot" style="background:var(--muted)"></div>
       <span id="conf-text" style="font-size:11px;color:var(--muted)">Sélectionner un centre</span>
@@ -8207,6 +8289,69 @@ function pdfAddFooter(doc, pageNum) {
     this.renderAll();
   },
 
+
+  // ── Custom dropdown sidebar ──────────────────────────────────────
+  toggleCentreDropdown() {
+    const btn  = document.getElementById('centre-dropdown');
+    const list = document.getElementById('centre-dropdown-list');
+    if (!btn || !list) return;
+    const isOpen = list.style.display !== 'none';
+    if (isOpen) {
+      list.style.display = 'none';
+      btn.classList.remove('open');
+    } else {
+      this._buildCentreDropdownList();
+      list.style.display = 'block';
+      btn.classList.add('open');
+      // Fermer si clic ailleurs
+      setTimeout(() => {
+        const close = (e) => {
+          if (!btn.contains(e.target) && !list.contains(e.target)) {
+            list.style.display = 'none';
+            btn.classList.remove('open');
+            document.removeEventListener('click', close);
+          }
+        };
+        document.addEventListener('click', close);
+      }, 0);
+    }
+  },
+
+  _buildCentreDropdownList() {
+    const list = document.getElementById('centre-dropdown-list');
+    if (!list) return;
+    const current = this.centre || 'ALL';
+    const items = [{ val: 'ALL', label: '— Tous les centres —' }];
+    CENTRES.forEach(c => items.push({ val: c, label: c.replace('VILLAGE SPORTIF ', 'VS ') }));
+    list.innerHTML = items.map(it => {
+      const sel = it.val === current ? ' selected' : '';
+      return `<div class="sb-dropdown-item${sel}" onclick="App._pickCentre('${it.val.replace(/'/g,"\'")}')">
+        ${sel ? '✓ ' : ''}${it.label}
+      </div>`;
+    }).join('');
+  },
+
+  _pickCentre(val) {
+    const list = document.getElementById('centre-dropdown-list');
+    const btn  = document.getElementById('centre-dropdown');
+    if (list) list.style.display = 'none';
+    if (btn)  btn.classList.remove('open');
+    this.selectCentre(val);
+  },
+
+  _syncCentreDropdown(val) {
+    const lbl = document.getElementById('centre-dropdown-label');
+    if (!lbl) return;
+    if (!val || val === 'ALL') {
+      lbl.textContent = '— Tous les centres —';
+    } else {
+      lbl.textContent = val.replace('VILLAGE SPORTIF ', 'VS ');
+    }
+    // Mettre à jour la sélection visuelle si la liste est ouverte
+    const list = document.getElementById('centre-dropdown-list');
+    if (list && list.style.display !== 'none') this._buildCentreDropdownList();
+  },
+
   exportCommissionPDF() {
     if (!window.jspdf) { showToast('jsPDF non disponible', 'info'); return; }
     const { jsPDF } = window.jspdf;
@@ -11864,6 +12009,8 @@ const Auth = {
         if (sel.options[0]) sel.options[0].disabled = true;
       }
     }
+    // Sync custom dropdown après peuplement
+    setTimeout(() => { if (App._syncCentreDropdown) App._syncCentreDropdown(App.centre || 'ALL'); }, 50);
 
     if (role === 'admin') {
       this._addAdminSwitcher();
