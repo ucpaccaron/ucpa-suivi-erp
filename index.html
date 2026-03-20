@@ -193,24 +193,54 @@ function notifyAria(message, level = 'info') {
   });
 }
 
-async function callAnthropicSecure(prompt, systemPrompt = '', maxTokens = 1000) {
+// ══════════════════════════════════════════════════════════════════
+// FONCTION IA UNIVERSELLE — Anthropic Claude OU Google Gemini
+// Auto-détection selon la clé : sk-ant-* → Claude · AIza* → Gemini
+// ══════════════════════════════════════════════════════════════════
+function _getAIProvider() {
+  const key = window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+  if (!key) return { provider: null, key: '' };
+  if (key.startsWith('AIza')) return { provider: 'gemini', key };
+  return { provider: 'anthropic', key };
+}
 
-  const apiKey = window._anthropicKey ||
-                 (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : '');
+async function callAI(prompt, systemPrompt = '', maxTokens = 1000) {
+  const { provider, key } = _getAIProvider();
 
-  if (!apiKey || apiKey === 'VOTRE_CLE_API_ICI') {
-    throw new Error('Clé API Anthropic non configurée. Rendez-vous dans Admin → Paramètres.');
+  if (!provider) {
+    throw new Error('Clé API non configurée. Rendez-vous dans Admin → Paramètres.');
   }
 
-  if (window._ucpaDebug) {
-    if (window._ucpaDebug) { console.warn('[UCPA ERP] callAnthropicSecure: appel direct (migrer vers Cloud Function)'); }
+  // ── Google Gemini ─────────────────────────────────────────────
+  if (provider === 'gemini') {
+    const model = 'gemini-2.0-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+    const parts = [];
+    if (systemPrompt) parts.push({ text: systemPrompt + '\n\n' });
+    parts.push({ text: prompt });
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 }
+      })
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error('API Gemini : ' + (err.error?.message || response.status));
+    }
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
   }
 
+  // ── Anthropic Claude (défaut) ─────────────────────────────────
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
+      'x-api-key': key,
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
@@ -221,15 +251,16 @@ async function callAnthropicSecure(prompt, systemPrompt = '', maxTokens = 1000) 
       messages: [{ role: 'user', content: prompt }]
     })
   });
-
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
-    throw new Error(`API Anthropic: ${err.error?.message || response.status}`);
+    throw new Error('API Anthropic : ' + (err.error?.message || response.status));
   }
-
   const data = await response.json();
   return data.content?.[0]?.text || '';
 }
+
+// Alias rétrocompatibilité
+const callAnthropicSecure = callAI;
 
 window.addEventListener('error', function(event) {
   logErpError({
@@ -4308,6 +4339,7 @@ font-family:'Barlow',sans-serif;
             <button class="btn btn-ghost btn-sm" id="adm-anthropic-show"
               onclick="const i=document.getElementById('adm-anthropic-key');i.type=i.type==='password'?'text':'password'">👁</button>
             <button class="btn btn-primary btn-sm" onclick="App.saveAnthropicKey()">💾 Enregistrer</button>
+            <button class="btn btn-ghost btn-sm" onclick="App.reloadAnthropicKey()" title="Recharger la clé depuis Firestore / stockage local">🔄 Relancer</button>
           </div>
           <div id="adm-anthropic-status" style="font-size:11px;margin-top:8px;color:var(--muted)">
             Statut : <span id="adm-anthropic-state">chargement…</span>
@@ -5999,7 +6031,6 @@ const App = {
   },
 
   async saveAnthropicKey() {
-    // FIX SÉCURITÉ : vérifier que l'utilisateur est bien admin
     const sess = sessionStorage.getItem('ucpa_session');
     const role = sess ? (JSON.parse(sess).role || '') : '';
     if (role !== 'admin' && role !== 'admin_national') {
@@ -6013,24 +6044,64 @@ const App = {
       return;
     }
 
-    if (window._firestore) {
-      await window._firestore.set('config_anthropic', { apiKey: key });
-      window._anthropicKey = key;
-      input.value = '';
-      this._renderAnthropicStatus();
-      const btn = document.querySelector('[onclick="App.saveAnthropicKey()"]');
-      if (btn) {
-        const orig = btn.innerHTML;
-        btn.innerHTML = '✅ Enregistrée !';
-        btn.style.background = 'var(--green)';
-        setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2500);
-      }
-    } else {
+    // Stocker en mémoire ET localStorage immédiatement
+    window._anthropicKey = key;
+    try { localStorage.setItem('ucpa_anthropic_key', key); } catch(e) {}
 
-      try { localStorage.setItem('ucpa_anthropic_key', key); } catch(e) {}
-      window._anthropicKey = key;
-      showToast('Clé sauvegardée localement (Firebase non configuré — valable sur cet appareil uniquement).', 'success');
+    if (window._firestore) {
+      try {
+        await window._firestore.set('config_anthropic', { apiKey: key });
+      } catch(e) {
+        showToast('⚠️ Firestore inaccessible — clé sauvegardée localement uniquement.', 'warn');
+      }
     }
+
+    input.value = '';
+    this._renderAnthropicStatus();
+
+    const btn = document.querySelector('[onclick="App.saveAnthropicKey()"]');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '✅ Enregistrée !';
+      btn.style.background = 'var(--green)';
+      setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 2500);
+    }
+    showToast('✅ Clé API Anthropic enregistrée — assistant IA actif.', 'success');
+  },
+
+  async reloadAnthropicKey() {
+    // Relancer : tenter de recharger depuis Firestore puis localStorage
+    showToast('🔄 Rechargement de la clé...', 'info');
+    let loaded = false;
+
+    // 1. Essai Firestore
+    if (window._firestore) {
+      try {
+        const snap = await window._firestore.get('config_anthropic');
+        if (snap && snap.apiKey) {
+          window._anthropicKey = snap.apiKey;
+          try { localStorage.setItem('ucpa_anthropic_key', snap.apiKey); } catch(e) {}
+          loaded = true;
+          showToast('✅ Clé rechargée depuis Firestore — assistant IA actif.', 'success');
+        }
+      } catch(e) {}
+    }
+
+    // 2. Fallback localStorage
+    if (!loaded) {
+      const lsKey = (() => { try { return localStorage.getItem('ucpa_anthropic_key'); } catch(e) { return null; } })();
+      if (lsKey) {
+        window._anthropicKey = lsKey;
+        loaded = true;
+        showToast('✅ Clé rechargée depuis le stockage local — assistant IA actif.', 'success');
+      }
+    }
+
+    if (!loaded) {
+      showToast('❌ Aucune clé trouvée. Entrez-la dans Admin → Configuration API.', 'error');
+    }
+
+    this._renderAnthropicStatus();
   },
 
   _clearAnthropicKey() {
@@ -6048,21 +6119,27 @@ const App = {
   },
 
   _renderAnthropicStatus() {
-    const el = document.getElementById('anthropic-state');
+    const el = document.getElementById('anthropic-state') || document.getElementById('adm-anthropic-state');
     if (!el) return;
 
-    // Vérifier le rôle de l'utilisateur connecté
     const sess    = sessionStorage.getItem('ucpa_session');
     const role    = sess ? (safeJsonParse(sess, {}).role || '') : '';
     const isAdmin = (role === 'admin' || role === 'admin_national');
 
-    // Lire depuis localStorage (persistance locale)
-    const lsKey  = (() => { try { return localStorage.getItem('ucpa_anthropic_key'); } catch(e) { return null; } })();
-    const hasKey = !!(lsKey);
+    // Lire depuis localStorage ET depuis _anthropicKey (Firestore)
+    const lsKey   = (() => { try { return localStorage.getItem('ucpa_anthropic_key'); } catch(e) { return null; } })();
+    const memKey  = (() => { try { return window._anthropicKey || ''; } catch(e) { return ''; } })();
 
-    // Aperçu masqué selon le rôle
-    const keyPreview = isAdmin && lsKey
-      ? escH(lsKey.substring(0, 14) + '••••••••••••' + lsKey.slice(-4))
+    // Synchroniser : si Firestore a chargé la clé mais pas localStorage, sauvegarder localement
+    if (memKey && !lsKey) {
+      try { localStorage.setItem('ucpa_anthropic_key', memKey); } catch(e) {}
+    }
+
+    const activeKey = lsKey || memKey;
+    const hasKey    = !!activeKey;
+
+    const keyPreview = isAdmin && activeKey
+      ? escH(activeKey.substring(0, 14) + '••••••••••••' + activeKey.slice(-4))
       : hasKey ? 'sk-ant-api03-••••••••••••••••••••' : null;
 
     if (!hasKey) {
@@ -6166,7 +6243,10 @@ const App = {
     if (!this.load('prestataires')) this.save('prestataires', []);
     if (!this.load('matrix')) this.save('matrix', {});
     if (!this.load('investissements')) this.save('investissements', []);
-    if (!this.load('centre_notes'))  this.save('centre_notes', []);
+    if (!this.load('centre_notes'))  {
+      // ── Tâches de suivi initiales (bilan 5 mois) ───────────────
+      this.save('centre_notes', [{"id":"bilan-01","type":"positif","statut":"fait","centre":"EMBRUN","titre":"RICT Embrun validé","contenu":"Le RICT Embrun est validé. Chantier cuisine cadré pour septembre.","date":"2026-03-20","echeance":"2026-09-01","tags":["travaux","suivi"],"auteur":"Camille CARON"},{"id":"bilan-02","type":"positif","statut":"fait","centre":"VAL THORENS","titre":"Ballon ECS Val Thorens réceptionné","contenu":"Ballon ECS réceptionné. Vérifier mise en service et relevés températures.","date":"2026-03-20","echeance":"","tags":["maintenance","sécurité"],"auteur":"Camille CARON"},{"id":"bilan-03","type":"positif","statut":"fait","centre":"ALL","titre":"Convention Skillmountain 2026 signée","contenu":"Convention Skillmountain 2026 signée.","date":"2026-03-20","echeance":"","tags":["suivi"],"auteur":"Camille CARON"},{"id":"bilan-04","type":"info","statut":"en_cours","centre":"ALL","titre":"Pilote SamFM lancé — 3 centres méditerranéens","contenu":"Pilote SamFM lancé sur 3 centres méditerranéens. Suivi à assurer.","date":"2026-03-20","echeance":"","tags":["suivi"],"auteur":"Camille CARON"},{"id":"bilan-05","type":"relance","statut":"en_cours","centre":"ALL","titre":"Impayés fournisseurs — EMC2 (depuis oct.) + 4-5 prestataires","contenu":"Impayés fournisseurs récurrents : EMC2 depuis octobre, 4-5 autres prestataires en attente. Problème côté comptabilité. Relancer la direction financière.","date":"2026-03-20","echeance":"2026-04-01","tags":["budget","urgence","suivi"],"auteur":"Camille CARON"},{"id":"bilan-06","type":"travaux","statut":"en_cours","centre":"LES ORRES","titre":"Amiante Les Orres — bloquer créneau mai","contenu":"Diagnostic amiante à moitié réalisé. Bloquer créneau en mai maintenant. Contacter l'organisme certifié pour la date.","date":"2026-03-20","echeance":"2026-05-01","tags":["sécurité","travaux","urgence"],"auteur":"Camille CARON"},{"id":"bilan-07","type":"alerte","statut":"en_cours","centre":"ALL","titre":"Ubigreen — problèmes d'accès et saisies sur plusieurs sites","contenu":"Ubigreen a encore des problèmes d'accès et de saisies sur plusieurs sites. Contacter le support et vérifier les accès sur chaque centre concerné.","date":"2026-03-20","echeance":"2026-04-05","tags":["suivi","maintenance"],"auteur":"Camille CARON"},{"id":"bilan-08","type":"reunion","statut":"a_faire","centre":"VAL CENIS","titre":"RH — Recrutement TECH1 Val Cenis (départ Bruno Bon retraite)","contenu":"Bruno Bon part à la retraite. Lancer le recrutement TECH1 Val Cenis cet été. Préparer le dossier de poste et la passation.","date":"2026-03-20","echeance":"2026-07-01","tags":["RH","personnel","suivi"],"auteur":"Camille CARON"},{"id":"bilan-09","type":"visite","statut":"a_faire","centre":"ORPIERRE","titre":"Reprise projet Orpierre — réunion 9 avril","contenu":"Projet Orpierre reprend le 9 avril. Préparer les points à aborder : état des lieux, planning, budget.","date":"2026-03-20","echeance":"2026-04-09","tags":["travaux","suivi"],"auteur":"Camille CARON"}]);
+    }
     if (!this.load('equipements'))   this.save('equipements', []);
     if (!this.load('piscine'))       this.save('piscine', {releves:[], config:{}});
 
@@ -6448,6 +6528,8 @@ const App = {
     document.getElementById('page-title').textContent = titles[page] || page;
     const centre = this.centre === 'ALL' ? 'Tous les centres' : this.centre.replace('VILLAGE SPORTIF ','');
     document.getElementById('page-sub').textContent = ' · ' + centre;
+    // Enforce confidentialité
+    this._enforceCentreRole();
     // Ajustement responsive après chaque navigation
     if (window._applyMobileLayout) setTimeout(window._applyMobileLayout, 80);
   },
@@ -6536,6 +6618,74 @@ const App = {
       }
       case 'veille': App.nav('assistant'); setTimeout(() => Assistant.switchMainTab('veille', document.getElementById('assistant-tab-veille')), 50); break;
       case 'assistant': Assistant.init(); break;
+    }
+  },
+
+
+  // ════════════════════════════════════════════════════════════════
+  // HELPERS CONFIDENTIALITÉ
+  // ════════════════════════════════════════════════════════════════
+
+  // Rôle de la session courante
+  _getRole() {
+    const s = safeJsonParse(sessionStorage.getItem('ucpa_session'), {});
+    return s.role || '';
+  },
+
+  // Centre de la session courante (pour rôle 'centre')
+  _getSessionCentre() {
+    const s = safeJsonParse(sessionStorage.getItem('ucpa_session'), {});
+    return s.centre || '';
+  },
+
+  // Région de la session courante
+  _getSessionRegion() {
+    const s = safeJsonParse(sessionStorage.getItem('ucpa_session'), {});
+    return s.region || '';
+  },
+
+  // Retourne vrai si l'utilisateur peut voir ce centre
+  canSeeCentre(centre) {
+    const role = this._getRole();
+    if (role === 'admin' || role === 'admin_national') return true;
+    if (role === 'region') return CENTRES.includes(centre); // CENTRES = centres de la région
+    if (role === 'centre') return centre === this._getSessionCentre();
+    return CENTRES.includes(centre);
+  },
+
+  // Filtre une liste d'objets {centre:...} selon les droits
+  filterByCentre(arr, centreKey = 'centre') {
+    const role = this._getRole();
+    if (role === 'admin' || role === 'admin_national') return arr;
+    if (role === 'region') return arr.filter(it => CENTRES.includes(it[centreKey]));
+    if (role === 'centre') {
+      const sc = this._getSessionCentre();
+      return arr.filter(it => it[centreKey] === sc);
+    }
+    return arr;
+  },
+
+  // Centre actif pour les filtres (respecte le verrou centre)
+  activeCentre() {
+    const role = this._getRole();
+    if (role === 'centre') return this._getSessionCentre();
+    return this.centre; // 'ALL' ou centre sélectionné manuellement
+  },
+
+  // Force la sélection du centre pour rôle 'centre'
+  _enforceCentreRole() {
+    const role = this._getRole();
+    if (role === 'centre') {
+      const sc = this._getSessionCentre();
+      if (sc && this.centre !== sc) {
+        this.centre = sc;
+        const sel = document.getElementById('centre-select');
+        if (sel) sel.value = sc;
+        this._syncCentreDropdown(sc);
+        // Masquer le sélecteur de centre (pas le choix)
+        const dd = document.getElementById('centre-dropdown');
+        if (dd) dd.style.pointerEvents = 'none';
+      }
     }
   },
 
@@ -12383,6 +12533,7 @@ const Auth = {
 
     App.init().then(function() {
       if (role === 'centre') App.selectCentre(centre);
+      App._enforceCentreRole();
       document.dispatchEvent(new Event('ucpa-session-started'));
 
       if (typeof UCPAImport !== 'undefined') {
@@ -14609,17 +14760,25 @@ const VL = {
       if (pctEl)  pctEl.textContent  = `${i} / ${domains.length}`;
 
       try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json', 'x-api-key':this._apiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-          body: JSON.stringify({
-            model:'claude-sonnet-4-20250514', max_tokens:1200,
-            tools:[{ type:'web_search_20250305', name:'web_search' }],
-            messages:[{ role:'user', content: this.SCAN_PROMPTS[domain] }]
-          })
-        });
-        const data = await response.json();
-        const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+        const { provider: _scanProvider, key: _scanKey } = _getAIProvider();
+        let text = '';
+        if (_scanProvider === 'gemini') {
+          // Gemini : sans web_search, on utilise le prompt directement
+          text = await this._callVLApi('', this.SCAN_PROMPTS[domain], 1200);
+        } else {
+          // Anthropic avec web_search
+          const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method:'POST',
+            headers:{ 'Content-Type':'application/json', 'x-api-key':_scanKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+            body: JSON.stringify({
+              model:'claude-sonnet-4-20250514', max_tokens:1200,
+              tools:[{ type:'web_search_20250305', name:'web_search' }],
+              messages:[{ role:'user', content: this.SCAN_PROMPTS[domain] }]
+            })
+          });
+          const data = await response.json();
+          text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+        }
         const jsonMatch = text.match(/\{[\s\S]*"updates"[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -14813,17 +14972,26 @@ const VL = {
     const u = this.updates.find(x=>x.id===updateId);
     this.itemChats[updateId].push({ role:'user', content:text });
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', 'x-api-key':this._apiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-        body: JSON.stringify({
-          model:'claude-sonnet-4-20250514', max_tokens:900,
-          system:`Tu es un expert en réglementation technique du bâtiment en France. L'utilisateur consulte : [${this.DOMAINS[u?.domain]?.label}] ${u?.titre}. Résumé : ${u?.resume}. Détail : ${u?.detail}. L'utilisateur est Responsable technique d'un établissement UCPA (ERP type O, N, R). Réponds directement, structuré, avec références précises.`,
-          messages: this.itemChats[updateId].map(m=>({ role:m.role==='ai'?'assistant':'user', content:m.content }))
-        })
-      });
-      const data = await resp.json();
-      const reply = data.content?.[0]?.text || 'Pas de réponse.';
+      const _sys_item = `Tu es un expert en réglementation technique du bâtiment en France. L'utilisateur consulte : [${this.DOMAINS[u?.domain]?.label}] ${u?.titre}. Résumé : ${u?.resume}. Détail : ${u?.detail}. L'utilisateur est Responsable technique d'un établissement UCPA (ERP type O, N, R). Réponds directement, structuré, avec références précises.`;
+      const { provider: _pItem, key: _kItem } = _getAIProvider();
+      let reply;
+      if (_pItem === 'gemini') {
+        // Gemini : historique aplati en prompt
+        const _hist = this.itemChats[updateId].map(m=>(m.role==='ai'?'Assistant':'Utilisateur')+': '+m.content).join('\n');
+        reply = await this._callVLApi(_sys_item, _hist, 900);
+      } else {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json','x-api-key':_kItem,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:900,
+            system: _sys_item,
+            messages: this.itemChats[updateId].map(m=>({ role:m.role==='ai'?'assistant':'user', content:m.content }))
+          })
+        });
+        const data = await resp.json();
+        reply = data.content?.[0]?.text || 'Pas de réponse.';
+      }
       this.itemChats[updateId].push({ role:'ai', content:reply });
       const el = document.getElementById(lid);
       if (el) el.innerHTML = `<div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble">${this._fmt(reply)}</div>`;
@@ -14882,17 +15050,25 @@ const VL = {
     msgs.scrollTop = msgs.scrollHeight;
     this.chatHistory.push({ role:'user', content:text });
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json', 'x-api-key':this._apiKey(), 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
-        body: JSON.stringify({
-          model:'claude-sonnet-4-20250514', max_tokens:1000,
-          system:`Tu es un expert en réglementation technique du bâtiment en France, spécialisé dans les ERP sportifs (types O, N, R) comme les centres UCPA. Tu maîtrises : sécurité incendie (arrêté 25/06/1980), énergie/décret tertiaire, accessibilité PMR, légionelle/ECS, amiante, cuisine professionnelle, piscines, radon, DUERP, chaufferie, électricité. L'utilisateur est Responsable technique d'un établissement UCPA en montagne. Réponds directement, structuré, avec références précises.`,
-          messages: this.chatHistory
-        })
-      });
-      const data = await resp.json();
-      const reply = data.content?.[0]?.text || 'Pas de réponse.';
+      const _sys_global = `Tu es un expert en réglementation technique du bâtiment en France, spécialisé dans les ERP sportifs (types O, N, R) comme les centres UCPA. Tu maîtrises : sécurité incendie (arrêté 25/06/1980), énergie/décret tertiaire, accessibilité PMR, légionelle/ECS, amiante, cuisine professionnelle, piscines, radon, DUERP, chaufferie, électricité. L'utilisateur est Responsable technique d'un établissement UCPA en montagne. Réponds directement, structuré, avec références précises.`;
+      const { provider: _pGlob, key: _kGlob } = _getAIProvider();
+      let reply;
+      if (_pGlob === 'gemini') {
+        const _hist = this.chatHistory.map(m=>(m.role==='assistant'?'Assistant':'Utilisateur')+': '+m.content).join('\n');
+        reply = await this._callVLApi(_sys_global, _hist, 1000);
+      } else {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json','x-api-key':_kGlob,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:1000,
+            system: _sys_global,
+            messages: this.chatHistory
+          })
+        });
+        const data = await resp.json();
+        reply = data.content?.[0]?.text || 'Pas de réponse.';
+      }
       this.chatHistory.push({ role:'assistant', content:reply });
       const el = document.getElementById(lid);
       if (el) el.innerHTML = `<div class="vl-chat-av ai">IA</div><div class="vl-chat-bubble">${this._fmt(reply)}</div>`;
@@ -15028,6 +15204,40 @@ const PDFImport = {
   },
 
   _apiKey() { return window._anthropicKey || (typeof ANTHROPIC_API_KEY !== 'undefined' ? ANTHROPIC_API_KEY : ''); },
+  _provider() { return _getAIProvider().provider || 'anthropic'; },
+
+  async _callVLApi(systemPrompt, userPrompt, maxTokens = 1200) {
+    const { provider, key } = _getAIProvider();
+    if (!key) throw new Error('Clé API non configurée.');
+
+    if (provider === 'gemini') {
+      const model = 'gemini-2.0-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
+          generationConfig: { maxOutputTokens: maxTokens, temperature: 0.7 }
+        })
+      });
+      if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error('Gemini: '+(e.error?.message||res.status)); }
+      const d = await res.json();
+      return d.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
+
+    // Anthropic
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key': key,
+                 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens: maxTokens,
+                             system: systemPrompt, messages:[{ role:'user', content: userPrompt }] })
+    });
+    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error('Anthropic: '+(e.error?.message||res.status)); }
+    const d = await res.json();
+    return d.content?.[0]?.text || '';
+  },
   _allCentres() {
     const list = [];
     Object.values(window.REGIONS || {}).forEach(r => r.centres?.forEach(c => list.push(c)));
@@ -15153,9 +15363,33 @@ const PDFImport = {
   },
 
   async _callAPI(base64, systemPrompt, userText, maxTokens=3000) {
+    const { provider, key } = _getAIProvider();
+    if (!key) throw new Error('Clé API non configurée.');
+
+    if (provider === 'gemini') {
+      // Gemini : PDF en inline_data
+      const model = 'gemini-2.0-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      const resp = await fetch(url, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          contents:[{role:'user', parts:[
+            {inline_data:{mime_type:'application/pdf', data: base64}},
+            {text: (systemPrompt ? systemPrompt+'\n\n' : '') + userText}
+          ]}],
+          generationConfig:{maxOutputTokens: maxTokens}
+        })
+      });
+      if (!resp.ok) { const e = await resp.json().catch(()=>({})); throw new Error('Gemini PDF: '+(e.error?.message||resp.status)); }
+      const d = await resp.json();
+      return (d.candidates?.[0]?.content?.parts?.[0]?.text||'').replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+    }
+
+    // Anthropic — PDF base64
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':this._apiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:maxTokens,
         system: systemPrompt,
@@ -16501,36 +16735,67 @@ const CentreNotes = {
     if (!feed) return;
     let notes = this._load();
 
+    // ── Filtre confidentialité par rôle ─────────────────────────
+    const sess = safeJsonParse(sessionStorage.getItem('ucpa_session'), {});
+    const role = sess.role || '';
+    if (role === 'centre') {
+      const sc = sess.centre || '';
+      notes = notes.filter(n => n.centre === sc || n.centre === 'ALL');
+    } else if (role === 'region') {
+      notes = notes.filter(n => CENTRES.includes(n.centre) || n.centre === 'ALL');
+    }
+    // admin / admin_national → tout visible
+
     if (this._centre !== 'ALL') notes = notes.filter(n => n.centre === this._centre);
     if (this._typeFilter) notes = notes.filter(n => n.type === this._typeFilter);
     if (this._tagFilter)  notes = notes.filter(n => (n.tags||[]).includes(this._tagFilter));
     if (this._filter) {
       const q = this._filter.toLowerCase();
       notes = notes.filter(n =>
-        (n.texte||'').toLowerCase().includes(q) ||
+        (n.texte||n.contenu||'').toLowerCase().includes(q) ||
+        (n.titre||'').toLowerCase().includes(q) ||
         (n.centre||'').toLowerCase().includes(q) ||
         (n.auteur||'').toLowerCase().includes(q) ||
         (n.tags||[]).some(t=>t.toLowerCase().includes(q))
       );
     }
 
-    notes = [
-      ...notes.filter(n=>n.pinned),
-      ...notes.filter(n=>!n.pinned)
-    ];
+    // Trier : épinglés d'abord, puis par échéance proche, puis par date
+    const today = new Date();
+    const urgScore = n => {
+      if (n.pinned) return 0;
+      if (n.statut === 'en_cours' || n.statut === 'a_faire') {
+        if (n.echeance) {
+          const days = (new Date(n.echeance) - today) / 86400000;
+          if (days < 0) return 1;
+          if (days < 7) return 2;
+          if (days < 30) return 3;
+        }
+        return 4;
+      }
+      if (n.statut === 'fait') return 6;
+      return 5;
+    };
+    notes = notes.sort((a,b) => urgScore(a) - urgScore(b) || new Date(b.date) - new Date(a.date));
+
+    const STATUT_CFG = {
+      'a_faire':  { label:'À faire',   color:'#B45309', bg:'#FFF4D7' },
+      'en_cours': { label:'En cours',  color:'#0277BD', bg:'#D8F2F4' },
+      'fait':     { label:'Fait ✓',    color:'#2E7D32', bg:'#E8F2D5' },
+    };
 
     if (!notes.length) {
       feed.innerHTML = `<div class="cn-empty"><div class="icon">📝</div><div>Aucune note${this._centre!=='ALL'?' pour ce centre':''}</div><div style="font-size:12px">Rédigez la première note ci-dessus</div></div>`;
       return;
     }
 
-    const allNotes = this._load(); // pour récupérer idx réel
+    const allNotes = this._load();
     feed.innerHTML = notes.map(note => {
       const T    = this.TYPES[note.type] || this.TYPES['info'];
       const idx  = allNotes.findIndex(n => n.id === note.id);
       const d    = new Date(note.date);
       const now  = new Date();
-      const diff = (now - d) / 60000; // minutes
+      const diff = (now - d) / 60000;
       const age  = diff < 60 ? Math.round(diff)+'min'
                  : diff < 1440 ? Math.round(diff/60)+'h'
                  : diff < 10080 ? Math.round(diff/1440)+'j'
@@ -16540,7 +16805,31 @@ const CentreNotes = {
         ? note.centre.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ')
         : '';
 
-      return `<div class="cn-card ${note.pinned?'pinned':''}">
+      // Statut
+      const sc   = STATUT_CFG[note.statut];
+      const statutBadge = sc
+        ? `<span style="font-size:10px;background:${sc.bg};color:${sc.color};border-radius:10px;padding:1px 8px;font-weight:600;cursor:pointer"
+             onclick="CentreNotes.cycleStatut(${idx})" title="Cliquer pour changer le statut">${sc.label}</span>`
+        : `<span style="font-size:10px;color:var(--muted);cursor:pointer" onclick="CentreNotes.cycleStatut(${idx})" title="Définir un statut">+ statut</span>`;
+
+      // Échéance
+      let echeanceBadge = '';
+      if (note.echeance) {
+        const daysLeft = Math.round((new Date(note.echeance) - today) / 86400000);
+        const eColor   = daysLeft < 0 ? '#C62828' : daysLeft < 7 ? '#B45309' : '#6B7280';
+        const eBg      = daysLeft < 0 ? '#FFEDED' : daysLeft < 7 ? '#FFF4D7' : 'var(--bg3)';
+        const eLabel   = daysLeft < 0 ? `⚠️ ${Math.abs(daysLeft)}j de retard`
+                       : daysLeft === 0 ? '🔴 Aujourd\'hui'
+                       : daysLeft === 1 ? '🟡 Demain'
+                       : `📅 ${new Date(note.echeance).toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}`;
+        echeanceBadge = `<span style="font-size:10px;background:${eBg};color:${eColor};border-radius:10px;padding:1px 8px">${eLabel}</span>`;
+      }
+
+      // Texte (supporte ancien champ 'texte' et nouveau 'contenu')
+      const texte = note.contenu || note.texte || '';
+      const titre = note.titre ? `<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${this._escHtml(note.titre)}</div>` : '';
+
+      return `<div class="cn-card ${note.pinned?'pinned':''}" style="${note.statut==='fait'?'opacity:0.75':''}">
         <div class="cn-card-actions">
           <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px" onclick="CentreNotes.togglePin(${idx})" title="${note.pinned?'Désépingler':'Épingler'}">${note.pinned?'📌':'📍'}</button>
           <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px" onclick="CentreNotes.editNote(${idx})" title="Modifier">✏️</button>
@@ -16550,27 +16839,41 @@ const CentreNotes = {
         <div class="cn-card-head">
           <div class="cn-type-dot" style="background:${T.bg};color:${T.color}">${T.icon}</div>
           <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <span style="font-size:12px;font-weight:700;color:${T.color}">${T.label}</span>
-              ${this._centre==='ALL' ? `<span style="font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1px 8px;color:var(--muted)">📍 ${centreName}</span>` : ''}
-              ${note.pinned ? '<span style="font-size:10px;color:var(--amber)">📌 Épinglé</span>' : ''}
+              ${statutBadge}
+              ${echeanceBadge}
+              ${this._centre==='ALL' ? `<span style="font-size:11px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1px 8px;color:var(--muted)">📍 ${centreName||'Global'}</span>` : ''}
+              ${note.pinned ? '<span style="font-size:10px;color:var(--amber)">📌</span>' : ''}
             </div>
             <div class="cn-card-meta">
               <span>${note.auteur||'—'}</span>
               <span>·</span>
               <span title="${d.toLocaleString('fr-FR')}">${age}</span>
-              ${note.modifie ? `<span>· modifié ${new Date(note.modifie).toLocaleDateString('fr-FR')}</span>` : ''}
             </div>
           </div>
         </div>
 
-        <div class="cn-card-text">${this._escHtml(note.texte||'')}</div>
+        ${titre}
+        <div class="cn-card-text">${this._escHtml(texte)}</div>
 
         ${(note.tags||[]).length ? `<div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
           ${note.tags.map(t=>`<span class="cn-tag" onclick="CentreNotes._tagFilter='${t}';CentreNotes._renderFeed()">${t}</span>`).join('')}
         </div>` : ''}
       </div>`;
     }).join('');
+  },
+
+  // Cycle le statut d'une note : undefined → a_faire → en_cours → fait → undefined
+  cycleStatut(idx) {
+    const notes = this._load();
+    if (!notes[idx]) return;
+    const cycle = [undefined, 'a_faire', 'en_cours', 'fait'];
+    const cur   = notes[idx].statut;
+    const next  = cycle[(cycle.indexOf(cur) + 1) % cycle.length];
+    notes[idx].statut = next;
+    this._save(notes);
+    this._renderFeed();
   },
 
   _escHtml(s) {
