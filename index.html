@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!-- ERP UCPA v6.0 | Build : 2026-03-18 07:36 | Production --><!-- UCPA ERP v4.3 - 2026-03-08 -->
-<html lang="fr" data-theme="dark">
+<html lang="fr" data-theme="light">
 <head>
 <meta charset="UTF-8">
   <!-- ═══ SÉCURITÉ ERP — Headers de sécurité ═══════════════════════════ -->
@@ -21,7 +21,7 @@
   <meta name="description" content="ERP UCPA v6.0 — Application de gestion sécurité, conformité réglementaire et maintenance pour les centres sportifs UCPA. Registre ERP, calendrier des contrôles, suivi piscine, DUERP, GED.">
   <meta name="author" content="Service Technique UCPA">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#FF4310">
+  <meta name="theme-color" content="#E8361A">
   <meta name="application-name" content="ERP UCPA v6.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
@@ -511,56 +511,83 @@ if (!document.getElementById('ucpa-toast-style')) {
   }
 </script>
 <style>:root{
---ucpa-orange:#E8541A;
---ucpa-orange-lt:#FF6B35;
---ucpa-marine:#003B71;
---ucpa-marine-lt:#0056A3;
---ucpa-blanc:#FFFFFF;
---ucpa-gris-clair:#F4F6FA;
+/* ═══ PALETTE OFFICIELLE UCPA ════════════════════════════════
+   Source : Modèle de présentation UCPA 2024-2025
+   Couleur principale : #E8361A (rouge UCPA)
+   Couleurs secondaires : teal, jaune, mauve, vert
+   ══════════════════════════════════════════════════════════ */
+
+/* Couleur principale */
+--ucpa-orange:    #E8361A;
+--ucpa-orange-lt: #FF4310;
+--ucpa-orange-20: #FFDED9;  /* version atténuée 20% */
+
+/* Couleurs secondaires UCPA */
+--ucpa-teal:      #00BEC3;
+--ucpa-teal-20:   #D8F2F4;
+--ucpa-yellow:    #FDC800;
+--ucpa-yellow-20: #FFF4D7;
+--ucpa-purple:    #5032B4;
+--ucpa-purple-20: #DCD6F1;
+--ucpa-green:     #8CBE00;
+--ucpa-green-20:  #E8F2D5;
+
+/* Couleurs d'accompagnement */
+--ucpa-navy:      #0F1F28;
+--ucpa-black:     #000000;
+--ucpa-gray:      #757575;
+--ucpa-lgray:     #D2D2D2;
+--ucpa-white:     #FFFFFF;
 }
 
 [data-theme="dark"]{
---bg:#080c12;
---bg2:#0d1320;
---bg3:#121a28;
---panel:#0f1722;
---border:#1c2840;
---text:#e8edf5;
---muted:#5a6b85;
---muted2:#8a9bb5;
+/* Fond sombre inspiration navy UCPA #0F1F28 */
+--bg:          #0A1520;
+--bg2:         #0F1D2A;
+--bg3:         #142233;
+--panel:       #0F1D2A;
+--border:      #1E3048;
+--text:        #E8EDF5;
+--muted:       #5A7A99;
+--muted2:      #8AAABB;
 
---accent:var(--ucpa-orange);
---accent2:var(--ucpa-orange-lt);
+/* Accent = orange UCPA principal */
+--accent:      var(--ucpa-orange);
+--accent2:     var(--ucpa-orange-lt);
 
---green:#1db954;
---amber:#f5a623;
---red:#e8361a;
---blue:#3a7bd5;
+/* Couleurs sémantiques */
+--green:       var(--ucpa-green);
+--amber:       var(--ucpa-yellow);
+--red:         #E8361A;
+--blue:        var(--ucpa-teal);
 
---shadow:rgba(0,0,0,0.5);
---matrix-sticky-bg:#080c12;
+--shadow:          rgba(0,0,0,0.5);
+--matrix-sticky-bg:#0A1520;
 }
 
 [data-theme="light"]{
---bg:#F4F6FA;
---bg2:#FFFFFF;
---bg3:#EEF1F8;
---panel:#FFFFFF;
---border:#D0D9EC;
---text:#1A2340;
---muted:#6B7A99;
---muted2:#4A5A7A;
+/* Fond clair blanc/gris UCPA */
+--bg:          #F5F7FA;
+--bg2:         #FFFFFF;
+--bg3:         #EEF2F8;
+--panel:       #FFFFFF;
+--border:      #D0D9EC;
+--text:        var(--ucpa-navy);
+--muted:       var(--ucpa-gray);
+--muted2:      #4A5A7A;
 
---accent:var(--ucpa-orange);
---accent2:var(--ucpa-orange-lt);
+/* Accent = orange UCPA principal */
+--accent:      var(--ucpa-orange);
+--accent2:     var(--ucpa-orange-lt);
 
---green:#16A34A;
---amber:#D97706;
---red:#DC2626;
---blue:#1D4ED8;
+/* Couleurs sémantiques */
+--green:       var(--ucpa-green);
+--amber:       var(--ucpa-yellow);
+--red:         #DC2626;
+--blue:        var(--ucpa-teal);
 
---shadow:rgba(0,0,0,0.12);
---matrix-sticky-bg:#F4F6FA;
+--shadow:          rgba(0,0,0,0.10);
+--matrix-sticky-bg:#F5F7FA;
 }
 
 :root{
@@ -602,43 +629,43 @@ white-space:nowrap;
 
 #sidebar{
 width:var(--sidebar);min-width:var(--sidebar);
-background:var(--bg);
-border-right:1px solid var(--border);
+background:var(--ucpa-navy);
+border-right:none;
 display:flex;flex-direction:column;
 height:100vh;overflow:hidden;
 z-index:100;
 }
 #sidebar-head{
 padding:16px;
-border-bottom:1px solid var(--border);
+border-bottom:1px solid rgba(255,255,255,0.08);
 }
 .logo{
 font-size:22px;font-weight:900;letter-spacing:-0.5px;
-color:var(--accent);
+color:var(--ucpa-orange);
 font-family:'Barlow',sans-serif;
 }
-.logo span{color:var(--text);font-weight:300}
+.logo span{color:rgba(255,255,255,0.85);font-weight:300}
 .region-label{
 font-size:10px;letter-spacing:2px;text-transform:uppercase;
-color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;
+color:rgba(255,255,255,0.40);margin-top:2px;font-family:'DM Mono',monospace;
 }
 .centre-selector{
 margin-top:12px;
-background:var(--bg3);
-border:1px solid var(--border);
+background:rgba(255,255,255,0.07);
+border:1px solid rgba(255,255,255,0.12);
 border-radius:6px;
 padding:8px 10px;
-color:var(--text);
+color:rgba(255,255,255,0.85);
 font-size:12px;
 width:100%;
 font-family:'Barlow',sans-serif;
 cursor:pointer;
 appearance:none;
-background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a6b85'/%3E%3C/svg%3E");
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ffffff80'/%3E%3C/svg%3E");
 background-repeat:no-repeat;
 background-position:right 10px center;
 }
-.centre-selector:focus{outline:none;border-color:var(--accent)}
+.centre-selector:focus{outline:none;border-color:var(--ucpa-orange)}
 
 .conformite-badge{
 margin-top:10px;
@@ -652,23 +679,23 @@ display:flex;align-items:center;gap:8px;
 
 #sidebar-nav{flex:1;overflow-y:auto;padding:8px 0}
 #sidebar-nav::-webkit-scrollbar{width:2px}
-#sidebar-nav::-webkit-scrollbar-thumb{background:var(--border)}
+#sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15)}
 
-.nav-section{padding:16px 16px 4px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:'DM Mono',monospace}
+.nav-section{padding:16px 16px 4px;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.35);font-family:'DM Mono',monospace}
 .nav-item{
 display:flex;align-items:center;gap:10px;
 padding:9px 16px;
 cursor:pointer;
 font-size:13px;font-weight:400;
-color:var(--muted2);
+color:rgba(255,255,255,0.60);
 transition:all 0.15s;
 border-left:2px solid transparent;
 position:relative;
 }
 .nav-item-ext{text-decoration:none;font-style:italic;opacity:.85}
 .nav-item-ext:hover{opacity:1}
-.nav-item:hover{background:var(--bg2);color:var(--text);border-left-color:var(--border)}
-.nav-item.active{background:var(--bg2);color:var(--accent);border-left-color:var(--accent);font-weight:600}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.90);border-left-color:rgba(255,255,255,0.20)}
+.nav-item.active{background:rgba(232,54,26,0.15);color:var(--ucpa-orange);border-left-color:var(--ucpa-orange);font-weight:600}
 .nav-item .icon{font-size:14px;width:16px;text-align:center;flex-shrink:0}
 .nav-badge{
 margin-left:auto;
@@ -685,8 +712,8 @@ text-align:center;
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #topbar{
 height:var(--hdr);
-background:var(--bg);
-border-bottom:1px solid var(--border);
+background:var(--bg2);
+border-bottom:3px solid var(--ucpa-orange);
 display:flex;align-items:center;
 padding:0 24px;gap:16px;
 flex-shrink:0;
@@ -709,7 +736,7 @@ transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;
 
 #content{flex:1;overflow-y:auto;padding:24px}
 #content::-webkit-scrollbar{width:4px}
-#content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+#content::-webkit-scrollbar-thumb{background:var(--ucpa-orange);border-radius:2px;opacity:0.5}
 
 .page{display:none}
 .page.active{display:block}
@@ -724,9 +751,9 @@ padding:18px;
 .kpi-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-family:'DM Mono',monospace}
 .kpi-val{font-size:32px;font-weight:900;margin:4px 0;line-height:1}
 .kpi-sub{font-size:11px;color:var(--muted)}
-.kpi.danger .kpi-val{color:var(--red)}
+.kpi.danger .kpi-val{color:var(--ucpa-orange)}
 .kpi.warn .kpi-val{color:var(--amber)}
-.kpi.ok .kpi-val{color:var(--green)}
+.kpi.ok .kpi-val{color:var(--ucpa-green)}
 
 .cal-filter{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;user-select:none;transition:.15s}
 .cal-filter input{accent-color:currentColor;width:13px;height:13px;cursor:pointer}
@@ -816,8 +843,8 @@ display:inline-block;padding:3px 10px;
 border-radius:20px;font-size:11px;font-weight:600;
 font-family:'DM Mono',monospace;
 }
-.pill-ok{background:rgba(29,185,84,0.15);color:var(--green)}
-.pill-warn{background:rgba(245,166,35,0.15);color:var(--amber)}
+.pill-ok{background:var(--ucpa-green-20);color:#166534}
+.pill-warn{background:var(--ucpa-yellow-20);color:#854D0E}
 .pill-ko{background:rgba(232,54,26,0.15);color:var(--red)}
 .pill-na{background:rgba(90,107,133,0.1);color:var(--muted)}
 
@@ -1093,7 +1120,7 @@ color:var(--muted);transition:border-color 0.15s;
 
 #login-screen{
 position:fixed;inset:0;z-index:9999;
-background:var(--bg);
+background:var(--ucpa-navy);
 display:flex;align-items:center;justify-content:center;
 flex-direction:column;
 }
@@ -1105,18 +1132,26 @@ border-radius:16px;
 padding:40px;
 box-shadow:0 24px 80px rgba(0,0,0,0.5);
 }
+.login-wrap::before{
+content:'';display:block;
+height:5px;
+background:var(--ucpa-orange);
+margin:-40px -40px 32px -40px;
+border-radius:16px 16px 0 0;
+}
+
 .login-logo{
-font-size:32px;font-weight:900;color:var(--accent);
+font-size:32px;font-weight:900;color:var(--ucpa-orange);
 font-family:'Barlow',sans-serif;margin-bottom:4px;
 }
-.login-logo span{color:var(--text);font-weight:300}
+.login-logo span{color:var(--ucpa-navy);font-weight:300}
 .login-region{
 font-size:10px;letter-spacing:3px;text-transform:uppercase;
-color:var(--muted);font-family:'DM Mono',monospace;
+color:var(--ucpa-gray);font-family:'DM Mono',monospace;
 margin-bottom:32px;
 }
 .login-title{
-font-size:16px;font-weight:700;color:var(--text);
+font-size:16px;font-weight:700;color:var(--ucpa-navy);
 margin-bottom:6px;
 }
 .login-sub{
@@ -1124,31 +1159,31 @@ font-size:12px;color:var(--muted);margin-bottom:28px;
 }
 .login-tabs{
 display:flex;gap:4px;margin-bottom:24px;
-background:var(--bg3);border-radius:8px;padding:4px;
+background:#EEF2F8;border-radius:8px;padding:4px;
 }
 .login-tab{
 flex:1;padding:8px;border:none;background:transparent;
-color:var(--muted2);font-family:'Barlow',sans-serif;
+color:var(--ucpa-gray);font-family:'Barlow',sans-serif;
 font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;
 transition:all 0.15s;
 }
-.login-tab.active{background:var(--accent);color:#fff}
+.login-tab.active{background:var(--ucpa-orange);color:#fff}
 .login-field{margin-bottom:16px}
 .login-field label{
 display:block;font-size:10px;letter-spacing:1.5px;
-text-transform:uppercase;color:var(--muted);
+text-transform:uppercase;color:var(--ucpa-gray);
 font-family:'DM Mono',monospace;margin-bottom:6px;
 }
 .login-field input,
 .login-field select{
-width:100%;background:var(--bg3);
-border:1px solid var(--border);border-radius:8px;
-padding:11px 14px;color:var(--text);
+width:100%;background:#F5F7FA;
+border:1px solid var(--ucpa-lgray);border-radius:8px;
+padding:11px 14px;color:var(--ucpa-navy);
 font-family:'Barlow',sans-serif;font-size:14px;
 transition:border-color 0.15s;
 }
 .login-field input:focus,
-.login-field select:focus{outline:none;border-color:var(--accent)}
+.login-field select:focus{outline:none;border-color:var(--ucpa-orange)}
 .login-btn{
 width:100%;padding:13px;background:var(--accent);
 color:#fff;border:none;border-radius:8px;
@@ -1159,9 +1194,9 @@ display:flex;align-items:center;justify-content:center;gap:8px;
 }
 .login-btn:hover{background:var(--accent2)}
 .login-error{
-background:rgba(232,54,26,0.12);
-border:1px solid rgba(232,54,26,0.3);
-color:var(--red);border-radius:6px;
+background:rgba(255,67,16,0.08);
+border:1px solid rgba(255,67,16,0.25);
+color:var(--ucpa-orange);border-radius:6px;
 padding:10px 14px;font-size:13px;
 margin-top:14px;display:none;
 }
@@ -1411,7 +1446,7 @@ body.region-nord{--accent:#3a7bd5;--accent2:#5a9be8}
 body.region-admin{--accent:#7c3aed;--accent2:#9d5af0}
 
 .badge-admin{
-display:inline-block;background:#7c3aed;color:#fff;
+display:inline-block;background:var(--ucpa-purple);color:#fff;
 font-size:9px;font-family:'DM Mono',monospace;
 border-radius:4px;padding:2px 6px;letter-spacing:1px;
 text-transform:uppercase;margin-left:6px;
@@ -1612,7 +1647,7 @@ transition:box-shadow .15s;
 .reg-card-bar{
 height:4px;width:100%;
 }
-.reg-card.expired .reg-card-bar{background:var(--red)}
+.reg-card.expired .reg-card-bar{background:var(--ucpa-orange)}
 .reg-card.soon .reg-card-bar{background:var(--amber)}
 .reg-card.ok .reg-card-bar{background:var(--green)}
 .reg-card.empty .reg-card-bar{background:var(--muted)}
@@ -2289,6 +2324,7 @@ font-family:'Barlow',sans-serif;
 
     <div class="region-switcher" id="login-region-tabs" style="margin-top:0;margin-bottom:20px">
       <button class="region-tab active-admin" id="tab-admin" onclick="Auth.switchTab('admin')">👑 Admin</button>
+      <button class="region-tab" id="tab-national" onclick="Auth.switchTab('national')">🌐 National</button>
       <button class="region-tab" id="tab-ALPES_NORD" onclick="Auth.switchTab('ALPES_NORD')">⛰️ Alpes Nord</button>
       <button class="region-tab" id="tab-ALPES_SUD" onclick="Auth.switchTab('ALPES_SUD')">🏔 Alpes Sud</button>
       <button class="region-tab" id="tab-PYRENEES" onclick="Auth.switchTab('PYRENEES')">🗻 Pyrénées</button>
@@ -2308,6 +2344,20 @@ font-family:'Barlow',sans-serif;
       </div>
       <div class="login-field"><label>Mot de passe</label>
         <input type="password" id="login-pass-admin" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')Auth.login()">
+      </div>
+    </div>
+
+    <!-- NATIONAL -->
+    <div id="login-tab-national" style="display:none">
+      <div style="background:rgba(0,190,195,0.08);border:1px solid rgba(0,190,195,0.25);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--ucpa-teal)">
+        🌐 Accès national — toutes régions, tous centres · Sans gestion des centres
+      </div>
+      <div class="login-field"><label>Identifiant</label>
+        <input maxlength="500" type="text" id="login-user-national" placeholder="national" autocomplete="off">
+      </div>
+      <div class="login-field"><label>Mot de passe</label>
+        <input type="password" id="login-pass-national" placeholder="••••••••"
           onkeydown="if(event.key==='Enter')Auth.login()">
       </div>
     </div>
@@ -2443,13 +2493,25 @@ font-family:'Barlow',sans-serif;
     <div class="nav-section">Outils</div>
     <div tabindex="0" role="menuitem" class="nav-item" onclick="App.nav('notice')" data-page="notice"><span class="icon">📖</span> Notice du site</div>
     <div tabindex="0" role="menuitem" class="nav-item" onclick="App.nav('backup')" data-page="backup"><span class="icon">💾</span> Sauvegardes</div>
-    <div tabindex="0" role="menuitem" class="nav-item" id="nav-admin" onclick="App.nav('admin')" data-page="admin" style="display:none"><span class="icon">⚙️</span> Admin — Centres</div>
+    <div tabindex="0" role="menuitem" class="nav-item" id="nav-admin" onclick="App.nav('admin')" data-page="admin" style="display:none"><span class="icon">⚙️</span> <span id="nav-admin-label">Admin — Centres</span></div>
     <div style="padding:8px 14px;margin-top:4px;display:flex;flex-direction:column;gap:6px">
       <button class="btn btn-ghost btn-sm" style="width:100%;font-size:11px" onclick="App.exportMonthlyPDF()">📄 Rapport mensuel PDF</button>
       <button id="btn-import-pdf" class="btn btn-sm" style="width:100%;font-size:11px;background:var(--green);color:#fff;border:none;cursor:pointer" onclick="PDFImport.openFilePicker()">📥 Importer une fiche PDF</button>
 
     </div>
   </nav>
+
+  <!-- ── Badge version bas sidebar ── -->
+  <div style="padding:10px 16px;border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <span style="font-size:10px;font-family:'DM Mono',monospace;color:rgba(255,255,255,0.35);letter-spacing:1px">ERP UCPA</span>
+    <span id="sidebar-version-badge"
+      style="font-size:10px;font-family:'DM Mono',monospace;font-weight:700;
+             background:var(--ucpa-orange);color:#fff;
+             padding:2px 8px;border-radius:10px;letter-spacing:0.5px">
+      v6.0
+    </span>
+  </div>
+
 </div>
 
 <!-- MAIN -->
@@ -4275,6 +4337,14 @@ const ANTHROPIC_API_KEY = '';  // Vide intentionnel — clé chargée via _loadA
 const BUILD_VERSION = 'v6.0';
 const BUILD_DATE = '2026-03-18 07:36';
 
+// ── Afficher la version dans le badge sidebar dès le chargement ──
+document.addEventListener('DOMContentLoaded', function() {
+  const badge = document.getElementById('sidebar-version-badge');
+  if (badge) badge.textContent = BUILD_VERSION;
+  // Tooltip avec la date de build
+  if (badge) badge.title = 'Build ' + BUILD_DATE;
+});
+
 const CONTROLES_TEMPLATE = [
   {catId:"1",groupe:"Renseignements",libelle:"Renseignements sur l'établissement",periodicite:null},
   {catId:"2",groupe:"Commissions sécurité",libelle:"PV commissions de sécurité",periodicite:null},
@@ -5452,7 +5522,7 @@ const App = {
     try {
       const s = JSON.parse(sessionStorage.getItem('ucpa_session') || '{}');
       const storedPw = localStorage.getItem('ucpa_custom_pw_' + (s.role||'') + '_' + (s.region||'') + '_' + (s.centre||''));
-      const defaultPw = s.role === 'admin' ? 'UCPA2025!' : (ALL_CENTRE_PASSWORDS[s.centre] || s.centre?.toLowerCase()?.replace(/\s+/g,'') || '');
+      const defaultPw = (s.role === 'admin') ? 'UCPA2025!' : (s.role === 'admin_national') ? 'UCPA_NAT!' : (ALL_CENTRE_PASSWORDS[s.centre] || s.centre?.toLowerCase()?.replace(/\s+/g,'') || '');
       const currentPw = storedPw || defaultPw;
       if (curr !== currentPw) { setMsg('Mot de passe actuel incorrect.', false); return; }
 
@@ -6011,7 +6081,23 @@ const App = {
       case 'ged':    GED.render(); break;
       case 'notice': Notice.render(); break;
       case 'backup': Backup.render(); break;
-      case 'admin':  Admin.render(); App._renderAnthropicStatus(); break;
+      case 'admin': {
+        const _sess = safeJsonParse(sessionStorage.getItem('ucpa_session'), {});
+        const _isNational = _sess.role === 'admin_national';
+        // Masquer l'onglet Centres pour le rôle national
+        const _tabCentres = document.getElementById('adm-tab-centres');
+        const _panelCentres = document.getElementById('adm-panel-centres');
+        if (_tabCentres)  _tabCentres.style.display  = _isNational ? 'none' : '';
+        if (_panelCentres) _panelCentres.style.display = _isNational ? 'none' : '';
+        // Pour le national : afficher directement comptes au lieu de centres
+        if (_isNational) {
+          Admin.showTab('comptes');
+        } else {
+          Admin.render();
+        }
+        App._renderAnthropicStatus();
+        break;
+      }
       case 'veille': App.nav('assistant'); setTimeout(() => Assistant.switchMainTab('veille', document.getElementById('assistant-tab-veille')), 50); break;
       case 'assistant': Assistant.init(); break;
     }
@@ -11573,7 +11659,7 @@ const Auth = {
 
   switchTab(tab) {
     this.currentTab = tab;
-    const allTabs = ['admin', ...Object.keys(REGIONS)];
+    const allTabs = ['admin', 'national', ...Object.keys(REGIONS)];
     allTabs.forEach(function(t) {
       const el  = document.getElementById('login-tab-' + t);
       const btn = document.getElementById('tab-' + t);
@@ -11644,6 +11730,19 @@ const Auth = {
       return;
     }
 
+    // ── PRIORITÉ 2 : Compte national (national / UCPA_NAT!) ──
+    if (this.currentTab === 'national') {
+      const user_nat = ((document.getElementById('login-user-national')||{}).value||'').trim().toLowerCase();
+      const pass_nat = ((document.getElementById('login-pass-national')||{}).value||'').trim();
+      const stored_nat = localStorage.getItem('ucpa_custom_pw_national__') || 'UCPA_NAT!';
+      if (user_nat === 'national' && (pass_nat === stored_nat || pass_nat === 'UCPA_NAT!')) {
+        this.startSession('admin_national', 'ALL', 'ALL', '🌐 National — Toutes régions');
+      } else {
+        if (err) { err.style.display = 'block'; err.textContent = 'Identifiant ou mot de passe National incorrect.'; }
+      }
+      return;
+    }
+
     // ── PRIORITÉ 2 : Compte admin principal (admin / UCPA2025!) ──
     if (this.currentTab === 'admin') {
       const pass_lower = inputPass.toLowerCase();
@@ -11703,6 +11802,11 @@ const Auth = {
       regionLabel   = '👑 Admin — ' + activeCentres.length + ' centres · Toutes régions';
       storagePrefix = 'ucpa_admin_';
       document.body.classList.add('region-admin');
+    } else if (role === 'admin_national') {
+      activeCentres = Object.values(REGIONS).reduce(function(acc, r) { return acc.concat(r.centres); }, []);
+      regionLabel   = '🌐 National — ' + activeCentres.length + ' centres · Toutes régions';
+      storagePrefix = 'ucpa_admin_';
+      document.body.classList.add('region-admin');
     } else {
       const reg = REGIONS[region];
       if (reg) {
@@ -11734,6 +11838,8 @@ const Auth = {
       let badge = '';
       if (role === 'admin') {
         badge = '<span class="badge-admin">ADMIN</span>';
+      } else if (role === 'admin_national') {
+        badge = '<span class="badge-admin" style="background:var(--ucpa-teal)">NATIONAL</span>';
       } else if (role === 'region') {
         const r = REGIONS[region];
         if (r) badge = '<span class="badge-admin" style="background:rgba(30,185,129,.15);color:var(--green)">' + r.icon + ' ' + r.label + '</span>';
@@ -11763,6 +11869,15 @@ const Auth = {
       this._addAdminSwitcher();
       const navAdmin = document.getElementById('nav-admin');
       if (navAdmin) navAdmin.style.display = 'flex';
+    } else if (role === 'admin_national') {
+      // National : accède à la page admin (comptes, logs, corbeille) mais PAS centres
+      this._addAdminSwitcher();
+      const navAdmin = document.getElementById('nav-admin');
+      if (navAdmin) {
+        navAdmin.style.display = 'flex';
+        const lbl = document.getElementById('nav-admin-label');
+        if (lbl) lbl.textContent = 'Admin — Paramètres';
+      }
     }
 
     App.init().then(function() {
@@ -19146,9 +19261,17 @@ const Admin = {
   // ════════════════════════════════════════════════════════════════
 
   showTab(tab) {
+    const sess = safeJsonParse(sessionStorage.getItem('ucpa_session'), {});
+    const isNational = sess.role === 'admin_national';
     ['centres','comptes','corbeille','logs'].forEach(t => {
       const btn = document.getElementById('adm-tab-'+t);
       const panel = document.getElementById('adm-panel-'+t);
+      // Masquer l'onglet centres pour le national
+      if (t === 'centres' && isNational) {
+        if (btn)   btn.style.display = 'none';
+        if (panel) panel.style.display = 'none';
+        return;
+      }
       if (btn)   btn.style.borderBottom = t===tab ? '2px solid var(--accent)' : '2px solid transparent';
       if (btn)   btn.style.fontWeight   = t===tab ? '600' : '400';
       if (panel) panel.style.display    = t===tab ? '' : 'none';
@@ -19156,7 +19279,7 @@ const Admin = {
     if (tab === 'comptes')   this._renderUsersList();
     if (tab === 'corbeille') this.renderCorbeille();
     if (tab === 'logs')      this._renderLogs();
-    if (tab === 'centres')   this.render();
+    if (tab === 'centres' && !isNational) this.render();
   },
 
   // ── Clé de stockage users ──────────────────────────────────────
