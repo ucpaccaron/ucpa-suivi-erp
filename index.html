@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ERP UCPA v6.0 | Build : 2026-03-18 07:36 | Production --><!-- UCPA ERP v4.3 - 2026-03-08 -->
+<!-- ERP UCPA v6.2 | Build : 2026-03-18 07:36 | Production --><!-- UCPA ERP v4.3 - 2026-03-08 -->
 <html lang="fr" data-theme="light">
 <head>
 <meta charset="UTF-8">
@@ -18,11 +18,11 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-  <meta name="description" content="ERP UCPA v6.0 — Application de gestion sécurité, conformité réglementaire et maintenance pour les centres sportifs UCPA. Registre ERP, calendrier des contrôles, suivi piscine, DUERP, GED.">
+  <meta name="description" content="ERP UCPA ERP UCPA v6.2 — Application de gestion sécurité, conformité réglementaire et maintenance pour les centres sportifs UCPA. Registre ERP, calendrier des contrôles, suivi piscine, DUERP, GED.">
   <meta name="author" content="Service Technique UCPA">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#E8361A">
-  <meta name="application-name" content="ERP UCPA v6.0">
+  <meta name="application-name" content="ERP UCPA ERP UCPA v6.2">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
 function escH(str) {
@@ -288,7 +288,7 @@ function logErpError(errData) {
       ts:      new Date().toISOString(),
       centre:  sessionStorage.getItem('ucpa_centre') || 'inconnu',
       user:    sessionStorage.getItem('ucpa_session') ? 'connecté' : 'déconnecté',
-      version: 'v6.0',
+      version: 'ERP UCPA v6.2',
       ...errData
     });
 
@@ -445,7 +445,7 @@ if (!document.getElementById('ucpa-toast-style')) {
     e.preventDefault();
   });
 </script>
-<title>ERP UCPA v6.0 — Gestion Sécurité & Conformité</title>
+<title>ERP UCPA ERP UCPA v6.2 — Gestion Sécurité & Conformité</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow:ital,wght@0,300;0,400;0,600;0,700;0,900;1,300&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -2973,7 +2973,7 @@ font-family:'Barlow',sans-serif;
       style="font-size:10px;font-family:'DM Mono',monospace;font-weight:700;
              background:var(--ucpa-orange);color:#fff;
              padding:2px 8px;border-radius:10px;letter-spacing:0.5px">
-      v6.0
+      ERP UCPA v6.2
     </span>
   </div>
 
@@ -4800,7 +4800,7 @@ const ANTHROPIC_API_KEY = '';  // Vide intentionnel — clé chargée via _loadA
 
 ;
 
-const BUILD_VERSION = 'v6.0';
+const BUILD_VERSION = 'ERP UCPA v6.2';
 const BUILD_DATE = '2026-03-18 07:36';
 
 // ── Afficher la version dans le badge sidebar dès le chargement ──
@@ -6962,7 +6962,7 @@ const App = {
               <span style="font-family:'DM Mono';font-size:10px;min-width:28px">${x.conf}%</span>
             </div>
           </td>
-          <td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px" onclick="App.selectCentre('${x.c}');App.nav('registre')">→</button></td>
+          <td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px" onclick="App.selectCentre('${x.c.replace(/'/g,"\\'")}');App.nav('registre')">→</button></td>
         </tr>`).join('')}
         </tbody></table>`;
     }
@@ -7087,7 +7087,7 @@ const App = {
  *   - Nom du centre UCPA
  *   - Date et heure de génération (horodatage non falsifiable côté client)
  *   - Numéro de version du document
- *   - Mention "Document généré par ERP UCPA v6.0"
+ *   - Mention "Document généré par ERP UCPA ERP UCPA v6.2"
  *
  * Usage : pdfAddHeader(doc, 'Registre de Sécurité')
  */
@@ -7116,7 +7116,7 @@ function pdfAddHeader(doc, titre, sousTitre) {
   // Horodatage à droite
   doc.setFontSize(8);
   doc.text('Généré le ' + horodatage, 287, 9, { align: 'right' });
-  doc.text('ERP UCPA v6.0 — Document confidentiel', 287, 16, { align: 'right' });
+  doc.text('ERP UCPA ERP UCPA v6.2 — Document confidentiel', 287, 16, { align: 'right' });
 
   // Ligne séparatrice
   doc.setDrawColor(200, 200, 200);
@@ -7140,7 +7140,7 @@ function pdfAddFooter(doc, pageNum) {
   doc.line(10, pageH - 12, pageW - 10, pageH - 12);
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
-  doc.text('ERP UCPA v6.0 — Usage interne exclusif — Ne pas diffuser', 10, pageH - 6);
+  doc.text('ERP UCPA ERP UCPA v6.2 — Usage interne exclusif — Ne pas diffuser', 10, pageH - 6);
   if (pageNum) doc.text('Page ' + pageNum, pageW - 10, pageH - 6, { align: 'right' });
   doc.setTextColor(30, 30, 30);
 }
@@ -8551,6 +8551,57 @@ function pdfAddFooter(doc, pageNum) {
     return this.load('commission') || {prescriptions:[], visites:[]};
   },
 
+  // Sauvegarde la commission dans le bon préfixe de région.
+  // Si l'utilisateur est admin et que les éléments concernent des régions différentes,
+  // on scinde par région pour éviter les PV cross-région.
+  _saveCommissionSmart(data) {
+    const isAdmin = this._storagePrefix === 'ucpa_admin_';
+    if (!isAdmin) {
+      // Utilisateur région/centre : save normal dans son propre préfixe
+      this._saveCommissionSmart(data);
+      return;
+    }
+    // Admin : router chaque prescription/visite dans le préfixe de sa région
+    const byPrefix = {};
+    const _getPrefix = (centre) => this._getPrefixForCentre(centre) || this._storagePrefix;
+
+    (data.prescriptions || []).forEach(p => {
+      const prefix = _getPrefix(p.centre);
+      if (!byPrefix[prefix]) {
+        // Charger l'état existant de cette région pour ne pas écraser les autres entrées
+        const existing = (() => {
+          try { const v = localStorage.getItem(prefix + 'commission'); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+        })() || {prescriptions:[], visites:[]};
+        byPrefix[prefix] = existing;
+      }
+      // Upsert : remplacer si même id, sinon ajouter
+      const idx = byPrefix[prefix].prescriptions.findIndex(e => e.id === p.id);
+      if (idx >= 0) byPrefix[prefix].prescriptions[idx] = p;
+      else byPrefix[prefix].prescriptions.push(p);
+    });
+
+    (data.visites || []).forEach(v => {
+      const prefix = _getPrefix(v.centre);
+      if (!byPrefix[prefix]) {
+        const existing = (() => {
+          try { const raw = localStorage.getItem(prefix + 'commission'); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+        })() || {prescriptions:[], visites:[]};
+        byPrefix[prefix] = existing;
+      }
+      const idx = byPrefix[prefix].visites.findIndex(e => e.id === v.id);
+      if (idx >= 0) byPrefix[prefix].visites[idx] = v;
+      else byPrefix[prefix].visites.push(v);
+    });
+
+    // Écrire chaque bloc région dans localStorage (+ cache)
+    Object.entries(byPrefix).forEach(([prefix, regionData]) => {
+      const k = prefix + 'commission';
+      this._cache[k] = regionData;
+      try { localStorage.setItem(k, JSON.stringify(regionData)); } catch(e) {}
+      if (window._firestore) window._firestore.set(k, JSON.stringify(regionData)).catch(()=>{});
+    });
+  },
+
   _renderCommPrescriptions() {
     const data   = this._getCommData();
     const pres   = data.prescriptions || [];
@@ -8788,7 +8839,7 @@ function pdfAddFooter(doc, pageNum) {
     const data = this._getCommData();
     if (type === 'prescriptions') data.prescriptions.splice(idx, 1);
     else if (type === 'visites')  data.visites.splice(idx, 1);
-    this.save('commission', data);
+    this._saveCommissionSmart(data);
     this.renderCommission();
     this.renderAll();
   },
@@ -9020,7 +9071,7 @@ function pdfAddFooter(doc, pageNum) {
     });
 
     data.prescriptions = existing;
-    this.save('commission', data);
+    this._saveCommissionSmart(data);
     this.renderCommission();
     this.renderAll();
     showToast(
@@ -10311,7 +10362,7 @@ Enregistrer quand même ?`)) return;
           statut:       (document.getElementById('m-statut')||{}).value || 'Prescrite',
           lien:         (document.getElementById('m-lien')||{}).value || ''
         });
-        this.save('commission', data);
+        this._saveCommissionSmart(data);
         this.renderCommission();
         this.renderAll();
       },
@@ -10328,7 +10379,7 @@ Enregistrer quand même ?`)) return;
           p.numPV        = (document.getElementById('m-num-pv')||{}).value || p.numPV || '';
           p.priorite     = (document.getElementById('m-priorite')||{}).value || p.priorite || 'Mineure';
         }
-        this.save('commission', data);
+        this._saveCommissionSmart(data);
         this.renderCommission();
         this.renderAll();
       },
@@ -10345,7 +10396,7 @@ Enregistrer quand même ?`)) return;
           echeance: (document.getElementById('m-echeance')||{}).value || '',
           lien:     (document.getElementById('m-lien')||{}).value || ''
         });
-        this.save('commission', data);
+        this._saveCommissionSmart(data);
         this.renderCommission();
       }
     };
@@ -11043,7 +11094,7 @@ Enregistrer quand même ?`)) return;
     doc.text("Art. R.111-19-8 Code de la Construction · Arrêté 8 décembre 2014",14,y); y+=8;
     doc.setTextColor(30,30,30);
 
-    const icons = {ok:"✓ Conforme", partial:'△ Partiel', ko:'✗ Non conforme', na:'N/A', '':'— Non évalué'};
+    const icons = {ok:"Conforme", partial:'Partiel', ko:'Non conforme', na:'N/A', '':'Non evalue'};
 
     doc.setFillColor(245,245,245); doc.rect(14,y-4,182,8,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(232,84,26);
@@ -11085,21 +11136,32 @@ Enregistrer quand même ?`)) return;
         const ech  = d['ech_'+item.id] || '';
         const color= v==='ok'?[22,163,74]:v==='partial'?[217,119,6]:v==='ko'?[220,38,38]:[100,100,100];
 
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(30,30,30);
-        doc.text(item.label,16,y);
+        // Badge statut (droit, calcul d'abord pour connaître la largeur)
+        doc.setFontSize(7); doc.setFont('helvetica','bold');
+        const statusText = icons[v] || 'Non evalue';
+        const tw = doc.getTextWidth(statusText) + 6;
         doc.setFillColor(...color);
+        doc.roundedRect(196-tw, y-4, tw, 5.5, 1, 1, 'F');
         doc.setTextColor(255,255,255);
-        const statusText = icons[v];
-        const tw = doc.getTextWidth(statusText)+6;
-        doc.roundedRect(196-tw,y-4,tw,5.5,1,1,'F');
-        doc.setFontSize(7); doc.setFont('helvetica','normal');
-        doc.text(statusText,196-tw+3,y);
-        doc.setTextColor(30,30,30); y+=5;
+        doc.text(statusText, 196-tw+3, y);
+
+        // Label item (zone limitée pour ne pas déborder sur le badge)
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(30,30,30);
+        const maxLabelW = 196 - tw - 20; // laisse 4mm de marge avant le badge
+        const labelLines = doc.splitTextToSize(item.label, maxLabelW);
+        doc.text(labelLines, 16, y);
+        y += Math.max(5, labelLines.length * 4);
 
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
-        doc.text(item.ref,16,y); y+=4;
-        if (obs) { doc.setTextColor(50,50,50); doc.text('→ '+obs,16,y); y+=4; }
-        if (ech) { doc.setTextColor(150,80,0); doc.text('📅 Échéance : '+new Date(ech).toLocaleDateString('fr-FR'),16,y); y+=4; }
+        const refLines = doc.splitTextToSize(item.ref, 176);
+        doc.text(refLines, 16, y); y += refLines.length * 4;
+        if (obs) {
+          doc.setTextColor(50,50,50);
+          const obsLines = doc.splitTextToSize('> '+obs, 176);
+          if (y + obsLines.length*4 > 270) { doc.addPage(); y = 18; }
+          doc.text(obsLines, 16, y); y += obsLines.length * 4;
+        }
+        if (ech) { doc.setTextColor(150,80,0); doc.text('Echeance : '+new Date(ech).toLocaleDateString('fr-FR'),16,y); y+=4; }
         doc.setTextColor(220,220,220); doc.line(14,y,196,y); y+=3;
         doc.setTextColor(30,30,30);
       });
@@ -15323,7 +15385,7 @@ const PDFImport = {
         <span>📄</span>
         <span class="pim-fname">${q.name}</span>
         ${dt ? `<span class="pim-ftype">${dt.icon} ${dt.label}</span>` : ''}
-        <span class="pim-fstatus ${q.status}">${statusTxt}${q.status==='err'&&q.errMsg?' — '+q.errMsg.slice(0,30):''}</span>
+        <span class="pim-fstatus ${q.status}">${statusTxt}${q.status==='err'&&q.errMsg?' — '+(q.errMsg.includes('fetch')||q.errMsg.includes('Failed')?'Clé API invalide ou absente':q.errMsg).slice(0,50):''}</span>
         ${q.status==='idle'?`<span style="cursor:pointer;color:var(--muted);font-size:14px" onclick="PDFImport._removeFile(${i})">✕</span>`:''}
       </div>`;
     }).join('');
@@ -15364,7 +15426,7 @@ const PDFImport = {
 
   async _callAPI(base64, systemPrompt, userText, maxTokens=3000) {
     const { provider, key } = _getAIProvider();
-    if (!key) throw new Error('Clé API non configurée.');
+    if (!key || !provider) throw new Error('Clé API non configurée. Allez dans Admin → Configuration.');
 
     if (provider === 'gemini') {
       // Gemini : PDF en inline_data
@@ -16423,7 +16485,8 @@ const Equip = {
   },
 
   openAdd() {
-    const cs = CENTRES.map(c=>`<option value="${c}">${c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ')}</option>`).join('');
+    const activeCentre = (App.centre && App.centre !== 'ALL') ? App.centre : CENTRES[0];
+    const cs = CENTRES.map(c=>`<option value="${c}"${c===activeCentre?' selected':''}>${c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ')}</option>`).join('');
     const cats = Object.entries(this.CATEGORIES).map(([k,v])=>`<option value="${k}">${v.icon} ${k}</option>`).join('');
     App.openModal('Nouvel équipement', `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -17481,7 +17544,7 @@ const InvModule = {
       });
       return `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <svg viewBox="0 0 140 140" width="120" height="120" style="flex-shrink:0">
-          ${segs.map(s=>`<path d="${s.path}" fill="${s.color}" opacity=".85"><title>ERP UCPA v6.0 — Gestion Sécurité & Conformité</title></path>`).join('')}
+          ${segs.map(s=>`<path d="${s.path}" fill="${s.color}" opacity=".85"><title>ERP UCPA ERP UCPA v6.2 — Gestion Sécurité & Conformité</title></path>`).join('')}
           <text x="70" y="66" text-anchor="middle" font-size="15" font-weight="800" fill="var(--text)">${total}</text>
           <text x="70" y="80" text-anchor="middle" font-size="9" fill="var(--muted)">projets</text>
         </svg>
@@ -20480,7 +20543,7 @@ const Admin = {
 
     const report = {
       generatedAt:  new Date().toISOString(),
-      version:      'ERP UCPA v6.0',
+      version:      'ERP UCPA ERP UCPA v6.2',
       centre:       sessionStorage.getItem('ucpa_centre') || '—',
       storageUsed:  Math.round(JSON.stringify(localStorage).length / 1024) + ' Ko',
       errors:       errorLog.slice(-100),
