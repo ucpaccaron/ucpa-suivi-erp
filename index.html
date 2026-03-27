@@ -125,10 +125,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function hashPassword(pw) {
   const encoder = new TextEncoder();
+  // CORRECTION QA - Salt statique : remplacer par un salt dynamique serveur en production
   const data = encoder.encode(pw + 'ucpa_erp_salt_2024');
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * CORRECTION QA - Validation SIRET (algorithme de Luhn)
+ * Retourne true si le SIRET est valide (14 chiffres + cle Luhn)
+ */
+function validateSIRET(siret) {
+  if (!siret || typeof siret !== 'string') return false;
+  const s = siret.replace(/\s/g, '');
+  if (!/^\d{14}$/.test(s)) return false;
+  let sum = 0;
+  for (let i = 0; i < 14; i++) {
+    let n = parseInt(s[i], 10);
+    if (i % 2 === 0) { n *= 2; if (n > 9) n -= 9; }
+    sum += n;
+  }
+  return sum % 10 === 0;
 }
 
 function safeOpen(url, target = '_blank') {
@@ -398,51 +416,18 @@ if (!document.getElementById('ucpa-toast-style')) {
 }
 
 
-  window.addEventListener('error', function(e) {
-
-    if (!e.message || e.message === 'undefined' || e.message === 'Script error.') return;
-
-    var src = (e.filename || '').toLowerCase();
-    if (src.indexOf('gstatic') >= 0 || src.indexOf('firebase') >= 0 || src.indexOf('googleapis') >= 0) return;
-
-    var div = document.getElementById('_errbanner');
-    if (!div) {
-      div = document.createElement('div');
-      div.id = '_errbanner';
-      div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:10px 16px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:50vh;overflow:auto;cursor:pointer';
-      div.title = 'Cliquer pour fermer';
-      div.onclick = function() { div.style.display = 'none'; };
-      document.body && document.body.appendChild(div);
-    }
-    var fichier = (e.filename || '?').split('/').pop() || '?';
-    var ligne = e.lineno || '?';
-    var col = e.colno || '?';
-    div.style.display = '';
-    div.textContent += '🚨 ' + e.message + '\n  → ' + fichier + ' : ' + ligne + ':' + col + '\n';
-  }, true);
-
+  // CORRECTION QA - Bandeau d'erreur technique supprime (affichait du JS brut aux agents terrain)
+  // Les erreurs sont loggees silencieusement via logErpError().
   window.addEventListener('unhandledrejection', function(e) {
-
     if (!e.reason) return;
     var msg = (e.reason.message || String(e.reason) || '').toLowerCase();
     if (msg.indexOf('firebase') >= 0 || msg.indexOf('firestore') >= 0 ||
         msg.indexOf('fetch') >= 0 || msg.indexOf('network') >= 0 ||
-        msg.indexOf('quota') >= 0) {
-      e.preventDefault(); // Supprimer du log console aussi
-      return;
+        msg.indexOf('quota') >= 0) { e.preventDefault(); return; }
+    if (typeof logErpError === 'function') {
+      logErpError({ type: 'unhandled_rejection',
+        message: String(e.reason && e.reason.message || e.reason || '').substring(0, 300) });
     }
-
-    var div = document.getElementById('_errbanner');
-    if (!div) {
-      div = document.createElement('div');
-      div.id = '_errbanner';
-      div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#dc2626;color:#fff;padding:10px 16px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:50vh;overflow:auto;cursor:pointer';
-      div.onclick = function() { div.style.display = 'none'; };
-      document.body && document.body.appendChild(div);
-    }
-    div.style.display = '';
-    div.textContent += '⚠️ Promise rejetée : ' + (e.reason.message || e.reason) + '\n';
-    e.preventDefault();
   });
 </script>
 <title>ERP UCPA ERP UCPA v6.2 — Gestion Sécurité & Conformité</title>
@@ -4247,7 +4232,16 @@ font-family:'Barlow',sans-serif;
     <!-- ADMIN CENTRES -->
     <div id="page-admin" class="page">
 
-      <!-- KPIs dynamiques (remplis par Admin.render()) -->
+      <!-- CORRECTION QA - Avertissement stockage local -->
+    <div id="ucpa-localStorage-warn" style="background:rgba(180,83,9,.10);border:1px solid rgba(180,83,9,.30);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:12px;display:flex;align-items:flex-start;gap:10px">
+      <span style="font-size:18px;flex-shrink:0">⚠️</span>
+      <div>
+        <strong style="color:var(--amber)">Attention — Données stockées localement dans ce navigateur</strong><br>
+        <span style="color:var(--muted2)">En cas de suppression du cache ou de changement d’appareil, les données ERP seront perdues. <strong>Exportez régulièrement</strong> via la page Sauvegardes, ou configurez Firebase pour la synchronisation.</span>
+      </div>
+      <button onclick="this.closest('#ucpa-localStorage-warn').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;flex-shrink:0;line-height:1" aria-label="Fermer">×</button>
+    </div>
+    <!-- KPIs dynamiques (remplis par Admin.render()) -->
       <div class="admin-kpi-bar">
         <div id="adm-kpi-dynamic" style="display:contents"></div>
         <div class="admin-kpi" style="border-left:1px solid var(--border);padding-left:16px">
@@ -6359,6 +6353,37 @@ const App = {
         }
       }
     }
+    // CORRECTION QA - Sync multi-onglets via BroadcastChannel
+    try {
+      if (!this._bc) {
+        this._bc = new BroadcastChannel('ucpa_erp_sync');
+        this._bc.onmessage = (ev) => {
+          if (!ev.data || ev.data.prefix !== this._storagePrefix) return;
+          delete this._cache[ev.data.key];
+          try { this.renderAll(); } catch(_) {}
+        };
+      }
+      this._bc.postMessage({ key: k, prefix: this._storagePrefix, ts: Date.now() });
+    } catch(_) {}
+
+    // CORRECTION QA - Indicateur de sauvegarde discret (pastille verte)
+    this._flashSaveIndicator();
+  },
+
+  _flashSaveIndicator() {
+    try {
+      let dot = document.getElementById('ucpa-save-dot');
+      if (!dot) {
+        dot = document.createElement('span');
+        dot.id = 'ucpa-save-dot';
+        dot.style.cssText = 'position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:9999;background:#16a34a;color:#fff;font-size:11px;font-weight:600;padding:3px 14px;border-radius:20px;opacity:0;transition:opacity .25s ease;pointer-events:none;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.25)';
+        dot.textContent = '✓ Enregistré';
+        document.body.appendChild(dot);
+      }
+      clearTimeout(dot._t);
+      dot.style.opacity = '1';
+      dot._t = setTimeout(() => { dot.style.opacity = '0'; }, 1800);
+    } catch(_) {}
   },
 
   _regionPrefixes() {
@@ -7106,17 +7131,17 @@ function pdfAddHeader(doc, titre, sousTitre) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text((titre || 'Document ERP').toUpperCase(), 10, 9);
+  doc.text(this._pdfSafe(titre || 'Document ERP').toUpperCase(), 10, 9);
 
   // Sous-titre / centre
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.text(centre + (sousTitre ? ' — ' + sousTitre : ''), 10, 16);
+  doc.text(this._pdfSafe(centre + (sousTitre ? ' - ' + sousTitre : '')), 10, 16);
 
   // Horodatage à droite
   doc.setFontSize(8);
-  doc.text('Généré le ' + horodatage, 287, 9, { align: 'right' });
-  doc.text('ERP UCPA ERP UCPA v6.2 — Document confidentiel', 287, 16, { align: 'right' });
+  doc.text('Genere le ' + horodatage, 287, 9, { align: 'right' });
+  doc.text('ERP UCPA v6.2 - Document confidentiel', 287, 16, { align: 'right' });
 
   // Ligne séparatrice
   doc.setDrawColor(200, 200, 200);
@@ -7140,7 +7165,7 @@ function pdfAddFooter(doc, pageNum) {
   doc.line(10, pageH - 12, pageW - 10, pageH - 12);
   doc.setFontSize(7);
   doc.setTextColor(120, 120, 120);
-  doc.text('ERP UCPA ERP UCPA v6.2 — Usage interne exclusif — Ne pas diffuser', 10, pageH - 6);
+  doc.text('ERP UCPA v6.2 - Usage interne exclusif - Ne pas diffuser', 10, pageH - 6);
   if (pageNum) doc.text('Page ' + pageNum, pageW - 10, pageH - 6, { align: 'right' });
   doc.setTextColor(30, 30, 30);
 }
@@ -7160,9 +7185,9 @@ function pdfAddFooter(doc, pageNum) {
 
     doc.setFillColor(232,84,26); doc.rect(0,0,297,18,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','bold');
-    doc.text("UCPA ERP — Dashboard Conformité", 14, 12);
+    doc.text("UCPA ERP - Dashboard Conformite", 14, 12);
     doc.setFontSize(9); doc.setFont("helvetica",'normal');
-    doc.text(`Généré le ${today} · ${this.centre==='ALL'?'Tous les centres':this.centre}`, 220, 12);
+    doc.text(this._pdfSafe('Genere le ' + today + ' - ' + (this.centre==='ALL'?'Tous les centres':this.centre)), 220, 12);
 
     doc.setTextColor(30,30,30);
     const kpis = [
@@ -7181,14 +7206,14 @@ function pdfAddFooter(doc, pageNum) {
     });
 
     doc.setTextColor(30,30,30); doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text("Contrôles urgents", 14, 48);
+    doc.text("Controles urgents", 14, 48);
     const urgents = [...expired.slice(0,15).map(r=>({...r,type:"Échu",color:[232,54,26]})),
                      ...soon.slice(0,10).map(r=>({...r,type:'<60j',color:[245,166,35]}))];
     if (urgents.length>0) {
       let y=52;
       doc.setFontSize(7); doc.setFont('helvetica','bold');
       doc.setFillColor(240,240,240); doc.rect(14,y,269,5,'F');
-      doc.text("TYPE",16,y+3.5); doc.text("LIBELLÉ",35,y+3.5); doc.text("GROUPE",160,y+3.5); doc.text("ÉCHÉANCE",230,y+3.5);
+      doc.text("TYPE",16,y+3.5); doc.text("LIBELLE",35,y+3.5); doc.text("GROUPE",160,y+3.5); doc.text("ECHEANCE",230,y+3.5);
       y+=6;
       urgents.forEach(u=>{
         doc.setFont('helvetica','normal');
@@ -7196,12 +7221,12 @@ function pdfAddFooter(doc, pageNum) {
         doc.setTextColor(30,30,30);
         doc.text((u.libelle||'').substring(0,80),35,y);
         doc.text((u.groupe||'').substring(0,30),160,y);
-        doc.text(this.fmtDate(u.prochainControle)||'—',230,y);
+        doc.text(this._pdfSafe(this.fmtDate(u.prochainControle)||'-'),230,y);
         y+=5; if(y>190){doc.addPage();y=20;}
       });
     } else {
       doc.setFontSize(9); doc.setFont('helvetica','italic'); doc.setTextColor(100,100,100);
-      doc.text('Aucune urgence — tous les contrôles sont à jour ✅', 14, 55);
+      doc.text('Aucune urgence - tous les controles sont a jour', 14, 55);
     }
 
     doc.save(`UCPA_Dashboard_${today.replace(/\//g,'-')}.pdf`);
@@ -7544,14 +7569,14 @@ function pdfAddFooter(doc, pageNum) {
     doc.rect(0, 0, 210, 12, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text('UCPA · Fiche Synthèse Centre', 14, 8);
+    doc.text('UCPA - Fiche Synthese Centre', 14, 8);
     doc.text(new Date().toLocaleDateString('fr-FR'), 196, 8, {align:'right'});
     doc.setTextColor(30, 30, 30);
     y = 22;
 
     doc.setFontSize(16); doc.setFont('helvetica','bold');
-    doc.text(nom, 14, y); y += 8;
-    if (d.adresse) { doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.text(`${d.adresse}, ${d.cp||''} ${d.ville||''}`, 14, y); y += 6; }
+    doc.text(this._pdfSafe(nom), 14, y); y += 8;
+    if (d.adresse) { doc.setFontSize(10); doc.setFont('helvetica','normal'); doc.text(this._pdfSafe(`${d.adresse}, ${d.cp||''} ${d.ville||''}`, 14, y); y += 6; }
     y += 4;
 
     const section = (title) => {
@@ -7559,7 +7584,7 @@ function pdfAddFooter(doc, pageNum) {
       doc.rect(14, y-4, 182, 7, 'F');
       doc.setFontSize(9); doc.setFont('helvetica','bold');
       doc.setTextColor(232, 84, 26);
-      doc.text(title.toUpperCase(), 16, y); y += 7;
+      doc.text(this._pdfSafe(title).toUpperCase(), 16, y); y += 7;
       doc.setTextColor(30, 30, 30);
       doc.setFont('helvetica','normal');
     };
@@ -8916,7 +8941,7 @@ function pdfAddFooter(doc, pageNum) {
     const today = new Date().toLocaleDateString('fr-FR');
     doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text("UCPA — Commission de Sécurité · Prescriptions", 14, 11);
+    doc.text("UCPA - Commission de Securite - Prescriptions", 14, 11);
     doc.setFontSize(8); doc.text(today, 260, 11);
     let y = 24;
     const headers = ["Centre",'N° PV','Priorité','Description','Échéance','Statut'];
@@ -8937,7 +8962,7 @@ function pdfAddFooter(doc, pageNum) {
         (p.description||'').slice(0,65),
         p.dateEcheance||'', p.statut||''
       ];
-      row.forEach((v,i) => { doc.text(String(v), x+1, y); x+=colWidths[i]; });
+      row.forEach((v,i) => { doc.text(this._pdfSafe(String(v||'')), x+1, y); x+=colWidths[i]; });
       y += 7;
     });
     doc.save(`UCPA_Commission_${today.replace(/\//g,'-')}.pdf`);
@@ -9727,6 +9752,14 @@ function pdfAddFooter(doc, pageNum) {
       const el = document.getElementById('prev-'+f);
       if (el) prev[f.replace(/-/g,'_')] = el.value;
     });
+
+    // CORRECTION QA - Validation SIRET dans le plan de prevention
+    const _prevSiret = document.getElementById('prev-siret');
+    if (_prevSiret && _prevSiret.value.trim()) {
+      const _sok = validateSIRET(_prevSiret.value.trim());
+      _prevSiret.style.borderColor = _sok ? '' : 'var(--red)';
+      _prevSiret.title = _sok ? '' : 'SIRET invalide - vérifiez les 14 chiffres';
+    }
 
     const insp = document.getElementById('prev-inspection');
     if (insp) prev.inspection = insp.checked;
@@ -10995,7 +11028,7 @@ Enregistrer quand même ?`)) return;
     const totalE = invs.reduce((s,i)=>s+(parseFloat(i.coutEstime)||0),0);
     const totalR = invs.reduce((s,i)=>s+(parseFloat(i.coutReel)||0),0);
     doc.setFontSize(9); doc.setFont('helvetica','bold');
-    doc.text(`Total estimé: ${totalE.toLocaleString('fr-FR')}€ | Coût réel: ${totalR.toLocaleString('fr-FR')}€ | ${invs.length} investissements`, 14, y); y+=8;
+    doc.text('Total estime: ' + totalE.toLocaleString('fr-FR') + ' EUR | Cout reel: ' + totalR.toLocaleString('fr-FR') + ' EUR | ' + invs.length + ' investissements`, 14, y); y+=8;
     doc.setFont('helvetica','normal'); doc.setFontSize(7);
     invs.forEach(inv => {
       const line = `${inv.annee||'—'} | ${(inv.centre||'—').replace('VILLAGE SPORTIF ','')} | ${inv.categorie||'—'} | ${(inv.description||'—').substring(0,50)} | ${inv.coutEstime||0}€ / ${inv.coutReel||0}€ | ${inv.statut||'—'}`;
@@ -11011,14 +11044,14 @@ Enregistrer quand même ?`)) return;
     doc.rect(0, 0, 210, 30, 'F');
     doc.setTextColor(232, 84, 26);
     doc.setFontSize(16); doc.setFont('helvetica', 'bold');
-    doc.text("UCPA · Alpes Sud", 14, 14);
+    doc.text("UCPA - Alpes Sud", 14, 14);
     doc.setTextColor(200, 210, 230);
     doc.setFontSize(10); doc.setFont("helvetica", 'normal');
-    doc.text(title, 14, 22);
+    doc.text(this._pdfSafe(title), 14, 22);
     doc.setTextColor(90, 107, 133);
     doc.setFontSize(9);
-    doc.text(`Centre : ${centre}`, 14, 28);
-    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 150, 28);
+    doc.text(this._pdfSafe('Centre : ' + centre), 14, 28);
+    doc.text('Genere le ' + new Date().toLocaleDateString('fr-FR'), 150, 28);
     doc.setTextColor(0, 0, 0);
     return 38;
   },
@@ -11033,7 +11066,7 @@ Enregistrer quand même ?`)) return;
     doc.setFontSize(10);
     centres.forEach(c => {
       doc.setFont('helvetica','bold'); doc.setTextColor(232,84,26);
-      doc.text(c, 14, y); y+=6;
+      doc.text(this._pdfSafe(c), 14, y); y+=6;
       doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
       const rows = reg[c] || [];
       rows.filter(r=>r.periodicite).forEach(r => {
@@ -11069,6 +11102,55 @@ Enregistrer quand même ?`)) return;
     doc.save(`UCPA_AlpesSud_Matrice_${this.today()}.pdf`);
   },
 
+  // CORRECTION BUG — Caractères Unicode incompatibles avec jsPDF/helvetica
+  // ≥, ≤, ×, ⌀, —, →, «, », ", ", etc. → remplacés par équivalents ASCII
+  _pdfSafe(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/≥/g, '>=')   // ≥
+      .replace(/≤/g, '<=')   // ≤
+      .replace(/×/g, 'x')    // ×
+      .replace(/⌀/g, 'diam') // ⌀
+      .replace(/—/g, '-')    // —
+      .replace(/–/g, '-')    // –
+      .replace(/’/g, "'")    // '
+      .replace(/‘/g, "'")    // '
+      .replace(/“/g, '"')    // "
+      .replace(/”/g, '"')    // "
+      .replace(/«/g, '"')    // «
+      .replace(/»/g, '"')    // »
+      .replace(/→/g, '->')   // →
+      .replace(/←/g, '<-')   // ←
+      .replace(/²/g, '2')    // ²
+      .replace(/³/g, '3')    // ³
+      .replace(/°/g, 'deg')  // °
+      .replace(/€/g, 'EUR')  // €
+      .replace(/à/g, 'a')    // à
+      .replace(/â/g, 'a')    // â
+      .replace(/ä/g, 'a')    // ä
+      .replace(/é/g, 'e')    // é
+      .replace(/è/g, 'e')    // è
+      .replace(/ê/g, 'e')    // ê
+      .replace(/ë/g, 'e')    // ë
+      .replace(/î/g, 'i')    // î
+      .replace(/ï/g, 'i')    // ï
+      .replace(/ô/g, 'o')    // ô
+      .replace(/ö/g, 'o')    // ö
+      .replace(/ù/g, 'u')    // ù
+      .replace(/û/g, 'u')    // û
+      .replace(/ü/g, 'u')    // ü
+      .replace(/ç/g, 'c')    // ç
+      .replace(/À/g, 'A')    // À
+      .replace(/É/g, 'E')    // É
+      .replace(/È/g, 'E')    // È
+      .replace(/Ê/g, 'E')    // Ê
+      .replace(/Î/g, 'I')    // Î
+      .replace(/Ô/g, 'O')    // Ô
+      .replace(/Û/g, 'U')    // Û
+      .replace(/Ç/g, 'C')    // Ç
+      .replace(/[^ -~]/g, '?'); // Tout autre non-ASCII → ?
+  },
+
   exportPMRPDF() {
     if (!window.jspdf) { showToast('jsPDF non disponible', 'info'); return; }
     const { jsPDF } = window.jspdf;
@@ -11082,29 +11164,29 @@ Enregistrer quand même ?`)) return;
     doc.rect(0,0,210,14,'F');
     doc.setTextColor(255,255,255);
     doc.setFontSize(11); doc.setFont('helvetica','bold');
-    doc.text('UCPA · Registre Public d\'Accessibilité PMR',14,9);
+    doc.text('UCPA - Registre Public Accessibilite PMR',14,9);
     doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text(new Date().toLocaleDateString('fr-FR'),196,9,{align:'right'});
     doc.setTextColor(30,30,30);
 
     let y = 22;
     doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text(nom,14,y); y+=7;
+    doc.text(this._pdfSafe(nom),14,y); y+=7;
     doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(120,120,120);
-    doc.text("Art. R.111-19-8 Code de la Construction · Arrêté 8 décembre 2014",14,y); y+=8;
+    doc.text('Art. R.111-19-8 CCH - Arrete 8 decembre 2014',14,y); y+=8;
     doc.setTextColor(30,30,30);
 
     const icons = {ok:"Conforme", partial:'Partiel', ko:'Non conforme', na:'N/A', '':'Non evalue'};
 
     doc.setFillColor(245,245,245); doc.rect(14,y-4,182,8,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(232,84,26);
-    doc.text("INFORMATIONS GÉNÉRALES",16,y); y+=8; doc.setTextColor(30,30,30);
+    doc.text('INFORMATIONS GENERALES',16,y); y+=8; doc.setTextColor(30,30,30);
     doc.setFont("helvetica",'normal'); doc.setFontSize(9);
-    doc.text(`Présence registre à l'accueil : ${icons[d.presence||'']}`,14,y); y+=6;
-    doc.text(`Attestation d'accessibilité : ${icons[d.attestation||'']}`,14,y); y+=6;
+    doc.text(this._pdfSafe('Presence registre a l accueil : ' + (icons[d.presence||''] || '-')),14,y); y+=6;
+    doc.text(this._pdfSafe('Attestation d accessibilite : ' + (icons[d.attestation||''] || '-')),14,y); y+=6;
     doc.text(`Ad'AP : ${icons[d.adap||'']}`,14,y); y+=6;
-    doc.text(`Responsable : ${d.responsable||'—'}`,14,y); y+=6;
-    doc.text(`Date mise à jour : ${d.date||'—'} · Prochaine vérif. : ${d['prochaine-verif']||'—'}`,14,y); y+=10;
+    doc.text('Responsable : '+this._pdfSafe(d.responsable||'-'),14,y); y+=6;
+    doc.text(this._pdfSafe('Date mise a jour : ' + (d.date||'-') + '  -  Prochaine verif. : ' + (d['prochaine-verif']||'-')),14,y); y+=10;
 
     let total=0,okN=0,partialN=0,koN=0;
     PMR_SECTIONS.forEach(s=>s.items.forEach(item=>{
@@ -11116,7 +11198,7 @@ Enregistrer quand même ?`)) return;
     doc.setDrawColor(232,84,26);
     doc.roundedRect(14,y-2,182,10,2,2,'FD');
     doc.setFont('helvetica','bold'); doc.setFontSize(9);
-    doc.text(`Conformité globale : ${okN}/${total} points conformes (${pct}%) · ${koN} non conformes · ${partialN} partiels`,16,y+5);
+    doc.text(this._pdfSafe('Conformite : ' + okN + '/' + total + ' conformes (' + pct + '%) - ' + koN + ' non conformes - ' + partialN + ' partiels'),16,y+5);
     doc.setFont('helvetica','normal'); y+=16;
 
     PMR_SECTIONS.forEach(section => {
@@ -11124,9 +11206,9 @@ Enregistrer quand même ?`)) return;
       doc.setFillColor(240,240,240);
       doc.rect(14,y-4,182,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(232,84,26);
-      doc.text(`${section.icon} ${section.label.toUpperCase()}`,16,y);
+      doc.text(this._pdfSafe(section.label).toUpperCase(),16,y);
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(120,120,120);
-      doc.text(section.ref,196,y,{align:'right'});
+      doc.text(this._pdfSafe(section.ref),196,y,{align:'right'});
       y+=9; doc.setTextColor(30,30,30);
 
       section.items.forEach(item => {
@@ -11148,16 +11230,16 @@ Enregistrer quand même ?`)) return;
         // Label item (zone limitée pour ne pas déborder sur le badge)
         doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(30,30,30);
         const maxLabelW = 196 - tw - 20; // laisse 4mm de marge avant le badge
-        const labelLines = doc.splitTextToSize(item.label, maxLabelW);
+        const labelLines = doc.splitTextToSize(this._pdfSafe(item.label), maxLabelW);
         doc.text(labelLines, 16, y);
         y += Math.max(5, labelLines.length * 4);
 
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
-        const refLines = doc.splitTextToSize(item.ref, 176);
+        const refLines = doc.splitTextToSize(this._pdfSafe(item.ref), 176);
         doc.text(refLines, 16, y); y += refLines.length * 4;
         if (obs) {
           doc.setTextColor(50,50,50);
-          const obsLines = doc.splitTextToSize('> '+obs, 176);
+          const obsLines = doc.splitTextToSize('> '+this._pdfSafe(obs), 176);
           if (y + obsLines.length*4 > 270) { doc.addPage(); y = 18; }
           doc.text(obsLines, 16, y); y += obsLines.length * 4;
         }
@@ -11172,7 +11254,7 @@ Enregistrer quand même ?`)) return;
     for (let i=1; i<=pages; i++) {
       doc.setPage(i);
       doc.setFontSize(7); doc.setTextColor(150,150,150);
-      doc.text(`UCPA — Document confidentiel — Page ${i}/${pages}`,105,292,{align:'center'});
+      doc.text(this._pdfSafe('UCPA - Document confidentiel - Page ' + i + '/' + pages),105,292,{align:'center'});
     }
 
     doc.save(`UCPA_PMR_${nom.replace(/\s/g,'_')}_${this.today()}.pdf`);
@@ -11221,15 +11303,15 @@ Enregistrer quand même ?`)) return;
       if (y > 250) { doc.addPage(); y = 20; }
       doc.setFillColor(232,84,26); doc.rect(14,y-5,182,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(255,255,255);
-      doc.text(title, 16, y+0.5); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
+      doc.text(this._pdfSafe(title), 16, y+0.5); doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
       y += 10;
     };
     const addField = (label, value, red) => {
       if (y > 270) { doc.addPage(); y = 20; }
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(80,80,80);
-      doc.text(label + ' :', 14, y);
+      doc.text(this._pdfSafe(label) + ' :', 14, y);
       doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(red?[200,0,0]:[0,0,0]);
-      const lines = doc.splitTextToSize(String(value||'—'), 150);
+      const lines = doc.splitTextToSize(this._pdfSafe(String(value||'-')), 150);
       doc.text(lines, 60, y);
       y += Math.max(7, lines.length * 5);
       doc.setTextColor(0,0,0);
@@ -11266,7 +11348,7 @@ Enregistrer quand même ?`)) return;
       if (y > 270) { doc.addPage(); y = 20; }
       const checked = prev.risques && prev.risques[i] ? '✓' : '○';
       const note    = prev.notes && prev.notes[i] ? ' — ' + prev.notes[i] : '';
-      const line    = doc.splitTextToSize(`${checked} ${r}${note}`, 180);
+      const line    = doc.splitTextToSize(this._pdfSafe(`${checked} ${r}${note}`), 180);
       doc.setTextColor(prev.risques&&prev.risques[i]?[0,120,0]:[150,150,150]);
       doc.text(line, 14, y); y += Math.max(6, line.length*5);
     });
@@ -11276,12 +11358,12 @@ Enregistrer quand même ?`)) return;
     addSection('5. Signatures et engagements (R.4512-8)');
     const sigTs = prev.signatureTS || ts_gen;
     doc.setFontSize(9); doc.setTextColor(80,80,80);
-    doc.text('Document généré et horodaté le : ' + ts_gen, 14, y); y += 7;
-    doc.text("Conform\u00e9ment \u00e0 l'article R.4512-8 du Code du travail", 14, y); y += 10;
+    doc.text('Document genere et horodate le : ' + ts_gen, 14, y); y += 7;
+    doc.text(this._pdfSafe("Conformement a l'article R.4512-8 du Code du travail"), 14, y); y += 10;
     doc.setTextColor(0,0,0);
 
     doc.setFont('helvetica','bold'); doc.setFontSize(10);
-    doc.text('Signataire EU (UCPA) : ' + (prev.signataire||'—'), 14, y); y += 7;
+    doc.text(this._pdfSafe('Signataire EU (UCPA) : ' + (prev.signataire||'-')), 14, y); y += 7;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
     doc.text('Horodatage : ' + sigTs, 14, y); y += 5;
     doc.setTextColor(0,0,0);
@@ -11299,7 +11381,7 @@ Enregistrer quand même ?`)) return;
 
     if (y + 35 > 280) { doc.addPage(); y = 20; }
     doc.setFont("helvetica",'bold'); doc.setFontSize(10);
-    doc.text('Signataire EE (Prestataire) : ' + (prev.signataire_ee||'—'), 110, y - 32 > 0 ? y - 32 : y); // côte à côte si possible
+    doc.text(this._pdfSafe('Signataire EE (Prestataire) : ' + (prev.signataire_ee||'-')), 110, y - 32 > 0 ? y - 32 : y); // côte à côte si possible
     const y2 = y - 32 > 20 ? y - 32 : y;
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
     doc.text("Horodatage : " + sigTs, 110, y2+7);
@@ -11319,7 +11401,7 @@ Enregistrer quand même ?`)) return;
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
       doc.setFontSize(7); doc.setTextColor(150,150,150);
-      doc.text(`UCPA · Plan de Prévention · ${centre} · Généré le ${ts_gen} · Page ${i}/${pages}`, 14, 290);
+      doc.text(this._pdfSafe(`UCPA - Plan de Prevention - ${centre} - Genere le ${ts_gen} - Page ${i}/${pages}`), 14, 290);
     }
     doc.setTextColor(0,0,0);
     const nom = centre.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'').substring(0,20);
@@ -11343,9 +11425,9 @@ Enregistrer quand même ?`)) return;
 
     const field = (lbl, val) => {
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(90,90,90);
-      doc.text(lbl + ' :', 14, y);
+      doc.text(this._pdfSafe(lbl) + ' :', 14, y);
       doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
-      const lines = doc.splitTextToSize(String(val||'—'), 148);
+      const lines = doc.splitTextToSize(this._pdfSafe(String(val||'-')), 148);
       doc.text(lines, 56, y);
       y += Math.max(6, lines.length * 5);
     };
@@ -11360,14 +11442,14 @@ Enregistrer quand même ?`)) return;
 
     doc.setFillColor(232,84,26); doc.rect(14,y-4,182,8,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
-    doc.text('2. VÉRIFICATIONS OBLIGATOIRES', 16, y+0.5); y+=10; doc.setTextColor(0,0,0);
+    doc.text('2. VERIFICATIONS OBLIGATOIRES', 16, y+0.5); y+=10; doc.setTextColor(0,0,0);
 
     PF_CHECKS.forEach((chk, i) => {
       if (y > 265) { doc.addPage(); y = 20; }
       const ok  = pf.checks && pf.checks[i];
       doc.setFont('helvetica','normal'); doc.setFontSize(9);
       doc.setTextColor(ok ? 0 : 160, ok ? 120 : 160, ok ? 0 : 160);
-      const lines = doc.splitTextToSize((ok ? '✓  ' : '○  ') + chk, 178);
+      const lines = doc.splitTextToSize((ok ? 'v  ' : 'o  ') + this._pdfSafe(chk), 178);
       doc.text(lines, 14, y);
       y += Math.max(6, lines.length * 5);
       doc.setDrawColor(230,230,230); doc.line(14, y-1, 196, y-1);
@@ -11380,7 +11462,7 @@ Enregistrer quand même ?`)) return;
     doc.text('3. SIGNATURES ET ENGAGEMENTS', 16, y+0.5); y+=10; doc.setTextColor(0,0,0);
 
     doc.setFontSize(8); doc.setTextColor(80,80,80);
-    doc.text('Document horodaté le : ' + ts + '  |  Conformément à la norme NF EN ISO 35001', 14, y); y+=8;
+    doc.text('Document horodate le : ' + ts + '  |  Conformement a la norme NF EN ISO 35001', 14, y); y+=8;
     doc.setTextColor(0,0,0);
 
     const SIG_Y  = y;
@@ -11393,15 +11475,15 @@ Enregistrer quand même ?`)) return;
     doc.rect(COL_L, SIG_Y,   SIG_W, 8, 'F');
     doc.rect(COL_R, SIG_Y,   SIG_W, 8, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(232,84,26);
-    doc.text('Émetteur — UCPA', COL_L+2, SIG_Y+5.5);
+    doc.text('Emetteur - UCPA', COL_L+2, SIG_Y+5.5);
     doc.setTextColor(58,123,213);
-    doc.text('Bénéficiaire — Prestataire (EE)', COL_R+2, SIG_Y+5.5);
+    doc.text('Beneficiaire - Prestataire (EE)', COL_R+2, SIG_Y+5.5);
     doc.setTextColor(0,0,0); doc.setFont('helvetica','normal');
 
     const nameY = SIG_Y + 11;
     doc.setFontSize(8.5);
-    doc.text('Nom : ' + (pf.signataire    || '— non renseigné —'), COL_L+2, nameY);
-    doc.text('Nom : ' + (pf.signataire_ee || '— non renseigné —'), COL_R+2, nameY);
+    doc.text(this._pdfSafe('Nom : ' + (pf.signataire || '- non renseigne -')), COL_L+2, nameY);
+    doc.text(this._pdfSafe('Nom : ' + (pf.signataire_ee || '- non renseigne -')), COL_R+2, nameY);
 
     const tsY = nameY + 5;
     doc.setFontSize(7.5); doc.setTextColor(100,100,100);
@@ -11443,7 +11525,7 @@ Enregistrer quand même ?`)) return;
     for (let p = 1; p <= pages; p++) {
       doc.setPage(p);
       doc.setFontSize(7); doc.setTextColor(150,150,150);
-      doc.text('UCPA · Permis de Feu · ' + centre + ' · ' + ts + ' · Page ' + p + '/' + pages, 14, 291);
+      doc.text(this._pdfSafe('UCPA - Permis de Feu - ' + centre + ' - ' + ts + ' - Page ' + p + '/' + pages), 14, 291);
     }
     doc.setTextColor(0,0,0);
     const nom = centre.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'').substring(0,20);
@@ -11466,7 +11548,7 @@ Enregistrer quand même ?`)) return;
     def.items.forEach((item, i) => {
       const checked = data[i] ? '✓' : '○';
       const val = data['v_'+i] || '';
-      doc.text(`${checked} ${item}${val?' — '+val:''}`, 14, y); y+=8;
+      doc.text(this._pdfSafe((checked === '✓' ? 'v' : 'o') + ' ' + item + (val?' - '+val:'')), 14, y); y+=8;
       if (y>270) { doc.addPage(); y=40; }
     });
     doc.save(`UCPA_AlpesSud_Checklist_${type}_${this.today()}.pdf`);
@@ -11987,13 +12069,13 @@ Enregistrer quand même ?`)) return;
     const saved = JSON.parse(sessionStorage.getItem(checkKey)||'{}');
     doc.setFillColor(232,84,26); doc.rect(0,0,210,18,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text(`UCPA — Gamme ${type}`, 14, 12);
+    doc.text(this._pdfSafe('UCPA - Gamme ' + type), 14, 12);
     doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(`${this.centre!=='ALL'?this.centre:'Tous centres'} · ${today}`, 110, 12);
+    doc.text(this._pdfSafe((this.centre!=='ALL'?this.centre:'Tous centres') + ' - ' + today), 110, 12);
 
     const nbChecked = Object.values(saved).filter(v=>v===1).length;
     const nbNC = Object.values(saved).filter(v=>v===2).length;
-    doc.text(`${nbChecked}/${items.length} cochés · ${nbNC} NC`, 110, 16);
+    doc.text(this._pdfSafe(nbChecked + '/' + items.length + ' coches - ' + nbNC + ' NC'), 110, 16);
     let y = 26; let currentSection = ''; let globalIdx = 0;
     items.forEach(item => {
       if (y > 275) { doc.addPage(); y = 20; }
@@ -12002,7 +12084,7 @@ Enregistrer quand même ?`)) return;
         currentSection = section;
         doc.setFillColor(245,245,245); doc.rect(14,y-4,182,7,'F');
         doc.setTextColor(232,84,26); doc.setFontSize(9); doc.setFont('helvetica','bold');
-        doc.text(section, 16, y); y += 7;
+        doc.text(this._pdfSafe(section), 16, y); y += 7;
       }
 
       const SECTION_TYPES = ['Journalier','Ouverture','Fermeture'];
@@ -12013,7 +12095,7 @@ Enregistrer quand même ?`)) return;
       doc.rect(14,y-3.5,3.5,3.5);
       if (state === 1) {
         doc.setTextColor(0,150,80); doc.setFontSize(8); doc.setFont('helvetica','bold');
-        doc.text('✓', 14.3, y-0.2);
+        doc.text('v', 14.3, y-0.2);
         doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
       } else if (state === 2) {
         doc.setTextColor(100,100,100); doc.setFontSize(7);
@@ -12021,7 +12103,7 @@ Enregistrer quand même ?`)) return;
         doc.setTextColor(30,30,30); doc.setFont('helvetica','normal');
       }
       const text = item.libelle || item.equipement || '';
-      const wrapped = doc.splitTextToSize(text, 155);
+      const wrapped = doc.splitTextToSize(this._pdfSafe(text), 155);
       doc.setFontSize(8);
       if (state === 1) { doc.setTextColor(100,150,100); } 
       else if (state === 2) { doc.setTextColor(160,160,160); }
@@ -12147,9 +12229,9 @@ Enregistrer quand même ?`)) return;
 
     doc.setFillColor(232,84,26); doc.rect(0,0,297,18,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text(`UCPA ERP — Rapport mensuel ${mois}`, 14, 12);
+    doc.text(this._pdfSafe('UCPA ERP - Rapport mensuel ' + mois), 14, 12);
     doc.setFontSize(8); doc.setFont('helvetica','normal');
-    doc.text(`Généré le ${today.toLocaleDateString('fr-FR')}`, 250, 12);
+    doc.text('Genere le ' + today.toLocaleDateString('fr-FR'), 250, 12);
 
     let y = 24;
     CENTRES.forEach(c => {
@@ -12162,9 +12244,9 @@ Enregistrer quand même ?`)) return;
       const color = conf>=80?[29,185,84]:conf>=50?[245,166,35]:[232,54,26];
       doc.setFillColor(...color); doc.roundedRect(14,y,4,6,1,1,'F');
       doc.setTextColor(30,30,30); doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text(name, 20, y+4.5);
+      doc.text(this._pdfSafe(name), 20, y+4.5);
       doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
-      doc.text(`Conformité: ${conf}% · ${done}/${rows.length} · ${expired} échu(s)`, 110, y+4.5);
+      doc.text(this._pdfSafe('Conformite: ' + conf + '% - ' + done + '/' + rows.length + ' - ' + expired + ' echu(s)'), 110, y+4.5);
       y += 8;
       if (y > 190) { doc.addPage(); y = 20; }
     });
@@ -13257,9 +13339,9 @@ const ECS = {
     doc.rect(0,0,297,12,'F');
     doc.setTextColor(255,255,255);
     doc.setFontSize(10); doc.setFont('helvetica','bold');
-    doc.text("UCPA · Carnet Sanitaire — Rondes ECS — " + centre, 14, 8);
+    doc.text(this._pdfSafe ? this._pdfSafe("UCPA - Carnet Sanitaire - Rondes ECS - " + centre) : ("UCPA - Carnet Sanitaire - " + centre), 14, 8);
     doc.setFontSize(8); doc.setFont("helvetica",'normal');
-    doc.text('Généré le ' + new Date().toLocaleDateString('fr-FR'), 283, 8, {align:'right'});
+    doc.text('Genere le ' + new Date().toLocaleDateString('fr-FR'), 283, 8, {align:'right'});
 
     let y = 22;
     doc.setTextColor(30,30,30);
@@ -13280,9 +13362,9 @@ const ECS = {
       doc.setDrawColor(...color);
       doc.roundedRect(14, y-4, 269, 8, 2, 2, 'FD');
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...color);
-      doc.text(`${isNaN(dt)?r.datetime:dt.toLocaleDateString('fr-FR')} ${isNaN(dt)?'':dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}  ·  ${r.operateur||'—'}  ·  ${r.frequence||''}`, 16, y);
+      doc.text((isNaN(dt)?r.datetime:dt.toLocaleDateString('fr-FR')) + ' ' + (isNaN(dt)?'':dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})) + '  -  ' + (r.operateur||'-') + '  -  ' + (r.frequence||''), 16, y);
       doc.setTextColor(...color);
-      doc.text(anomalies > 0 ? `⚠ ${anomalies} anomalie(s)` : '✓ Conforme', 270, y, {align:'right'});
+      doc.text(anomalies > 0 ? (anomalies + ' anomalie(s)') : 'Conforme', 270, y, {align:'right'});
       y += 9; doc.setTextColor(30,30,30);
 
       const keys = Object.keys(r.mesures || {});
@@ -13295,7 +13377,7 @@ const ECS = {
         const st   = rowDef.type==='bool' ? (val==='ok'?'ok':'ko') : this._validate(rowDef,val);
         const col  = st==='ok'?[22,163,74]:st==='ko'?[220,38,38]:[100,100,100];
         doc.setFontSize(7); doc.setFont('helvetica','normal'); doc.setTextColor(80,80,80);
-        const label = rowDef.label.length > 22 ? rowDef.label.substr(0,22)+'…' : rowDef.label;
+        const rawLbl = rowDef.label.length > 22 ? rowDef.label.substr(0,22)+'...' : rowDef.label; const label = (typeof App !== 'undefined' && App._pdfSafe) ? App._pdfSafe(rawLbl) : rawLbl.replace(/[^\x00-\x7E]/g,'?');
         doc.text(label, x, y);
         doc.setFont('helvetica','bold'); doc.setTextColor(...col);
         doc.text(`${val}${rowDef.unit?' '+rowDef.unit:''}`, x, y+4);
@@ -14053,7 +14135,8 @@ const Cal = {
     });
     container.innerHTML = `<div style="max-height:70vh;overflow-y:auto">${html}</div>`;
 
-    evts.forEach((e,i) => { window[`e${i}`] = e; });
+    // CORRECTION QA - window[`e${i}`] supprime : polluait le scope global
+    Cal._evtsCache = evts;
   },
 
   openDay(dateStr) {
@@ -14236,7 +14319,7 @@ const Cal = {
     doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
     const monthLabel = new Date(year, month, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-    doc.text(`UCPA — Calendrier des Opérations · ${monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1)}`, 14, 11);
+    doc.text(this._pdfSafe ? this._pdfSafe('UCPA - Calendrier des Operations - ' + monthLabel.charAt(0).toUpperCase()+monthLabel.slice(1)) : ('UCPA - Calendrier - ' + monthLabel), 14, 11);
     doc.setFontSize(8); doc.setFont('helvetica','normal');
     doc.text(new Date().toLocaleDateString('fr-FR'), 255, 11);
 
@@ -18222,10 +18305,20 @@ const Prest = {
       docs[d.id] = document.getElementById('doc-' + d.id)?.checked || false;
     });
 
+    // CORRECTION QA - Validation SIRET Luhn
+    const siretVal = (document.getElementById('m-prest-siret')?.value || '').trim();
+    if (siretVal && !validateSIRET(siretVal)) {
+      showToast('⚠️ SIRET invalide (14 chiffres, cle de Luhn incorrecte).', 'warn', 5000);
+      const _se = document.getElementById('m-prest-siret');
+      if (_se) { _se.style.borderColor = 'var(--red)'; _se.focus(); }
+      return false;
+    }
+
     const docsManquants = this.DOCS_REQUIS.filter(d => d.obligatoire && !docs[d.id]);
     if (docsManquants.length > 0) {
-      const ok = confirm(`⚠️ Documents obligatoires non cochés :\n${docsManquants.map(d => '• ' + d.label).join('\n')}\n\nConformer quand même ?`);
-      if (!ok) return false;
+      // CORRECTION QA - confirm() remplace par toast non-bloquant
+      showToast('⚠️ Documents obligatoires manquants : ' + docsManquants.map(d => d.label).join(', '), 'warn', 7000);
+      return false;
     }
 
     const entry = {
@@ -18233,7 +18326,7 @@ const Prest = {
       centre:           centre,
       entreprise:       entreprise,
       nomIntervenant:   nom,
-      siret:            (document.getElementById('m-prest-siret')?.value || '').trim(),
+      siret:            siretVal,
       typeIntervention: document.getElementById('m-prest-type')?.value || 'Autre',
       zone:             (document.getElementById('m-prest-zone')?.value || '').trim(),
       natureIntervention: (document.getElementById('m-prest-nature')?.value || '').trim(),
@@ -18640,14 +18733,14 @@ const Prest = {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text("REGISTRE ENTRÉES / SORTIES PRESTATAIRES", 14, 13);
+    doc.text("REGISTRE ENTREES / SORTIES PRESTATAIRES", 14, 13);
     doc.setFontSize(9);
-    doc.text(`Centre : ${centre} · Édité le ${dateStr}`, 200, 13);
+    doc.text('Centre : ' + centre + ' - Edite le ' + dateStr, 200, 13);
     doc.setTextColor(0, 0, 0);
 
     doc.setFontSize(7);
     doc.setTextColor(120, 120, 120);
-    doc.text("C. trav. R.4512-1 à R.4514-10 · L.8222-1 (travail dissimulé) · Loi Sapin 2 / Décret 2017-360 · Conservation 5 ans minimum", 14, 26);
+    doc.text("C. trav. R.4512-1 a R.4514-10 - L.8222-1 - Conservation 5 ans minimum", 14, 26);
     doc.setTextColor(0, 0, 0);
 
     const headers = ['Entreprise', 'Intervenant', 'Type', 'Zone', 'Entrée', 'Sortie', 'Durée', 'Docs ✓', 'Statut'];
@@ -18696,7 +18789,7 @@ const Prest = {
     for (let pg = 1; pg <= pages; pg++) {
       doc.setPage(pg);
       doc.setFontSize(7); doc.setTextColor(160,160,160);
-      doc.text(`Page ${pg}/${pages} · UCPA ERP · Registre tenu conformément à L.8222-1 et C.trav. R.4512-1`, 14, 207);
+      doc.text('Page ' + pg + '/' + pages + ' - UCPA ERP - Registre L.8222-1', 14, 207);
     }
 
     doc.save(`registre_prestataires_${centre}_${dateStr.replace(/\//g,'-')}.pdf`);
@@ -19606,11 +19699,11 @@ const DUERP = {
 
     doc.setFillColor(232,84,26); doc.rect(0,0,297,16,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(12); doc.setFont('helvetica','bold');
-    doc.text(`UCPA — DUERP · ${centreName}`, 14, 11);
+    doc.text(this._pdfSafe ? this._pdfSafe('UCPA - DUERP - ' + centreName) : ('UCPA - DUERP - ' + centreName), 14, 11);
     doc.setFontSize(8); doc.text(today, 250, 11);
 
     doc.setTextColor(60,60,60); doc.setFontSize(9); doc.setFont('helvetica','italic');
-    doc.text('Document Unique d\'Évaluation des Risques Professionnels', 14, 22);
+    doc.text('Document Unique d Evaluation des Risques Professionnels', 14, 22);
 
     let y = 30;
     const cols = [{label:'Unité de travail',w:40},{label:'Danger',w:65},{label:'Famille',w:30},
@@ -19632,7 +19725,7 @@ const DUERP = {
         const hex = i===6?niv.color:'#333333';
         const r2=parseInt(hex.slice(1,3),16)||50, g2=parseInt(hex.slice(3,5),16)||50, b2=parseInt(hex.slice(5,7),16)||50;
         if(i===6) doc.setTextColor(r2,g2,b2); else doc.setTextColor(50,50,50);
-        doc.text(String(v||'—').slice(0,Math.floor(cols[i].w/1.8)), x+1, y);
+        doc.text((typeof App!=='undefined'&&App._pdfSafe?App._pdfSafe(String(v||'-')):String(v||'-').replace(/[^\x00-\x7E]/g,'?')).slice(0,Math.floor(cols[i].w/1.8)), x+1, y);
         x+=cols[i].w;
       });
       y+=7;
@@ -19640,11 +19733,11 @@ const DUERP = {
 
     y+=5;
     doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(80,80,80);
-    doc.text("Grille de cotation (Probabilité × Gravité) :", 14, y); y+=5;
+    doc.text("Grille de cotation (P x G) :", 14, y); y+=5;
     this.NIVEAUX.forEach(n => {
       const r2=parseInt(n.color.slice(1,3),16), g2=parseInt(n.color.slice(3,5),16), b2=parseInt(n.color.slice(5,7),16);
       doc.setTextColor(r2,g2,b2); doc.setFont("helvetica",'normal');
-      doc.text(`${n.label} : ${n.min}–${n.max}     `, 14+this.NIVEAUX.indexOf(n)*45, y);
+      doc.text((typeof App!=='undefined'&&App._pdfSafe?App._pdfSafe:s=>s)(n.label + ' : ' + n.min + '-' + n.max), 14+this.NIVEAUX.indexOf(n)*45, y);
     });
 
     doc.save(`UCPA_DUERP_${centreName.replace(/\s/g,'_')}_${today.replace(/\//g,'-')}.pdf`);
@@ -19669,19 +19762,19 @@ const DUERP = {
     const ts   = new Date().toLocaleString('fr-FR');
     let y = App.pdfHeader(doc, "DUERP — Document Unique d’Évaluation des Risques Professionnels");
     doc.setFontSize(9); doc.setTextColor(80,80,80);
-    doc.text(`Centre : ${centre} · Généré le : ${ts} · R.4121-1 du Code du travail`, 14, y); y += 10;
+    doc.text(this._pdfSafe('Centre : ' + centre + ' - Genere le : ' + ts + ' - R.4121-1 du Code du travail'), 14, y); y += 10;
 
     const critiques  = ris.filter(r => this.cotation(r) >= 12).length;
     const importants = ris.filter(r => { const c = this.cotation(r); return c >= 9 && c < 12; }).length;
     const actOuvertes = act.filter(a => a.statut !== 'Réalisée').length;
     doc.setFillColor(248,250,252); doc.rect(14, y, 182, 14, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(0,0,0);
-    doc.text(`Risques : ${ris.length} total — ${critiques} critiques — ${importants} importants`, 16, y+6);
-    doc.text(`Actions : ${act.length} total — ${actOuvertes} ouvertes`, 16, y+12);
+    doc.text('Risques : ' + ris.length + ' total - ' + critiques + ' critiques - ' + importants + ' importants', 16, y+6);
+    doc.text('Actions : ' + act.length + ' total - ' + actOuvertes + ' ouvertes', 16, y+12);
     y += 18;
 
     doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(232,84,26);
-    doc.text('RISQUES PAR UNITÉ DE TRAVAIL', 14, y); y += 7;
+    doc.text('RISQUES PAR UNITE DE TRAVAIL', 14, y); y += 7;
 
     const byUnite = {};
     ris.forEach(r => {
@@ -19710,14 +19803,14 @@ const DUERP = {
         const cot = this.cotation(r);
         const niv = this.niveau(cot);
         const rgb = niv.label === 'Critique' ? [220,38,38] : niv.label === 'Important' ? [217,119,6] : niv.label === 'Modéré' ? [2,132,199] : [5,150,105];
-        const lines0 = doc.splitTextToSize(r.danger||'—', WIDTHS[0]-1);
-        const linesMes = doc.splitTextToSize((r.mesures||'—').substring(0,80), WIDTHS[6]-1);
+        const lines0 = doc.splitTextToSize(this._pdfSafe ? this._pdfSafe(r.danger||'-') : (r.danger||'-'), WIDTHS[0]-1);
+        const linesMes = doc.splitTextToSize(this._pdfSafe ? this._pdfSafe((r.mesures||'-').substring(0,80)) : (r.mesures||'-').substring(0,80), WIDTHS[6]-1);
         const nbLines = Math.max(lines0.length, linesMes.length, 1);
         const rowH = nbLines * 4.5 + 3;
         if (y + rowH > 270) { doc.addPage(); y = 20; }
         doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(0,0,0);
         doc.text(lines0, COL[0], y+3);
-        doc.text((r.famille||'—').substring(0,12), COL[1], y+3);
+        doc.text((r.famille||'-').substring(0,12), COL[1], y+3);
         doc.text(String(r.probabilite||1), COL[2], y+3);
         doc.text(String(r.gravite||1), COL[3], y+3);
         doc.setFont('helvetica','bold');
@@ -19744,17 +19837,17 @@ const DUERP = {
       ACT_HDR.forEach((h,i) => doc.text(h, ACT_COL[i], y+1)); y += 7;
       act.forEach(a => {
         if (y > 265) { doc.addPage(); y = 20; }
-        const lines = doc.splitTextToSize(a.action||'—', ACT_W[0]-1);
+        const lines = doc.splitTextToSize(this._pdfSafe ? this._pdfSafe(a.action||'-') : (a.action||'-'), ACT_W[0]-1);
         const rowH  = lines.length * 4.5 + 3;
         doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(0,0,0);
         doc.text(lines, ACT_COL[0], y+3);
-        doc.text((a.responsable||'—').substring(0,18), ACT_COL[1], y+3);
-        doc.text(a.echeance ? new Date(a.echeance).toLocaleDateString('fr-FR') : '—', ACT_COL[2], y+3);
+        doc.text((a.responsable||'-').substring(0,18), ACT_COL[1], y+3);
+        doc.text(a.echeance ? new Date(a.echeance).toLocaleDateString('fr-FR') : '-', ACT_COL[2], y+3);
         const pCls = a.priorite==='Majeure' ? [220,38,38] : a.priorite==='Élevée' ? [217,119,6] : [5,150,105];
-        doc.setTextColor(...pCls); doc.text(a.priorite||'—', ACT_COL[3], y+3);
+        doc.setTextColor(...pCls); doc.text(a.priorite||'-', ACT_COL[3], y+3);
         const sCls = a.statut==='Réalisée' ? [5,150,105] : a.statut==='En cours' ? [2,132,199] : [0,0,0];
-        doc.setTextColor(...sCls); doc.text(a.statut||'—', ACT_COL[4], y+3);
-        doc.setTextColor(0,0,0); doc.text((a.centre||'—').substring(0,12), ACT_COL[5], y+3);
+        doc.setTextColor(...sCls); doc.text(a.statut||'-', ACT_COL[4], y+3);
+        doc.setTextColor(0,0,0); doc.text((a.centre||'-').substring(0,12), ACT_COL[5], y+3);
         y += rowH; doc.setDrawColor(220,220,220); doc.line(14, y, 196, y);
       });
     }
@@ -19763,7 +19856,7 @@ const DUERP = {
     for (let p = 1; p <= pages; p++) {
       doc.setPage(p);
       doc.setFontSize(7); doc.setTextColor(150,150,150);
-      doc.text(`UCPA · DUERP · ${centre} · ${ts} · Page ${p}/${pages}`, 14, 292);
+      doc.text(this._pdfSafe ? this._pdfSafe('UCPA - DUERP - ' + centre + ' - ' + ts + ' - Page ' + p + '/' + pages) : ('UCPA - DUERP - ' + centre), 14, 292);
     }
     const nom = centre.replace(/\s+/g,'_').replace(/[^A-Za-z0-9_]/g,'').substring(0,20);
     doc.save(`UCPA_DUERP_${nom}_${App.today()}.pdf`);
@@ -20721,7 +20814,7 @@ const Admin = {
       <div class="admin-centre-card">
         <div class="admin-centre-info">
           <div class="admin-centre-name" title="${name}">${this._short(name)}</div>
-          <div class="admin-centre-pw">Mot de passe : <code>${this._pw(name)}</code></div>
+          <div class="admin-centre-pw" data-pw="${this._pw(name)}">Mot de passe : <code>••••••••</code> <button onclick="(function(b){var c=b.closest('[data-pw]');var k=c.querySelector('code');var s=c.dataset.shown==='1';k.textContent=s?'••••••••':c.dataset.pw;c.dataset.shown=s?'0':'1';b.textContent=s?'??':'??';})(this)" style="background:none;border:none;cursor:pointer;font-size:11px;padding:0 3px;color:var(--muted)" aria-label="Afficher/masquer le mot de passe">??</button></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="btn btn-ghost btn-sm" title="Renommer"
@@ -21298,14 +21391,14 @@ const Piscine = {
     const centre = App.centre==='ALL'?'Tous centres':App.centre.replace('STATION DE SKI ','');
     doc.setFillColor(2,132,199); doc.rect(0,0,210,22,'F');
     doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold');
-    doc.text('REGISTRE QUALITÉ EAU — PISCINE', 14, 14);
-    doc.setFontSize(9); doc.text(centre+' · '+new Date().toLocaleDateString('fr-FR'), 140, 14);
+    doc.text('REGISTRE QUALITE EAU - PISCINE', 14, 14);
+    doc.setFontSize(9); doc.text((centre+' - '+new Date().toLocaleDateString('fr-FR')), 140, 14);
     let y = 32;
     const releves = this.getReleves();
     doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont('helvetica','normal');
     releves.slice(0,30).forEach(r => {
       const date = new Date(r.date).toLocaleString('fr-FR');
-      doc.setFont('helvetica','bold'); doc.text(date+' — '+r.operateur, 14, y); y+=5;
+      doc.setFont('helvetica','bold'); doc.text(date+' - '+(r.operateur||''), 14, y); y+=5;
       (r.mesures||[]).forEach(m=>{
         const v=m.valeurs||{};
         const txt = `${m.bassin}: pH=${v.ph||'—'} Cl=${v.chlore_libre||'—'} TAC=${v.tac||'—'} T°=${v.temp_bassin||v.temp_pataug||'—'}°C`;
@@ -21313,7 +21406,7 @@ const Piscine = {
       });
       if (r.dérivesCritiques?.length) {
         doc.setTextColor(220,38,38);
-        r.dérivesCritiques.forEach(d=>{doc.text('⚠ '+d, 18, y); y+=4;});
+        r.dérivesCritiques.forEach(d=>{doc.text('! '+d, 18, y); y+=4;});
         doc.setTextColor(0,0,0);
       }
       y+=3; if(y>280){doc.addPage(); y=14;}
@@ -21466,18 +21559,30 @@ const UCPAImport = {
     const nb = Object.keys(this.PATCH).filter(c =>
       typeof CENTRES === 'undefined' || CENTRES.includes(c)
     ).length;
-    if (!confirm('Réinitialiser les données de ' + nb + ' centres depuis les fiches UCPA ?\n\nLes champs existants seront conservés. Seuls les champs vides seront remplis.')) return;
+    // CORRECTION QA - confirm()/alert() remplaces par modale + toast non-bloquants
+    if (typeof App !== 'undefined' && App.openModal) {
+      App.openModal('?? Réinitialiser les données',
+        '<div style="font-size:13px;margin-bottom:16px">Réinitialiser les données de <strong>' + nb + ' centres</strong> depuis les fiches UCPA ?<br>'
+        + '<span style="color:var(--muted);font-size:12px">Les champs existants sont conservés. Seuls les champs vides seront remplis.</span></div>'
+        + '<div style="display:flex;gap:10px;justify-content:flex-end">'
+        + '<button class="btn btn-ghost btn-sm" onclick="App.closeModal()">Annuler</button>'
+        + '<button class="btn btn-primary btn-sm" onclick="UCPAImport._doRun(' + nb + ');App.closeModal()">✅ Confirmer</button>'
+        + '</div>', '__confirm__');
+    } else {
+      if (!confirm('Réinitialiser les données de ' + nb + ' centres ?')) return;
+      this._doRun(nb);
+    }
+  },
 
+  _doRun(nb) {
     const filled = this.applyToRegistre(null);
     this.applyToSyntheses(null);
-
     if (typeof App !== 'undefined') {
       try { if (App._currentPage === 'registre') App.renderRegistre(); } catch(e) {}
       try { if (App._currentPage === 'synthese') App.renderSynthese && App.renderSynthese(); } catch(e) {}
       App.renderAll();
     }
-
-    alert('Import terminé !\n\n' + nb + ' centres traités\n' + filled + ' champs remplis');
+    if (typeof showToast === 'function') showToast('✅ Import terminé — ' + nb + ' centres traités, ' + filled + ' champs remplis', 'success', 6000);
   }
 };
 
@@ -21524,7 +21629,7 @@ document.addEventListener('ucpa-session-started', function() {
       var banner = document.createElement('div');
       banner.id = 'session-timeout-banner';
       banner.style.cssText = 'display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#e8530a;color:#fff;padding:10px 20px;align-items:center;justify-content:space-between;font-family:sans-serif;font-size:13px;font-weight:600';
-      banner.innerHTML = '⏱️ Votre session expire dans 5 minutes. <button onclick="document.getElementById(\'session-timeout-banner\').style.display=\'none\'" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;margin-left:16px">Rester connecté</button>';
+      banner.innerHTML = '⏱️ Votre session expire dans 5 minutes. <button onclick="resetTimers();document.getElementById(\'session-timeout-banner\').style.display=\'none\'" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 12px;border-radius:4px;cursor:pointer;margin-left:16px">Rester connecté</button>';
       document.body.appendChild(banner);
     });
   })();
