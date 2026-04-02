@@ -7049,7 +7049,7 @@ const App = {
               <span style="font-family:'DM Mono';font-size:10px;min-width:28px">${x.conf}%</span>
             </div>
           </td>
-          <td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px" onclick="App.selectCentre('${x.c.replace(/'/g,"\\'")}');App.nav('registre')">→</button></td>
+          <td><button class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px" data-centre="${escH(x.c)}" onclick="App.selectCentre(this.dataset.centre);App.nav('registre')">→</button></td>
         </tr>`).join('')}
         </tbody></table>`;
     }
@@ -8967,7 +8967,7 @@ function pdfAddFooter(doc, pageNum) {
     CENTRES.forEach(c => items.push({ val: c, label: c.replace('VILLAGE SPORTIF ', 'VS ') }));
     list.innerHTML = items.map(it => {
       const sel = it.val === current ? ' selected' : '';
-      return `<div class="sb-dropdown-item${sel}" onclick="App._pickCentre('${it.val.replace(/'/g,"\'")}')">
+      return `<div class="sb-dropdown-item${sel}" data-centre="${it.val.replace(/"/g,'&quot;')}" onclick="App._pickCentre(this.dataset.centre)">
         ${sel ? '✓ ' : ''}${it.label}
       </div>`;
     }).join('');
@@ -11046,11 +11046,11 @@ Enregistrer quand même ?`)) return;
 
         const final = mode ? invs : [...existing, ...invs];
         this.save('investissements', final);
-        alert(`✅ ${count} projets importés (total: ${final.length}). Budget total: ${invs.reduce((s,i)=>s+i.coutEstime,0).toLocaleString('fr-FR')} €`);
+        showToast('✅ ' + count + ' projets importés.', 'success', 5000);
         event.target.value = '';
         this.renderInvestissements();
       } catch(err) {
-        alert('Erreur lors de la lecture du fichier: ' + err.message);
+        showToast('Erreur lecture fichier: ' + err.message, 'error');
         console.error(err);
       }
     };
@@ -12218,7 +12218,7 @@ Enregistrer quand même ?`)) return;
     this.save('registre', reg);
     this.toggleQuickEntry();
     this.renderAll();
-    alert(`✅ ${updated} contrôle(s) mis à jour pour ${groupe} — ${centre.replace('VILLAGE SPORTIF ','VS ')}`);
+    showToast('✅ ' + updated + ' contrôle(s) mis à jour pour ' + groupe + ' — ' + centre.replace('VILLAGE SPORTIF ','VS '), 'success', 5000);
   },
 
   showHistory(centreEncoded, rowIndex) {
@@ -12938,7 +12938,7 @@ const ECS = {
       if (el && el.value) { mesures[row.id] = el.value; anyValue = true; }
     }));
 
-    if (!anyValue) { alert('Saisissez au moins une mesure avant d\'enregistrer.'); return; }
+    if (!anyValue) { showToast('Saisissez au moins une mesure avant d\'enregistrer.', 'warn'); return; }
 
     const san = App.load('sanitaire') || {ecs:[], purges:[], releves:[]};
     if (!san.releves) san.releves = [];
@@ -14320,7 +14320,7 @@ const Cal = {
         : '✅ Rondes : déjà configurées',
       '\nLe calendrier affiche maintenant les prochains contrôles et les rondes planifiées.'
     ].join('\n');
-    alert(msg);
+    showToast(msg.replace(/\n/g,' | '), 'success', 6000);
   },
   toggleFilter(cat) { this._filters[cat] = !this._filters[cat]; this.render(); },
 
@@ -15921,7 +15921,7 @@ Réponds UNIQUEMENT en JSON valide :
       const centre = d._overrideCentre || d.centre || '';
 
       if (item.docType === 'registre_ucpa') {
-        if (!centre) { alert(`Centre non défini pour "${item.name}" — assignez-le avant d'importer.`); return; }
+        if (!centre) { showToast('Centre non défini pour "' + item.name + '" — assignez-le avant d\'importer.', 'error', 6000); return; }
         const checks = document.querySelectorAll(`.pim-ctrl-check[data-idx="${idx}"]`);
         const active = new Set(); checks.forEach(cb=>{ if(cb.checked) active.add(cb.dataset.catid); });
         const ctrls = (d.controles||[]).filter(c=>active.has(c.catId));
@@ -15929,7 +15929,7 @@ Réponds UNIQUEMENT en JSON valide :
         if (d.directeur||d.code_site||d.erp_cat) { this._fillSynthese(d, centre); stats.synthese++; }
 
       } else if (item.docType === 'rapport_verif') {
-        if (!centre) { alert(`Centre non défini pour "${item.name}".`); return; }
+        if (!centre) { showToast('Centre non défini pour "' + item.name + '" — assignez-le avant d\'importer.', 'error', 5000); return; }
         const checks = document.querySelectorAll(`.pim-ctrl-check[data-idx="${idx}"]`);
         let hasChecked = false; checks.forEach(cb=>{ if(cb.checked) hasChecked=true; });
         if (hasChecked && d.catId) {
@@ -16005,7 +16005,7 @@ Réponds UNIQUEMENT en JSON valide :
       stats.observations  ? `• ${stats.observations} observation(s) créée(s)` : '',
     ].filter(Boolean);
 
-    alert('✅ Import terminé !\n\n' + (lines.length ? lines.join('\n') : 'Aucune donnée importée.'));
+    showToast('✅ Import terminé — ' + (lines.length ? lines.join(' | ') : 'Aucune donnée importée.'), 'success', 8000);
     if (typeof App.renderAll === 'function') App.renderAll();
   },
 
@@ -16784,8 +16784,8 @@ const CentreNotes = {
   _centreItem(c, nb) {
     const label    = c.replace('STATION DE SKI ','').replace('VILLAGE SPORTIF ','VS ').replace('VILLAGE NAUTIQUE ','VN ');
     const isActive = this._centre === c;
-    return `<div class="cn-centre-item ${isActive?'active':''}"
-        onclick="CentreNotes.selectCentre('${c.replace(/'/g,"\\'")}')"
+    return `<div class="cn-centre-item ${isActive?'active':''}" data-centre="${escH(c)}"
+        onclick="CentreNotes.selectCentre(this.dataset.centre)"
         style="padding-left:22px;font-size:11px">
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(label)}</span>
       ${nb>0?`<span class="cn-centre-badge" style="${isActive?'':'background:var(--bg3);color:var(--muted)'}">  ${nb}</span>`:''}
@@ -16860,7 +16860,7 @@ const CentreNotes = {
 
   addNote() {
     const txt = (document.getElementById('cn-new-text')?.value||'').trim();
-    if (!txt) { alert('Rédigez une note avant de l\'ajouter.'); return; }
+    if (!txt) { showToast('Rédigez une note avant de l\'ajouter.', 'warn'); return; }
 
     const centre = this._centre === 'ALL'
       ? (document.getElementById('cn-new-centre')?.value || '')
@@ -17221,7 +17221,7 @@ const DashNotes = {
         .join('');
 
       return `<div style="padding:9px 16px;border-bottom:1px solid var(--border);cursor:pointer"
-          onclick="CentreNotes.selectCentre('${centre.replace(/'/g,"\\'")}');App.nav('notes')"
+          data-centre="${escH(centre)}" onclick="CentreNotes.selectCentre(this.dataset.centre);App.nav('notes')"
           onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
           <span style="font-size:12px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
@@ -18996,7 +18996,7 @@ const ExcelImport = {
       try {
         const wb = XLSX.read(e.target.result, {type:'binary', cellDates:true});
         callback(wb);
-      } catch(err) { alert('Erreur lecture fichier: ' + err.message); }
+      } catch(err) { showToast('Erreur lecture fichier: ' + err.message, 'error'); }
     };
     reader.readAsBinaryString(file);
   },
@@ -19766,7 +19766,7 @@ const DUERP = {
     const d = this.getData();
     const v = (d.versions||[])[vIdx];
     if (!v) return;
-    alert(`Export PDF de la version du ${new Date(v.date).toLocaleDateString('fr-FR')} — ${v.nbRisques} risques, ${v.nbCritiques} critiques`);
+    showToast('Export version du ' + new Date(v.date).toLocaleDateString('fr-FR') + ' — ' + v.nbRisques + ' risques, ' + v.nbCritiques + ' critiques', 'info', 4000);
 
   },
   exportPDF() {
@@ -20079,7 +20079,7 @@ const GED = {
   },
 
   openAddDoc() {
-    if (!this._activeFolder) { alert('Sélectionnez d\'abord un dossier.'); return; }
+    if (!this._activeFolder) { showToast('Sélectionnez d\'abord un dossier.', 'warn'); return; }
     App.openModal('➕ Lier un document — ' + this._activeFolder.label, `
       <div style="margin-bottom:14px;padding:10px 14px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--muted2)">
         📁 <strong style="color:var(--text)">${this._activeFolder.label}</strong><br>
@@ -21265,7 +21265,7 @@ const Piscine = {
     const bassins = this.getBassins().filter(b=>b.actif);
     const date = document.getElementById('pisc-date')?.value;
     const operateur = (document.getElementById('pisc-operateur')?.value||'').trim();
-    if (!date) { alert('Veuillez renseigner la date et l\'heure.'); return; }
+    if (!date) { showToast('Veuillez renseigner la date et l\'heure.', 'warn'); return; }
 
     const mesures = bassins.map(b => {
       const valeurs = {};
